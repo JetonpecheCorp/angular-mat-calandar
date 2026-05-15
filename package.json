@@ -1,0 +1,21 @@
+{
+  "name": "angular-mat-calandar",
+  "description": "Calendrier angular material",
+  "author": "jetonpeche",
+  "version": "1.0.0",
+  "peerDependencies": {
+    "@angular/common": "^21.1.0",
+    "@angular/core": "^21.1.0",
+    "@angular/material": "^21.1.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JetonpecheCorp/angular-mat-input.git"
+  },
+  "sideEffects": false,
+  "license": "ISC",
+  "keywords": ["angular", "calandar", "material", "angular material"]
+}

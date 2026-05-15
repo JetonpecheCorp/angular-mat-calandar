@@ -1,0 +1,63 @@
+<div class="calendar-wrapper mat-elevation-z2">
+
+    <mat-toolbar class="calendar-header">
+        <div class="header-content">
+            <button mat-icon-button (click)="Precedent()">
+                <mat-icon>chevron_left</mat-icon>
+            </button>
+
+            <span class="month-title">{{ nomMois() }} {{ annee() }}</span>
+
+            <button mat-icon-button (click)="Suivant()">
+                <mat-icon>chevron_right</mat-icon>
+            </button>
+        </div>
+    </mat-toolbar>
+
+    <div class="weekdays-grid">
+        @for (element of listeNomSemaine(); track $index) 
+        {
+            <div class="weekday">
+                <span class="day-short">{{ element.reduit }}</span>
+                <span class="day-long">{{ element.normal }}</span>
+            </div>
+        }
+    </div>
+
+    <div class="days-grid">
+        @for (element of listeDate(); track $index) 
+        {
+            <div class="day-cell" 
+                   matRipple
+                   [matRippleDisabled]="matRippleDisabled() || overrideRipple()" 
+                   (click)="ClickJour(element)"
+                   [class.day-disabled]="element.estWeekend && weekendDisabled()"
+                   [class.today]="element.estAujourdhui"
+                   [class.different-month]="!element.estMoisCourant">
+                    
+                    <span class="day-number">{{ element.date.getDate() }}</span>
+
+                    <div class="events-list">
+                        @for (ev of element.listeEvent.slice(0, 3); track $index) 
+                        {
+                            <div class="event-item" [title]="ev.description || ev.titre" 
+                                   (mouseenter)="overrideRipple.set(true)" 
+                                   (mouseleave)="overrideRipple.set(false)"
+                                   (touchstart)="overrideRipple.set(true)"
+                                   (click)="$event.stopPropagation(); ClickEvent(ev)">
+                                <span class="event-time">{{ ev.startDate | date:'HH:mm' }}</span>
+                                <span class="event-title">{{ ev.titre }}</span>
+                            </div>
+                        }
+
+                        @if (element.listeEvent.length > 3) 
+                        {
+                            <div class="more-indicator">
+                                + {{ element.listeEvent.length - 3 }} de plus...
+                            </div>
+                        }
+                    </div>
+                </div>
+        }
+    </div>
+</div>
