@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/JetonpecheCorp/angular-mat-input.git"
+    "url": "https://github.com/JetonpecheCorp/angular-mat-calandar.git"
   },
   "sideEffects": false,
   "license": "ISC",
