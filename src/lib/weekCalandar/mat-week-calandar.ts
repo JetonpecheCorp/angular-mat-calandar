@@ -1,4 +1,4 @@
-import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute } from '@angular/core';
+import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,7 +35,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
     weekendDisabled = input(false, { transform: booleanAttribute });
-   useAmPm = input(false, { transform: booleanAttribute });
+    useAmPm = input(false, { transform: booleanAttribute });
+
+    eventClicked = output<EventCalandar>();
 
     protected texteBtnAujourdhui = signal<string>("Today");
 
@@ -176,6 +178,17 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const FIN = new Date(_fin.getFullYear(), _fin.getMonth(), _fin.getDate()).getTime();
 
         return DATE >= DEBUT && DATE <= FIN;
+    }
+
+    protected ClickEvent(_event: EventCalandar): void
+    {   
+        this.eventClicked.emit({
+            id: _event.id,
+            startDate: _event.startDate,
+            endDate: _event.endDate,
+            titre: _event.titre,
+            description: _event.description
+        });
     }
 
     protected getPositionedEvents(dateJour: Date): PositionedEvent[]

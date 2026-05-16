@@ -56,6 +56,7 @@
                         @for (ev of getPositionedEvents(jour.date); track ev.id) 
                         {
                             <div class="event-block"
+                                 (click)="ClickEvent(ev)"
                                  [ngStyle]="calculerStyleEvent(ev)"
                                  [style.width.%]="100 / ev.nbColonneTotal"
                                  [style.left.%]="(100 / ev.nbColonneTotal) * ev.colonne">
