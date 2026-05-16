@@ -49,10 +49,10 @@
         {
             <div class="day-cell" 
                    matRipple
-                   [matRippleDisabled]="matRippleDisabled() || overrideRipple() || (element.estWeekend &&weekendDisabled())" 
+                   [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
                    (click)="ClickJour(element)"
                    [class.last-column]="($index + 1) % nbColonnes() === 0"
-                   [class.day-disabled]="element.estWeekend && weekendDisabled()"
+                   [class.day-disabled]="(element.estWeekend && weekendDisabled()) || element.estBloquer"
                    [class.today]="element.estAujourdhui"
                    [class.different-month]="!element.estMoisCourant">
                     
@@ -62,10 +62,10 @@
                     @for (ev of element.listeEvent.slice(0, 3); track $index) 
                     {
                         <div class="event-item" [title]="ev.description || ev.titre" 
-                                (mouseenter)="overrideRipple.set(true)" 
-                                (mouseleave)="overrideRipple.set(false)"
-                                (touchstart)="overrideRipple.set(true)"
-                                (click)="$event.stopPropagation(); ClickEvent(ev)">
+                               (mouseenter)="overrideRipple.set(true)" 
+                               (mouseleave)="overrideRipple.set(false)"
+                               (touchstart)="overrideRipple.set(true)"
+                               (click)="$event.stopPropagation(); ClickEvent(ev)">
                                 
                             <span class="event-time">{{ ev.startDate | date:'HH:mm' }}</span>
                             <span class="event-title">{{ ev.titre }}</span>

@@ -19,23 +19,18 @@ export class MatMonthCalandar implements OnInit
     matRippleDisabled = input<boolean>(false);
     events = input<EventCalandar[]>();
 
-    /**
-     * 1 => january, 12 => december
-     */
+    /** 1 => January, 12 => december */
     mois = model.required<number>({ alias: "month" });
     annee = model.required<number>({ alias: "year" });
     weekendDisabled = input(false, { transform: booleanAttribute });
     mondayFirst = input(false, { transform: booleanAttribute });
 
-    /**
-     * 0 => Sunday, 6 => Monday
-     */
+    /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
 
-    /**
-     * 1 => January, 12 => december
-     */
+    /** 1 => January, 12 => december */
     monthsDisabled = input<number[]>([]);
+    daysDisabled = input<Date[]>();
 
     eventClickJour = output<DateCalendrier>({ alias: "dayClicked" });
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
@@ -255,9 +250,11 @@ export class MatMonthCalandar implements OnInit
                 continue;
 
             let listeDateInterval = this.events()?.filter(x => this.EstDansIntervalle(date, x.startDate, x.endDate)) ?? [];
+            let estBloquer = this.daysDisabled()?.findIndex(x => this.DateSontEgaux(x, date))
 
             liste.push({
                 date,
+                estBloquer: estBloquer != -1,
                 estAujourdhui: this.EstDateJour(date),
                 estMoisCourant: date.getMonth() === _de.getMonth(),
                 estWeekend: date.getDay() === 0 || date.getDay() === 6,
@@ -275,6 +272,14 @@ export class MatMonthCalandar implements OnInit
         const FIN = new Date(_fin.getFullYear(), _fin.getMonth(), _fin.getDate()).getTime();
 
         return DATE >= DEBUT && DATE <= FIN;
+    }
+
+    private DateSontEgaux(_date1: Date, _date2: Date): boolean
+    {
+        const DATE1 = new Date(_date1.getFullYear(), _date1.getMonth(), _date1.getDate());
+        const DATE2 = new Date(_date2.getFullYear(), _date2.getMonth(), _date2.getDate());
+
+        return DATE1.getTime() == DATE2.getTime();
     }
 
     private EstDateJour(_date: Date): boolean
