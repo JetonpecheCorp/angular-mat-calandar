@@ -1,63 +1,24 @@
-# AngularMatCalandar
+# Angular mat calandar
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.0.
+Calendrier au style material design de angular.
+Traduction automatique celons la **langue du navigateur.**
 
-## Code scaffolding
+# Information
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- Compatible Angular 21
+- Compatible et conçu pour Angular material
 
-```bash
-ng generate component component-name
-```
+# Par mois
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Attribut
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the library, run:
-
-```bash
-ng build angular-mat-calandar
-```
-
-This command will compile your project, and the build artifacts will be placed in the `dist/` directory.
-
-### Publishing the Library
-
-Once the project is built, you can publish your library by following these steps:
-
-1. Navigate to the `dist` directory:
-   ```bash
-   cd dist/angular-mat-calandar
-   ```
-
-2. Run the `npm publish` command to publish your library to the npm registry:
-   ```bash
-   npm publish
-   ```
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- `month`: mois à afficher (REQUIS)
+- `year`: Année du mois à afficher (REQUIS)
+- `matRippleDisabled`: désactiver l'effet ripple sur les cellules des jours
+- `events`: Liste des evenements à mettre sur le calandrier
+- `weekendDisabled`: Masquer le weekend (samedi et dimanche)
+- `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
+- `daysOfWeekDisabled`: Masquer des jours de la semaine (0 => dimanche, 6 => lundi)
+- `monthsDisabled`=> Masquer des mois (1 => janvier 12 => decembre)
+- `eventClickJour` => Event click sur le jour
+- `eventClickEvent` => Event click sur un évènement

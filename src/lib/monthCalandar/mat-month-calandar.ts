@@ -26,7 +26,11 @@ export class MatMonthCalandar implements OnInit
     /**
      * 0 => Sunday, 6 => Monday
      */
-    daysDisabled = input<number[]>([]);
+    daysOfWeekDisabled = input<number[]>([]);
+
+    /**
+     * 1 => January, 12 => december
+     */
     monthsDisabled = input<number[]>([]);
 
     eventClickJour = output<DateCalendrier>({ alias: "dayClicked" });
@@ -118,7 +122,7 @@ export class MatMonthCalandar implements OnInit
 
     private joursAExclure = computed(() => 
     {
-        const A_MASQUER = new Set(this.daysDisabled());
+        const A_MASQUER = new Set(this.daysOfWeekDisabled());
 
         if (this.weekendDisabled())
         {
