@@ -1,0 +1,248 @@
+:host {
+    display: block;
+    height: 100vh;
+    background: var(--mat-sys-surface);
+    --hour-height: 60px;
+    --time-column-width: 60px;
+    --header-height: 70px;
+}
+
+.week-calendar-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-scroll-viewport {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- HEADER PRINCIPAL --- */
+.calendar-header 
+{
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 120;
+    height: var(--header-height) !important;
+    min-height: var(--header-height) !important;
+    padding: 0;
+    background-color: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+    flex-shrink: 0;
+}
+
+.header-main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 4px;
+}
+
+.header-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.header-nav-row button
+{
+    color: var(--mat-sys-on-primary);
+}
+
+.period-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.today-btn-flat {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    height: 32px !important;
+}
+
+/* --- ENTÊTE DES JOURS STICKY --- */
+.days-header-sticky {
+    position: sticky;
+    top: var(--header-height); 
+    z-index: 110; 
+    display: flex;
+    background: var(--mat-sys-surface);
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    flex-shrink: 0;
+    min-width: fit-content;
+}
+
+/* --- COLONNE DES HEURES FIXE (LEFT STICKY) --- */
+.time-gutter, .time-column {
+    width: var(--time-column-width);
+    flex-shrink: 0;
+    position: sticky;
+    left: 0;
+    z-index: 105;
+    background: var(--mat-sys-surface-container-low);
+    border-right: 1px solid var(--mat-sys-outline-variant);
+}
+
+.time-gutter {
+    z-index: 106; /* Doit être au-dessus des labels de jours */
+}
+
+.days-labels-grid {
+    display: grid;
+    flex: 1;
+}
+
+.day-label {
+    padding: 10px 0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--mat-sys-outline-variant);
+}
+
+.day-label .number {
+    font-size: 1.5rem;
+    font-weight: 300;
+}
+
+.day-label.today { color: var(--mat-sys-primary); }
+.day-label.today .number { font-weight: 600; }
+
+/* --- ÉVÉNEMENTS --- */
+.event-block {
+    position: absolute;
+    box-sizing: border-box;
+    border: 1px solid var(--mat-sys-surface); 
+    border-left: 4px solid var(--mat-sys-primary);
+    background-color: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.7rem;
+    z-index: 5;
+    overflow: hidden;
+    transition: width 0.2s ease, left 0.2s ease;
+    cursor: pointer;
+}
+
+.event-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: normal; 
+    overflow-wrap: anywhere; 
+    display: -webkit-box;
+    -webkit-line-clamp: 3; 
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* --- CORPS DU CALENDRIER --- */
+.calendar-body {
+    display: flex;
+    flex: 1 0 auto;
+    padding-top: 10px;
+    min-width: fit-content;
+}
+
+.days-grid {
+    display: grid;
+    flex: 1;
+}
+
+.day-column {
+    position: relative;
+    border-left: 1px solid var(--mat-sys-outline-variant);
+}
+
+.hour-label {
+    height: var(--hour-height) !important;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding-right: 8px;
+    box-sizing: border-box;
+}
+
+.hour-label span {
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    background: var(--mat-sys-surface-container-low);
+    padding: 0 4px;
+}
+
+.hour-slot {
+    height: var(--hour-height) !important;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    box-sizing: border-box;
+}
+
+.current-time-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #ea4335;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.time-circle {
+    position: absolute;
+    left: -6px;
+    top: -5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #ea4335;
+}
+
+/* --- RESPONSIVE --- */
+.name.short { display: none; }
+
+@media (max-width: 800px) {
+    :host { --time-column-width: 50px; }
+    .name.long { display: none; }
+    .name.short { display: block; text-transform: capitalize; }
+}
+
+@media (max-width: 600px) 
+{
+    :host { 
+        --header-height: 60px;
+        --time-column-width: 45px; 
+    }
+
+    .days-header-sticky {
+        top: var(--header-height);
+    }
+    
+    .calendar-header { min-height: 60px; }
+    
+    .day-label .number {
+        font-size: 1.1rem;
+        height: 28px;
+        width: 28px;
+        line-height: 28px;
+        margin: 0 auto;
+    }
+
+    .day-label.today .number {
+        background: var(--mat-sys-primary);
+        color: white;
+        border-radius: 50%;
+    }
+
+    /* Force le scroll horizontal pour ne pas écraser les colonnes */
+    .days-labels-grid, .days-grid 
+    {
+        min-width: 600px;
+    }
+}

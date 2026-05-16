@@ -1,0 +1,83 @@
+<div class="week-calendar-container">
+    
+    <div class="main-scroll-viewport">
+        
+        <mat-toolbar class="calendar-header">
+            <div class="header-main-container">
+                <div class="header-nav-row">
+                    <button mat-icon-button (click)="Precedent()">
+                        <mat-icon>chevron_left</mat-icon>
+                    </button>
+
+                    <span class="period-title">{{ titrePeriode() }}</span>
+                    
+                    <button mat-icon-button (click)="Suivant()">
+                        <mat-icon>chevron_right</mat-icon>
+                    </button>
+                </div>
+                <div>
+                    <button matButton="filled" class="today-btn-flat" (click)="AllerAujourdhui()">
+                        {{ texteBtnAujourdhui() }}
+                    </button>
+                </div>
+            </div>
+        </mat-toolbar>
+
+        <div class="days-header-sticky">
+            <div class="time-gutter"></div> 
+            <div class="days-labels-grid" [style.grid-template-columns]="'repeat(' + listeNomSemaine().length + ', 1fr)'">
+                @for (element of listeNomSemaine(); track element.date) {
+                    <div class="day-label" [class.today]="element.estAujourdhui">
+                        <span class="name long">{{ element.normal }}</span>
+                        <span class="name short">{{ element.reduit }}</span>
+                        <span class="number">{{ element.date.getDate() }}</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="calendar-body">
+            
+            <div class="time-column">
+                @for (h of heures(); track h) 
+                {
+                    <div class="hour-label">
+                        <span>{{ h }}</span>
+                    </div>
+                }
+            </div>
+
+            <div class="days-grid" [style.grid-template-columns]="'repeat(' + listeNomSemaine().length + ', 1fr)'">
+                @for (jour of listeNomSemaine(); track jour.date) {
+                    <div class="day-column">
+
+                        @for (ev of getPositionedEvents(jour.date); track ev.id) {
+                            <div class="event-block"
+                                 [ngStyle]="calculerStyleEvent(ev)"
+                                 [style.width.%]="100 / ev.nbColonneTotal"
+                                 [style.left.%]="(100 / ev.nbColonneTotal) * ev.colonne">
+                                
+                                <div class="event-content">
+                                    <span class="event-title">{{ ev.titre }}</span>
+                                    <span class="event-time">{{ ev.formatHeure }}</span>
+                                </div>
+                            </div>
+                        }
+
+                        @if (jour.estAujourdhui && positionBarreRouge() >= 0) 
+                        {
+                            <div class="current-time-line" [style.top.px]="positionBarreRouge()">
+                                <div class="time-circle"></div>
+                            </div>
+                        }
+
+                        @for (h of heures(); track h) {
+                            <div class="hour-slot"></div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
