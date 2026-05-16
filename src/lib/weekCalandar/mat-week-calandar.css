@@ -4,7 +4,7 @@
     background: var(--mat-sys-surface);
     --hour-height: 60px;
     --time-column-width: 60px;
-    --header-height: 70px;
+    --header-height: 90px;
 }
 
 .week-calendar-container {
@@ -216,7 +216,7 @@
 @media (max-width: 600px) 
 {
     :host { 
-        --header-height: 60px;
+        --header-height: 80px;
         --time-column-width: 45px; 
     }
 
@@ -236,7 +236,7 @@
 
     .day-label.today .number {
         background: var(--mat-sys-primary);
-        color: white;
+        color: var(--mat-sys-on-primary);
         border-radius: 50%;
     }
 
