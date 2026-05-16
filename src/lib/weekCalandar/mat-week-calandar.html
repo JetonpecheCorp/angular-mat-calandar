@@ -53,7 +53,7 @@
                 {
                     <div class="day-column">
 
-                        @for (ev of getPositionedEvents(jour.date); track ev.id) 
+                        @for (ev of getPositionedEvents(jour.date); track $index) 
                         {
                             <div class="event-block"
                                  (click)="ClickEvent(ev)"
