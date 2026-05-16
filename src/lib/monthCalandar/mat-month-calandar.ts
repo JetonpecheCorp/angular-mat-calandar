@@ -6,10 +6,11 @@ import { EventCalandar } from '../../models/EventCalandar';
 import { DateCalendrier } from '../../models/DateCalandar';
 import { DatePipe } from '@angular/common';
 import {MatRippleModule} from '@angular/material/core';
+import {MatMenuModule} from '@angular/material/menu';
 
 @Component({
   selector: 'jp-mat-month-calandar',
-  imports: [MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule],
+  imports: [MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule],
   templateUrl: './mat-month-calandar.html',
   styleUrl: './mat-month-calandar.css',
 })
@@ -26,6 +27,7 @@ export class MatMonthCalandar implements OnInit
      * 0 => Sunday, 6 => Monday
      */
     daysDisabled = input<number[]>([]);
+    monthsDisabled = input<number[]>([]);
 
     eventClickJour = output<DateCalendrier>({ alias: "dayClicked" });
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
@@ -89,6 +91,30 @@ export class MatMonthCalandar implements OnInit
         return liste;
     });
 
+    protected listeMoisTraduit = computed(() => 
+    {
+        const FORMATEUR = new Intl.DateTimeFormat(this.langueNavigateur, { month: 'long' });
+        
+        return Array.from({ length: 12 }, (_, i) => 
+        {
+            return {
+                id: i + 1,
+                nom: FORMATEUR.format(new Date(2024, i, 1))
+            };
+        })
+        .filter(x => !this.monthsDisabled().includes(x.id));
+    });
+
+    protected listeAnnee = computed(() => 
+    {
+        const ANNEE_REFERENCE = this.annee();
+
+        const ANNEE_DEBUT = ANNEE_REFERENCE - 50;
+        const ANNEE_FIN = ANNEE_REFERENCE + 50;
+        
+        return Array.from({ length: (ANNEE_FIN - ANNEE_DEBUT) + 1 }, (_, i) => ANNEE_DEBUT + i);
+    });
+
     private joursAExclure = computed(() => 
     {
         const A_MASQUER = new Set(this.daysDisabled());
@@ -120,16 +146,56 @@ export class MatMonthCalandar implements OnInit
         this.texteEventPlus.set(texte);
     }
 
-    protected Precedent(): void
+    protected Precedent(): void 
     {
-        this.mois.update(x => x == 1 ? 12 : x - 1);
-        this.annee.update(x => this.mois() == 12 ? x - 1 : x);
+        let nouveauMois = this.mois() == 1 ? 12 : this.mois() - 1;
+        let nouvelleAnnee = this.mois() === 1 ? this.annee() - 1 : this.annee();
+
+        // on continue de reculer quand que le mois est désactivé
+        while (this.monthsDisabled().includes(nouveauMois)) 
+        {
+            nouveauMois = nouveauMois == 1 ? 12 : nouveauMois - 1;
+
+            if (nouveauMois == 12) 
+                nouvelleAnnee--;
+        }
+
+        this.annee.set(nouvelleAnnee);
+        this.mois.set(nouveauMois);
     }
 
-    protected Suivant(): void
+    protected Suivant(): void 
     {
-        this.mois.update(x => x == 12 ? 1 : x + 1);
-        this.annee.update(x => this.mois() == 1 ? x + 1 : x);
+        let nouveauMois = this.mois() == 12 ? 1 : this.mois() + 1;
+        let nouvelleAnnee = this.mois() == 12 ? this.annee() + 1 : this.annee();
+
+        // on continue d'avancer quand que le mois est désactivé
+        while (this.monthsDisabled().includes(nouveauMois)) 
+        {
+            nouveauMois = nouveauMois == 12 ? 1 : nouveauMois + 1;
+            if (nouveauMois == 1) 
+                nouvelleAnnee++;
+        }
+
+        this.annee.set(nouvelleAnnee);
+        this.mois.set(nouveauMois);
+    }
+
+    protected AllerAujourdhui(): void 
+    {
+        let dateJour = new Date();
+        this.mois.set(dateJour.getMonth() + 1);
+        this.annee.set(dateJour.getFullYear());
+    }
+
+    protected ChangerMois(_numeroMois: number): void
+    {
+        this.mois.set(_numeroMois);
+    }
+
+    protected changerAnnee(_annee: number): void
+    {
+        this.annee.set(_annee);
     }
 
     protected ClickJour(_dateCalandrier: DateCalendrier): void

@@ -19,11 +19,37 @@
 
 .calendar-header
 {
-    display: flex;
-    justify-content: center;
+    height: auto !important;
+    min-height: 80px;
+    padding-top: 8px 0;
     background-color: var(--mat-sys-primary);
     color: var(--mat-sys-on-primary);
-    height: 64px;
+}
+
+.header-main-container 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.header-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.header-action-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.today-btn {
+    height: 32px !important;
+    line-height: 32px !important;
 }
 
 .calendar-header button 
@@ -40,12 +66,80 @@
     width: 100%;
 }
 
-.month-title {
+.capitalize 
+{
+    text-transform: capitalize;
+}
+
+.active-item
+{
+    color: var(--mat-sys-primary) !important;
+    font-weight: bold;
+    background-color: var(--mat-sys-primary-container);
+}
+
+.month-title 
+{
     font-size: 1.25rem;
     font-weight: 400;
     text-align: center;
     text-transform: capitalize;
-    min-width: 0; /* Important pour le responsive */
+    cursor: pointer;
+    min-width: 0;
+}
+
+.year-grid 
+{
+display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 12px;
+    
+    width: 280px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.year-chip 
+{
+    min-width: 0px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    border-radius: 20px !important;
+    font-weight: 400;
+    font-size: 0.9rem;
+}
+
+.active-year 
+{
+    background-color: var(--mat-sys-primary) !important;
+    color: var(--mat-sys-on-primary) !important;
+    font-weight: 700 !important;
+}
+
+.year-grid::-webkit-scrollbar 
+{
+    width: 6px;
+}
+
+.year-grid::-webkit-scrollbar-thumb 
+{
+    background-color: var(--mat-sys-outline-variant);
+    border-radius: 10px;
+}
+
+.year-title
+{
+    cursor: pointer;
+}
+
+.title-selector {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 /* --- GRILLE DES JOURS DE LA SEMAINE --- */

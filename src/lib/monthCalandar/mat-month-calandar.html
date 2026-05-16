@@ -1,16 +1,36 @@
-<div class="calendar-wrapper mat-elevation-z2" [class.weekend-off]="weekendDisabled()">
+<div class="calendar-wrapper mat-elevation-z2">
 
     <mat-toolbar class="calendar-header">
-        <div class="header-content">
-            <button mat-icon-button (click)="Precedent()">
-                <mat-icon>chevron_left</mat-icon>
-            </button>
+        <div class="header-main-container">
+            
+            <div class="header-nav-row">
+                <button mat-icon-button (click)="Precedent()">
+                    <mat-icon>chevron_left</mat-icon>
+                </button>
+                
+                <div class="title-selector">
+                    <span class="month-title clickable" [matMenuTriggerFor]="menuMois">
+                        {{ nomMois() }}
+                    </span>
 
-            <span class="month-title">{{ nomMois() }} {{ annee() }}</span>
+                    <span class="year-title clickable" [matMenuTriggerFor]="menuAnnee"> 
+                        {{ annee() }}
+                    </span>
+                </div>
 
-            <button mat-icon-button (click)="Suivant()">
-                <mat-icon>chevron_right</mat-icon>
-            </button>
+                <button mat-icon-button (click)="Suivant()">
+                    <mat-icon>chevron_right</mat-icon>
+                </button>
+            </div>
+
+            <div class="header-action-row">
+                <button matButton="filled"
+                    class="today-btn" 
+                    (click)="AllerAujourdhui()">
+                    Aujourd'hui
+                </button>
+            </div>
+
         </div>
     </mat-toolbar>
 
@@ -63,3 +83,33 @@
         }
     </div>
 </div>
+
+<mat-menu #menuMois="matMenu">
+    @for (element of listeMoisTraduit(); track element.id) 
+    {
+        <button mat-menu-item 
+                (click)="ChangerMois(element.id)"
+                [class.active-item]="element.id === mois()"
+                class="capitalize">
+            {{ element.nom }}
+        </button>
+    }
+    @empty 
+    {
+        <button mat-menu-item disabled>Aucun mois disponible</button>
+    }
+</mat-menu>
+
+<mat-menu #menuAnnee="matMenu">
+    <div class="year-grid" (click)="$event.stopPropagation()">
+        @for (element of listeAnnee(); track element) 
+        {
+            <button mat-button 
+                    class="year-chip" 
+                    [class.active-year]="element === annee()"
+                    (click)="changerAnnee(element)">
+                {{ element }}
+            </button>
+        }
+    </div>
+</mat-menu>
