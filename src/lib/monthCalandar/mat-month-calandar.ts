@@ -18,6 +18,10 @@ export class MatMonthCalandar implements OnInit
 {
     matRippleDisabled = input<boolean>(false);
     events = input<EventCalandar[]>();
+
+    /**
+     * 1 => january, 12 => december
+     */
     mois = model.required<number>({ alias: "month" });
     annee = model.required<number>({ alias: "year" });
     weekendDisabled = input(false, { transform: booleanAttribute });
