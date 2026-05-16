@@ -132,9 +132,9 @@
     cursor: pointer;
 }
 
-.event-title {
+.event-title 
+{
     font-size: 0.8rem;
-    font-weight: 600;
     white-space: normal; 
     overflow-wrap: anywhere; 
     display: -webkit-box;
