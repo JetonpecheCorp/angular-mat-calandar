@@ -11,7 +11,6 @@ Traduction automatique celons la **langue du navigateur.**
 # Par mois
 
 ## Attribut
-
 - `month`: mois à afficher (REQUIS)
 - `year`: Année du mois à afficher (REQUIS)
 - `matRippleDisabled`: désactiver l'effet ripple sur les cellules des jours
