@@ -1,4 +1,4 @@
-import { booleanAttribute, Component, computed, input, model, output, signal } from '@angular/core';
+import { booleanAttribute, Component, computed, input, model, OnInit, output, signal } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,17 +13,25 @@ import {MatRippleModule} from '@angular/material/core';
   templateUrl: './mat-month-calandar.html',
   styleUrl: './mat-month-calandar.css',
 })
-export class MatMonthCalandar
+export class MatMonthCalandar implements OnInit
 {
-    protected overrideRipple = signal(false);
     matRippleDisabled = input<boolean>(false);
     events = input<EventCalandar[]>();
     mois = model.required<number>({ alias: "month" });
     annee = model.required<number>({ alias: "year" });
-    weekendDisabled = input(true, { transform: booleanAttribute });
+    weekendDisabled = input(false, { transform: booleanAttribute });
+    mondayFirst = input(false, { transform: booleanAttribute });
+
+    /**
+     * 0 => Sunday, 6 => Monday
+     */
+    daysDisabled = input<number[]>([]);
 
     eventClickJour = output<DateCalendrier>({ alias: "dayClicked" });
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
+
+    protected overrideRipple = signal(false);
+    protected texteEventPlus = signal<string>("one more");
 
     private readonly langueNavigateur = navigator.language || "fr-FR";
 
@@ -32,6 +40,8 @@ export class MatMonthCalandar
         const DATE = new Date(this.annee(), this.mois() - 1, 1);
         return new Intl.DateTimeFormat(this.langueNavigateur, { month: 'long' }).format(DATE);
     });
+
+    protected nbColonnes = computed(() => 7 - this.joursAExclure().length);
 
     protected listeDate = computed(() =>
     {
@@ -49,26 +59,66 @@ export class MatMonthCalandar
         return this.Generer(dateDebut, dateFinMois);
     });
 
-    protected listeNomSemaine = computed(() =>
+    protected listeNomSemaine = computed(() => 
     {
-        this.listeDate();
+        let liste = [];
 
-        const DATE = new Date();
-        const DATE_DEBUT_SEMAINE = DATE.getDate() - DATE.getDay();
+        // debuter par lundi ou dimanche ?
+        const JOUR_DEBUT = this.mondayFirst() ? 5 : 4; 
+        const DATE_REF = new Date(2025, 4, JOUR_DEBUT); 
         
         const shortFormatter = new Intl.DateTimeFormat(this.langueNavigateur, { weekday: 'short' });
         const longFormatter = new Intl.DateTimeFormat(this.langueNavigateur, { weekday: 'long' });
 
-        return Array.from({ length: 7 }, (_, i) => 
+        for (let i = 0; i < 7; i++) 
         {
-            const date = new Date(DATE.getFullYear(), DATE.getMonth(), DATE_DEBUT_SEMAINE + i);
+            const dateTest = new Date(DATE_REF);
+            dateTest.setDate(DATE_REF.getDate() + i);
+            const dayIndex = dateTest.getDay();
 
-            return {
-                reduit: shortFormatter.format(date).toLowerCase().replace('.', ''),
-                normal: longFormatter.format(date).toLowerCase()
-            };
-        });
+            if (this.joursAExclure().includes(dayIndex)) 
+                continue;
+
+            liste.push({
+                index: dayIndex,
+                reduit: shortFormatter.format(dateTest).toLowerCase().replace('.', ''),
+                normal: longFormatter.format(dateTest).toLowerCase()
+            });
+        }
+
+        return liste;
     });
+
+    private joursAExclure = computed(() => 
+    {
+        const A_MASQUER = new Set(this.daysDisabled());
+
+        if (this.weekendDisabled())
+        {
+            A_MASQUER.add(0);
+            A_MASQUER.add(6);
+        }
+
+        return Array.from(A_MASQUER);
+    });
+
+    ngOnInit(): void 
+    {
+        const LANGUE = this.langueNavigateur.split('-')[0];
+        
+        const DICT_TRADUCTION: Record<string, string> = 
+        {
+            'fr': 'de plus',
+            'it': 'in più',
+            'de': 'mehr',
+            'es': 'más',
+            'pt': 'mais',
+            'en': 'more'
+        };
+
+        const texte = DICT_TRADUCTION[LANGUE] || DICT_TRADUCTION['en'];
+        this.texteEventPlus.set(texte);
+    }
 
     protected Precedent(): void
     {
@@ -84,30 +134,39 @@ export class MatMonthCalandar
 
     protected ClickJour(_dateCalandrier: DateCalendrier): void
     {
+        console.log("jour");
+        
         this.eventClickJour.emit(_dateCalandrier);
     }
 
     protected ClickEvent(_event: EventCalandar): void
     {
+        console.log("event");
+        
         this.eventClickEvent.emit(_event);
     }
 
-    private Generer(_de: Date, _a: Date): DateCalendrier[]
+    private Generer(_de: Date, _a: Date): DateCalendrier[] 
     {
         const DATE_DEBUT = new Date(_de.getFullYear(), _de.getMonth(), 1);
-        const DATE_FIN = _a; 
+        const JOUR_SEMAINE = DATE_DEBUT.getDay();
 
-        DATE_DEBUT.setDate(DATE_DEBUT.getDate() - DATE_DEBUT.getDay()); 
-    
-        const DIFF_TEMPS = Math.abs(DATE_FIN.getTime() - DATE_DEBUT.getTime());
-        const NB_JOUR_DIFF = Math.floor(DIFF_TEMPS / 86_400_000);  
-    
+        let offset: number = JOUR_SEMAINE;
+
+        if (this.mondayFirst()) 
+            offset = JOUR_SEMAINE === 0 ? 6 : JOUR_SEMAINE - 1;
+        
+        DATE_DEBUT.setDate(DATE_DEBUT.getDate() - offset); 
+
         let liste: DateCalendrier[] = [];
 
-        for (let i = 0; i <= NB_JOUR_DIFF; i++)
+        for (let i = 0; i < 42; i++) 
         {
             let date = new Date(DATE_DEBUT);
             date.setDate(date.getDate() + i);
+
+            if (this.joursAExclure().includes(date.getDay())) 
+                continue;
 
             let listeDateInterval = this.events()?.filter(x => this.EstDansIntervalle(date, x.startDate, x.endDate)) ?? [];
 
@@ -115,11 +174,11 @@ export class MatMonthCalandar
                 date,
                 estAujourdhui: this.EstDateJour(date),
                 estMoisCourant: date.getMonth() === _de.getMonth(),
-                estWeekend: date.getDay() == 0 || date.getDay() == 6,
+                estWeekend: date.getDay() === 0 || date.getDay() === 6,
                 listeEvent: listeDateInterval
             });
         }
-        
+
         return liste;
     }
 

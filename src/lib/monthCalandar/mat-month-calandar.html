@@ -1,4 +1,4 @@
-<div class="calendar-wrapper mat-elevation-z2">
+<div class="calendar-wrapper mat-elevation-z2" [class.weekend-off]="weekendDisabled()">
 
     <mat-toolbar class="calendar-header">
         <div class="header-content">
@@ -14,7 +14,7 @@
         </div>
     </mat-toolbar>
 
-    <div class="weekdays-grid">
+    <div class="weekdays-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
         @for (element of listeNomSemaine(); track $index) 
         {
             <div class="weekday">
@@ -24,40 +24,42 @@
         }
     </div>
 
-    <div class="days-grid">
+    <div class="days-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
         @for (element of listeDate(); track $index) 
         {
             <div class="day-cell" 
                    matRipple
-                   [matRippleDisabled]="matRippleDisabled() || overrideRipple()" 
+                   [matRippleDisabled]="matRippleDisabled() || overrideRipple() || (element.estWeekend &&weekendDisabled())" 
                    (click)="ClickJour(element)"
+                   [class.last-column]="($index + 1) % nbColonnes() === 0"
                    [class.day-disabled]="element.estWeekend && weekendDisabled()"
                    [class.today]="element.estAujourdhui"
                    [class.different-month]="!element.estMoisCourant">
                     
-                    <span class="day-number">{{ element.date.getDate() }}</span>
+                <span class="day-number">{{ element.date.getDate() }}</span>
 
-                    <div class="events-list">
-                        @for (ev of element.listeEvent.slice(0, 3); track $index) 
-                        {
-                            <div class="event-item" [title]="ev.description || ev.titre" 
-                                   (mouseenter)="overrideRipple.set(true)" 
-                                   (mouseleave)="overrideRipple.set(false)"
-                                   (touchstart)="overrideRipple.set(true)"
-                                   (click)="$event.stopPropagation(); ClickEvent(ev)">
-                                <span class="event-time">{{ ev.startDate | date:'HH:mm' }}</span>
-                                <span class="event-title">{{ ev.titre }}</span>
-                            </div>
-                        }
+                <div class="events-list">
+                    @for (ev of element.listeEvent.slice(0, 3); track $index) 
+                    {
+                        <div class="event-item" [title]="ev.description || ev.titre" 
+                                (mouseenter)="overrideRipple.set(true)" 
+                                (mouseleave)="overrideRipple.set(false)"
+                                (touchstart)="overrideRipple.set(true)"
+                                (click)="$event.stopPropagation(); ClickEvent(ev)">
+                                
+                            <span class="event-time">{{ ev.startDate | date:'HH:mm' }}</span>
+                            <span class="event-title">{{ ev.titre }}</span>
+                        </div>
+                    }
 
-                        @if (element.listeEvent.length > 3) 
-                        {
-                            <div class="more-indicator">
-                                + {{ element.listeEvent.length - 3 }} de plus...
-                            </div>
-                        }
-                    </div>
+                    @if (element.listeEvent.length > 3)
+                    {
+                        <div class="more-indicator">
+                            + {{ element.listeEvent.length - 3 }} {{ texteEventPlus() }}...
+                        </div>
+                    }
                 </div>
+            </div>
         }
     </div>
 </div>

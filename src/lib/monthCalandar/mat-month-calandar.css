@@ -52,7 +52,6 @@
 .weekdays-grid 
 {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
     background-color: var(--mat-sys-primary);
     color: var(--mat-sys-on-primary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -71,7 +70,6 @@
 
 .days-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
     width: 100%;
 }
 
@@ -88,18 +86,17 @@
     gap: 4px;
 }
 
-.day-cell:nth-child(7n) {
+.day-cell.last-column {
     border-right: none;
 }
 
-.day-cell:hover {
-    background-color: var(--mat-sys-surface-container-low);
+.day-cell:last-child {
+    border-right: none;
 }
 
 .day-disabled {
-    pointer-events: none;
+    cursor: default;
     background-color: var(--mat-sys-surface-container-low) !important;
-    opacity: 0.6;
 }
 
 .day-cell:hover .day-number 
@@ -114,7 +111,7 @@
 }
 
 .day-cell.today {
-    background-color: var(--mat-sys-primary-container);
+    background-color: var(--mat-sys-primary-container) !important;
 }
 
 .day-number {
