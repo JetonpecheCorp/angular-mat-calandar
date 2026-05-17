@@ -92,12 +92,11 @@
 }
 
 .time-gutter {
-    z-index: 106; /* Doit être au-dessus des labels de jours */
+    z-index: 106;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--mat-sys-surface-container-low);
-    /* On ajoute une petite bordure en bas pour la cohérence avec les jours */
     border-bottom: 1px solid var(--mat-sys-outline-variant); 
     box-sizing: border-box;
 }
