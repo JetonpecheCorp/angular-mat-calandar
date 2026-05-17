@@ -11,6 +11,8 @@ interface PositionedEvent extends EventCalandar
     colonne: number;
     nbColonneTotal: number;
     formatHeure: string;
+    continueAvant: boolean; 
+    continueApres: boolean;
 }
 
 @Component({
@@ -213,7 +215,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             if (event.startDate.getTime() >= maxTimestampFin) 
             {
                 // Nouvel événement commence après la fin du groupe actuel : on traite le groupe
-                this.AjouterEventAuGroupeColonne(groupeActuelle, positionedEvents);
+                this.AjouterEventAuGroupeColonne(groupeActuelle, positionedEvents, dateJour);
                 groupeActuelle = [];
                 maxTimestampFin = 0;
             }
@@ -222,45 +224,37 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             maxTimestampFin = Math.max(maxTimestampFin, event.endDate.getTime());
         });
         
-        this.AjouterEventAuGroupeColonne(groupeActuelle, positionedEvents);
-
+        this.AjouterEventAuGroupeColonne(groupeActuelle, positionedEvents, dateJour);
         return positionedEvents;
     }
 
-    protected calculerStyleEvent(event: EventCalandar) 
+    protected CalculerStyleEvent(event: EventCalandar, dateJour: Date): any
     {
         const start = new Date(event.startDate);
         const end = new Date(event.endDate);
-        
         const minH = this.hourMin();
         const maxH = this.hourMax();
 
-        let finHeures = end.getHours();
-        let finMinutes = end.getMinutes();
+        const commenceAvant = !this.EstMemeJour(start, dateJour);
+        const finitApres = !this.EstMemeJour(end, dateJour);
 
-        // Si l'heure est 00:00, on considère que c'est 24:00 pour le calcul
-        if (finHeures === 0 && finMinutes === 0)
-            finHeures = 24;
+        let hDeb = commenceAvant ? 0 : start.getHours();
+        let mDeb = commenceAvant ? 0 : start.getMinutes();
+        let hFin = finitApres ? 24 : end.getHours();
+        let mFin = finitApres ? 0 : end.getMinutes();
 
-        // 1. TOP (Début)
-        let topMinutes = ((start.getHours() - minH) * 60) + start.getMinutes();
-        let displayTop = Math.max(0, topMinutes);
+        if (hFin == 0 && mFin == 0) 
+            hFin = 24;
 
-        // 2. FIN (en utilisant notre variable corrigée finHeures)
-        let endMinutesTotal = ((finHeures - minH) * 60) + finMinutes;
-        
-        // La fin ne doit pas dépasser la grille (maxH + 1 pour inclure l'heure complète)
-        const maxGridMinutes = (maxH - minH + 1) * 60;
-        let displayEnd = Math.min(maxGridMinutes, endMinutesTotal);
-
-        // 3. HAUTEUR
-        let displayHeight = displayEnd - displayTop;
+        let top = ((hDeb - minH) * 60) + mDeb;
+        let endTotal = ((hFin - minH) * 60) + mFin;
+        const maxGrid = (maxH - minH + 1) * 60;
 
         return {
-            'top.px': displayTop,
-            'height.px': displayHeight,
+            'top.px': Math.max(0, top),
+            'height.px': Math.min(maxGrid, endTotal) - Math.max(0, top),
             'min-height.px': 15,
-            'display': displayHeight > 0 ? 'flex' : 'none'
+            'display': 'flex'
         };
     }
 
@@ -298,33 +292,39 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected EstAujourdhui(_date: Date): boolean
     {
         const DATE = new Date();
-        return _date.getDate() === DATE.getDate() && 
-            _date.getMonth() === DATE.getMonth() && 
-            _date.getFullYear() === DATE.getFullYear();
+        return _date.getDate() == DATE.getDate() && 
+            _date.getMonth() == DATE.getMonth() && 
+            _date.getFullYear() == DATE.getFullYear();
     }
 
-    private AjouterEventAuGroupeColonne(_groupe: EventCalandar[], _listeEventPosition: PositionedEvent[]): void
+    private EstMemeJour(_date1: Date, _date2: Date): boolean 
+    {
+        return _date1.getFullYear() == _date2.getFullYear() &&
+            _date1.getMonth() == _date2.getMonth() &&
+            _date1.getDate() == _date2.getDate();
+    }
+
+    private AjouterEventAuGroupeColonne(_groupe: EventCalandar[], _listeEventPosition: PositionedEvent[], _dateJour: Date): void
     {
         if (_groupe.length == 0) 
             return;
 
         const LISTE_COLONNE: EventCalandar[][] = [];
+        const isAmPm = this.useAmPm();
 
         _groupe.forEach(event => 
         {
             let colIndex = 0;
             let estPlacer = false;
-
             for (let i = 0; i < LISTE_COLONNE.length; i++) 
             {
-                const lastInCol = LISTE_COLONNE[i][LISTE_COLONNE[i].length - 1];
+                const DERNIER_EVENT = LISTE_COLONNE[i][LISTE_COLONNE[i].length - 1];
 
-                if (event.startDate.getTime() >= lastInCol.endDate.getTime()) 
+                if (event.startDate.getTime() >= DERNIER_EVENT.endDate.getTime()) 
                 {
                     LISTE_COLONNE[i].push(event);
                     colIndex = i;
                     estPlacer = true;
-
                     break;
                 }
             }
@@ -344,7 +344,11 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 ...event,
                 colonne: (event as any)._tmpCol,
                 nbColonneTotal: LISTE_COLONNE.length,
-                formatHeure: this.GenererFormatHeure(event.startDate, event.endDate, this.useAmPm())
+                formatHeure: this.GenererFormatHeure(event.startDate, event.endDate, isAmPm),
+
+                // calcul des flèches
+                continueAvant: !this.EstMemeJour(new Date(event.startDate), _dateJour),
+                continueApres: !this.EstMemeJour(new Date(event.endDate), _dateJour)
             });
         });
     }

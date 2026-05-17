@@ -56,16 +56,26 @@
                         @for (ev of getPositionedEvents(jour.date); track $index) 
                         {
                             <div class="event-block"
-                                 (click)="ClickEvent(ev)"
-                                 [ngStyle]="calculerStyleEvent(ev)"
-                                 [style.width.%]="100 / ev.nbColonneTotal"
-                                 [style.left.%]="(100 / ev.nbColonneTotal) * ev.colonne">
-                                
-                                <div class="event-content">
-                                    <span class="event-title">{{ ev.titre }}</span>
-                                    <span class="event-time">{{ ev.formatHeure }}</span>
+                                    (click)="ClickEvent(ev)"
+                                    [ngStyle]="CalculerStyleEvent(ev, jour.date)"
+                                    [style.width.%]="100 / ev.nbColonneTotal"
+                                    [style.left.%]="(100 / ev.nbColonneTotal) * ev.colonne">
+                                    
+                                    <div class="event-content">
+                                        @if (ev.continueAvant) 
+                                        {
+                                            <mat-icon class="continue-icon top">keyboard_arrow_up</mat-icon>
+                                        }
+
+                                        <span class="event-title">{{ ev.titre }}</span>
+                                        <span class="event-time">{{ ev.formatHeure }}</span>
+
+                                        @if (ev.continueApres) 
+                                        {
+                                            <mat-icon class="continue-icon bottom">keyboard_arrow_down</mat-icon>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
                         }
 
                         @if (jour.estAujourdhui && positionBarreRouge() >= 0) 
@@ -75,11 +85,12 @@
                             </div>
                         }
 
-                        @for (h of heures(); track h) {
+                        @for (h of heures(); track h) 
+                        {
                             <div class="hour-slot"></div>
                         }
-                    </div>
-                }
+                        </div>
+                    }
             </div>
         </div>
 

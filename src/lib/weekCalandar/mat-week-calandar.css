@@ -132,6 +132,14 @@
     cursor: pointer;
 }
 
+.event-content 
+{
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+}
+
 .event-title 
 {
     font-size: 0.8rem;
@@ -142,6 +150,31 @@
     line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    padding: 0 2px;
+}
+
+/* ICON ÉVÉNEMENT CONTINUE */
+.continue-icon 
+{
+    font-size: 16px;
+    height: 16px;
+    width: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    margin: 0 auto;
+}
+
+.continue-icon.top {
+    margin-top: -2px;
+    margin-bottom: -4px;
+}
+
+.continue-icon.bottom 
+{
+    margin-top: auto;
+    margin-bottom: -2px;
 }
 
 /* --- CORPS DU CALENDRIER --- */
