@@ -104,13 +104,11 @@
 
 .week-number-label {
     font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--mat-sys-on-surface-variant);
-    opacity: 0.7;
-    /* Petit effet optionnel : un cercle léger autour */
-    background: var(--mat-sys-surface-variant);
-    padding: 4px 6px;
-    border-radius: 4px;
+    font-weight: 700;
+    color: var(--mat-sys-primary);
+    background: var(--mat-sys-primary-container);
+    padding: 2px 6px;
+    border-radius: 12px;
 }
 
 .days-labels-grid {
