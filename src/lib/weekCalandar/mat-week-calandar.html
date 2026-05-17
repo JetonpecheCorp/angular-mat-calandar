@@ -9,7 +9,7 @@
                         <mat-icon>chevron_left</mat-icon>
                     </button>
 
-                    <span class="period-title">{{ titrePeriode() }}</span>
+                    <span class="period-title" [matMenuTriggerFor]="menuSemaine">{{ titrePeriode() }}</span>
                     
                     <button mat-icon-button (click)="Suivant()">
                         <mat-icon>chevron_right</mat-icon>
@@ -98,3 +98,17 @@
 
     </div>
 </div>
+
+<mat-menu #menuSemaine="matMenu">
+    <div class="menu-scroll-container" >
+        @for (w of listeToutesSemaines(); track w.date.getTime()) 
+        {
+            <button mat-menu-item (click)="ChoisirSemaine(w.date)">
+                <div class="week-row" [class.current-week-tag]="w.numero == numeroSemaine()">
+                    <span class="week-label">{{ prefixSemaine() }}{{ w.numero }} —</span>
+                    <span>{{ w.labelDebut }} au {{ w.labelFin }}</span>
+                </div>
+            </button>
+        }
+    </div>
+</mat-menu>

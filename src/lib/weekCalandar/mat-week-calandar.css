@@ -7,10 +7,58 @@
     --header-height: 90px;
 }
 
+.menu-scroll-container {
+    max-height: 400px;
+    min-width: 280px;
+    overflow-y: auto;
+}
+
 .week-calendar-container {
     height: 100%;
     display: flex;
     flex-direction: column;
+}
+
+.week-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.week-label
+{
+    font-weight: bold;
+}
+
+.current-week-tag 
+{
+    background-color: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+    border-radius: 20px;
+    font-weight: 700;
+}
+
+/* Ajustement du bouton de menu pour que le tag ne soit pas collé aux bords */
+button.mat-menu-item.week-menu-item 
+{
+    height: auto !important;
+    line-height: normal !important;
+    padding: 0 8px !important;
+}
+
+/* Au survol du menu, on garde un effet propre */
+.week-menu-item:hover .week-row:not(.current-week-tag) {
+    background-color: var(--mat-sys-surface-variant);
+    border-radius: 8px;
+}
+
+.menu-scroll-container {
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .main-scroll-viewport {

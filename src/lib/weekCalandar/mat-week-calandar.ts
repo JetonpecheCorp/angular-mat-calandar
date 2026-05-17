@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { EventCalandar } from '../../public-api';
+import {MatMenuModule} from '@angular/material/menu';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -18,7 +19,7 @@ interface PositionedEvent extends EventCalandar
 @Component({
   selector: 'jp-mat-week-calandar',
   standalone: true,
-  imports: [CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
+  imports: [MatMenuModule, CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
   templateUrl: './mat-week-calandar.html',
   styleUrls: ['./mat-week-calandar.css']
 })
@@ -99,6 +100,44 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return liste;
     });
 
+    protected listeToutesSemaines = computed(() => 
+    {
+        const ref = this.dateReference();
+        const ANNEE = ref.getFullYear();
+        const weeks = [];
+        
+        let d = new Date(ANNEE, 0, 1);
+        const targetDay = this.mondayFirst() ? 1 : 0;
+        
+        while (d.getDay() != targetDay) 
+        {
+            d.setDate(d.getDate() - 1);
+        }
+
+        for (let i = 0; i < 53; i++) 
+        {
+            const start = new Date(d);
+            start.setDate(d.getDate() + (i * 7));
+            
+            if (i > 0 && start.getFullYear() > ANNEE && start.getMonth() > 0) 
+                break;
+
+            // On calcule le dimanche (ou samedi) de la même semaine
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+
+            weeks.push({
+                numero: this.RecupererNumeroSemaine(start),
+                date: start,
+                // On prépare les deux labels
+                labelDebut: start.toLocaleDateString(this.langueNavigateur, { day: '2-digit', month: 'short' }),
+                labelFin: end.toLocaleDateString(this.langueNavigateur, { day: '2-digit', month: 'short' })
+            });
+        }
+
+        return weeks;
+    });
+
     protected positionBarreRouge = computed(() => 
     {
         const maintenant = this.heureActuelle();
@@ -136,16 +175,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected numeroSemaine = computed(() => 
     {
-        let date = new Date(Date.UTC(this.dateReference().getFullYear(), this.dateReference().getMonth(), this.dateReference().getDate()));
-
-            // Ajoute 4 jours à la date pour s'assurer que nous sommes toujours dans la semaine ISO 8601 correcte
-            date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-            
-            const DATE_DEBUT_ANNEE = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-
-            // 86_400_000 => nombre de millisecondes dans un jour
-            const NUMERO_SEMAINE = Math.ceil((((date.getTime() - DATE_DEBUT_ANNEE.getTime()) / 86_400_000) + 1) / 7);
-            return NUMERO_SEMAINE;
+        return this.RecupererNumeroSemaine(this.dateReference());
     });
 
     private joursAExclure = computed(() => 
@@ -310,6 +340,11 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         this.dateReference.set(new Date()); 
     }
 
+    protected ChoisirSemaine(_date: Date): void
+    {
+        this.dateReference.set(_date);
+    }
+
     protected Precedent(): void
     {
         const DATE = new Date(this.dateReference());
@@ -405,5 +440,19 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         };
 
         return `${format(start)} - ${format(end)}`;
+    }
+
+    private RecupererNumeroSemaine(_date: Date): number
+    {
+        let date = new Date(Date.UTC(_date.getFullYear(), _date.getMonth(), _date.getDate()));
+
+        // Ajoute 4 jours à la date pour s'assurer que nous sommes toujours dans la semaine ISO 8601 correcte
+        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+            
+        const DATE_DEBUT_ANNEE = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+
+        // 86_400_000 => nombre de millisecondes dans un jour
+        const NUMERO_SEMAINE = Math.ceil((((date.getTime() - DATE_DEBUT_ANNEE.getTime()) / 86_400_000) + 1) / 7);
+        return NUMERO_SEMAINE;
     }
 }
