@@ -80,7 +80,8 @@
 }
 
 /* --- COLONNE DES HEURES FIXE (LEFT STICKY) --- */
-.time-gutter, .time-column {
+.time-gutter, .time-column 
+{
     width: var(--time-column-width);
     flex-shrink: 0;
     position: sticky;
@@ -92,6 +93,24 @@
 
 .time-gutter {
     z-index: 106; /* Doit être au-dessus des labels de jours */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--mat-sys-surface-container-low);
+    /* On ajoute une petite bordure en bas pour la cohérence avec les jours */
+    border-bottom: 1px solid var(--mat-sys-outline-variant); 
+    box-sizing: border-box;
+}
+
+.week-number-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--mat-sys-on-surface-variant);
+    opacity: 0.7;
+    /* Petit effet optionnel : un cercle léger autour */
+    background: var(--mat-sys-surface-variant);
+    padding: 4px 6px;
+    border-radius: 4px;
 }
 
 .days-labels-grid {
@@ -280,5 +299,10 @@
     .days-labels-grid, .days-grid 
     {
         min-width: 600px;
+    }
+
+    .week-number-label {
+        font-size: 0.65rem;
+        padding: 2px 4px;
     }
 }

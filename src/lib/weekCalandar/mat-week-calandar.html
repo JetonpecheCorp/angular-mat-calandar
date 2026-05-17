@@ -24,7 +24,9 @@
         </mat-toolbar>
 
         <div class="days-header-sticky">
-            <div class="time-gutter"></div> 
+            <div class="time-gutter">
+                <span class="week-number-label">{{ prefixSemaine() }}{{ numeroSemaine() }}</span>
+            </div> 
             <div class="days-labels-grid" [style.grid-template-columns]="'repeat(' + listeNomSemaine().length + ', 1fr)'">
                 @for (element of listeNomSemaine(); track element.date) 
                 {

@@ -43,6 +43,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     dayClicked = output<EventCalandar[]>();
 
     protected texteBtnAujourdhui = signal<string>("Today");
+    protected prefixSemaine = signal<string>("W");
 
     private readonly langueNavigateur = navigator.language || "fr-FR";
     private timerInterval: any;
@@ -133,6 +134,20 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         });
     });
 
+    protected numeroSemaine = computed(() => 
+    {
+        let date = new Date(Date.UTC(this.dateReference().getFullYear(), this.dateReference().getMonth(), this.dateReference().getDate()));
+
+            // Ajoute 4 jours à la date pour s'assurer que nous sommes toujours dans la semaine ISO 8601 correcte
+            date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+            
+            const DATE_DEBUT_ANNEE = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+
+            // 86_400_000 => nombre de millisecondes dans un jour
+            const NUMERO_SEMAINE = Math.ceil((((date.getTime() - DATE_DEBUT_ANNEE.getTime()) / 86_400_000) + 1) / 7);
+            return NUMERO_SEMAINE;
+    });
+
     private joursAExclure = computed(() => 
     {
         const A_MASQUER = new Set(this.daysOfWeekDisabled());
@@ -166,6 +181,18 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         };
 
         this.texteBtnAujourdhui.set(DICT_TRADUCTION_BTN[LANGUE] || DICT_TRADUCTION_BTN['en']);
+
+        const DICT_TRADUCTION_SEMAINE: Record<string, string> = 
+        {
+            'fr': "S",
+            'it': "S",
+            'es': "S",
+            'pt': "S",
+            'en': "W",
+            'de': "W"
+        };
+
+        this.prefixSemaine.set(DICT_TRADUCTION_SEMAINE[LANGUE] || DICT_TRADUCTION_SEMAINE['en']);
     }
 
     ngOnDestroy(): void 
