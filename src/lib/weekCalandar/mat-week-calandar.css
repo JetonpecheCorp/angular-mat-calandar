@@ -239,6 +239,8 @@
 }
 
 /* --- RESPONSIVE --- */
+.name { text-transform: capitalize; }
+
 .name.short { display: none; }
 
 @media (max-width: 800px) {
