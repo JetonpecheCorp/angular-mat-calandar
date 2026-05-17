@@ -40,6 +40,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     useAmPm = input(false, { transform: booleanAttribute });
 
     eventClicked = output<EventCalandar>();
+    dayClicked = output<EventCalandar[]>();
 
     protected texteBtnAujourdhui = signal<string>("Today");
 
@@ -191,6 +192,13 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             titre: _event.titre,
             description: _event.description
         });
+    }
+
+    protected ClickJour(_date: Date): void
+    {
+        let liste = this.events().filter(x => this.EstDansIntervalle(_date, x.startDate, x.endDate));
+        
+        this.dayClicked.emit(liste);
     }
 
     protected getPositionedEvents(dateJour: Date): PositionedEvent[]

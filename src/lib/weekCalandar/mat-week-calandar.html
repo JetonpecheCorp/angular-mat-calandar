@@ -28,7 +28,7 @@
             <div class="days-labels-grid" [style.grid-template-columns]="'repeat(' + listeNomSemaine().length + ', 1fr)'">
                 @for (element of listeNomSemaine(); track element.date) 
                 {
-                    <div class="day-label" [class.today]="element.estAujourdhui">
+                    <div class="day-label" [class.today]="element.estAujourdhui" (click)="ClickJour(element.date)">
                         <span class="name long">{{ element.normal }}</span>
                         <span class="name short">{{ element.reduit }}</span>
                         <span class="number">{{ element.date.getDate() }}</span>
