@@ -44,6 +44,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `weekendDisabled`: Masquer le weekend
 - `useAmPm`: Afficher les heures en AM / PM
 - `eventClicked`: Event click sur un évènement
+- `dayClicked`: Event click sur un jour, liste les events inclus dans le jour
 
 ## Exemple
 ```html
