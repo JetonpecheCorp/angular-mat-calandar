@@ -260,10 +260,18 @@
     padding: 0 4px;
 }
 
-.hour-slot {
+.hour-slot 
+{
     height: var(--hour-height) !important;
     border-bottom: 1px solid var(--mat-sys-outline-variant);
     box-sizing: border-box;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+
+.hour-slot:hover 
+{
+    background-color: var(--mat-sys-surface-container-high);
 }
 
 .current-time-line {

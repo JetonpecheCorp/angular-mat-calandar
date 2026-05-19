@@ -89,7 +89,7 @@
 
                         @for (h of heures(); track h) 
                         {
-                            <div class="hour-slot"></div>
+                            <div class="hour-slot" (click)="ClickTimeSlot(jour.date, h)"></div>
                         }
                         </div>
                     }

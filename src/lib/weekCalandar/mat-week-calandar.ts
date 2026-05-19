@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { EventCalandar } from '../../public-api';
 import {MatMenuModule} from '@angular/material/menu';
+import { DateInterval } from '../../models/DateInterval';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -42,6 +43,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     eventClicked = output<EventCalandar>();
     dayClicked = output<EventCalandar[]>();
+    timeSlotClicked = output<DateInterval>();
 
     protected texteBtnAujourdhui = signal<string>("Today");
     protected prefixSemaine = signal<string>("W");
@@ -163,7 +165,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             let heureIndex = HEURE_MIN + i;
 
             if (!EST_AM_PM) 
-                return `${heureIndex}`;
+                return `${heureIndex}h`;
 
             // Logique AM/PM
             let periode = heureIndex >= 12 ? 'PM' : 'AM';
@@ -343,6 +345,31 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected ChoisirSemaine(_date: Date): void
     {
         this.dateReference.set(_date);
+    }
+
+    protected ClickTimeSlot(_dateJour: Date, _heureLabel: string): void 
+    {
+        let dateDebut = new Date(_dateJour);
+        
+        let heures = parseInt(_heureLabel, 10);
+        
+        if (this.useAmPm())
+        {
+            const estPM = _heureLabel.toLowerCase().includes('pm');
+
+            if (estPM && heures < 12)
+                heures += 12;
+
+            if (!estPM && heures == 12) 
+                heures = 0;
+        }
+        
+        dateDebut.setHours(heures, 0, 0, 0);
+        
+        let dateFin = new Date(dateDebut);
+        dateFin.setHours(dateDebut.getHours() + 1);
+        
+        this.timeSlotClicked.emit({ start: dateDebut, end: dateFin });
     }
 
     protected Precedent(): void
