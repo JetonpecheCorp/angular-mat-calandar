@@ -58,7 +58,8 @@
                         @for (ev of getPositionedEvents(jour.date); track $index) 
                         {
                             <div class="event-block"
-                                    (click)="ClickEvent(ev)"
+                                    cdkDrag
+                                    (cdkDragEnded)="OnEventDragEnded($event, ev)"
                                     [ngStyle]="CalculerStyleEvent(ev, jour.date)"
                                     [style.width.%]="100 / ev.nbColonneTotal"
                                     [style.left.%]="(100 / ev.nbColonneTotal) * ev.colonne">

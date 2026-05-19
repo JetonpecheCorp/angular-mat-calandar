@@ -7,6 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { EventCalandar } from '../../public-api';
 import {MatMenuModule} from '@angular/material/menu';
 import { DateInterval } from '../../models/DateInterval';
+import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -20,7 +21,7 @@ interface PositionedEvent extends EventCalandar
 @Component({
   selector: 'jp-mat-week-calandar',
   standalone: true,
-  imports: [MatMenuModule, CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
+  imports: [DragDropModule, MatMenuModule, CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
   templateUrl: './mat-week-calandar.html',
   styleUrls: ['./mat-week-calandar.css']
 })
@@ -44,6 +45,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     eventClicked = output<EventCalandar>();
     dayClicked = output<EventCalandar[]>();
     timeSlotClicked = output<DateInterval>();
+    eventUpdated = output<EventCalandar>();
 
     protected texteBtnAujourdhui = signal<string>("Today");
     protected prefixSemaine = signal<string>("W");
@@ -345,6 +347,48 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected ChoisirSemaine(_date: Date): void
     {
         this.dateReference.set(_date);
+    }
+
+    protected OnEventDragEnded(_dragEvent: CdkDragEnd, ev: PositionedEvent): void 
+    {
+        const distance = _dragEvent.distance;
+
+        // la distance a pas trop bougé click normal
+        if (Math.abs(distance.x) < 5 && Math.abs(distance.y) < 5) 
+        {
+            this.ClickEvent(ev);
+            _dragEvent.source._dragRef.reset();
+            return;
+        }
+        
+        // calcul largeur d'une colonne
+        const GRID_ELEMENT = _dragEvent.source.element.nativeElement.closest('.days-grid');
+        const LARGEUR_COLONNE = GRID_ELEMENT ? GRID_ELEMENT.clientWidth / this.listeNomSemaine().length : 1;
+
+        // 2. Calculer le décalage
+        // Distance X divisée par largeur colonne = nombre de jours
+        const joursDecalage = Math.round(distance.x / LARGEUR_COLONNE);
+        const minutesDecalage = Math.round(distance.y / 15) * 15;
+
+        // modifier la date et heures
+        let nouvelleDateDebut = new Date(ev.startDate);
+        nouvelleDateDebut.setDate(nouvelleDateDebut.getDate() + joursDecalage);
+        nouvelleDateDebut.setMinutes(nouvelleDateDebut.getMinutes() + minutesDecalage);
+
+        let nouvelleDateFin = new Date(ev.endDate);
+        nouvelleDateFin.setDate(nouvelleDateFin.getDate() + joursDecalage);
+        nouvelleDateFin.setMinutes(nouvelleDateFin.getMinutes() + minutesDecalage);
+
+        // 4. On réinitialise visuellement le drag pour que le CSS reprenne le relais
+        _dragEvent.source._dragRef.reset();
+
+        this.eventUpdated.emit({
+            id: ev.id,
+            titre: ev.titre,
+            description: ev.description,
+            startDate: nouvelleDateDebut,
+            endDate: nouvelleDateFin
+        });
     }
 
     protected ClickTimeSlot(_dateJour: Date, _heureLabel: string): void 

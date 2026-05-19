@@ -165,7 +165,8 @@
 .day-label.today .number { font-weight: 600; }
 
 /* --- ÉVÉNEMENTS --- */
-.event-block {
+.event-block 
+{
     position: absolute;
     box-sizing: border-box;
     border: 1px solid var(--mat-sys-surface); 
@@ -178,7 +179,12 @@
     z-index: 5;
     overflow: hidden;
     transition: width 0.2s ease, left 0.2s ease;
-    cursor: pointer;
+    cursor: grab;
+}
+
+.event-block:active 
+{
+    cursor: grabbing;
 }
 
 .event-content 
@@ -272,6 +278,25 @@
 .hour-slot:hover 
 {
     background-color: var(--mat-sys-surface-container-high);
+}
+
+/* L'élément pendant qu'on le glisse */
+.cdk-drag-preview {
+    box-sizing: border-box;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.4); /* Ombre portée stylée */
+    opacity: 0.9;
+    z-index: 1000 !important; /* Passe au-dessus de tout le reste */
+}
+
+/* L'élément d'origine (on le masque ou on le rend transparent pendant le drag) */
+.cdk-drag-placeholder {
+    opacity: 0.3;
+}
+
+/* Animation fluide quand on relâche l'événement et qu'il retourne à sa place */
+.cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .current-time-line {
