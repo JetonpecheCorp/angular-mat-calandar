@@ -43,8 +43,11 @@ Traduction automatique celons la **langue du navigateur.**
 - `daysOfWeekDisabled`: Jours de la semaine à masquer
 - `weekendDisabled`: Masquer le weekend
 - `useAmPm`: Afficher les heures en AM / PM
+
+- `timeSlotClicked`: Event click sur une heure du calendrier
 - `eventClicked`: Event click sur un évènement
 - `dayClicked`: Event click sur un jour, liste les events inclus dans le jour
+- `eventUpdated`: Event drag and drop ou resize d'un event
 
 ## Exemple
 ```html
