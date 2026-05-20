@@ -1,4 +1,4 @@
-import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output } from '@angular/core';
+import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,7 +23,8 @@ interface PositionedEvent extends EventCalandar
   standalone: true,
   imports: [DragDropModule, MatMenuModule, CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
   templateUrl: './mat-week-calandar.html',
-  styleUrls: ['./mat-week-calandar.css']
+  styleUrls: ['./mat-week-calandar.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MatWeekCalendar implements OnInit, OnDestroy
 {
@@ -49,6 +50,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected texteBtnAujourdhui = signal<string>("Today");
     protected prefixSemaine = signal<string>("W");
+    protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
+    protected resizeEnCours = signal<{ id: string | number, dateTime: number, top: number, height: number, formatHeure: string } | null>(null);
 
     private readonly langueNavigateur = navigator.language || "fr-FR";
     private timerInterval: any;
@@ -297,6 +300,11 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return positionedEvents;
     }
 
+    protected OnEventDragStarted(ev: PositionedEvent): void 
+    {
+        this.eventEnCoursDeDrag.set(ev);
+    }
+
     protected CalculerStyleEvent(event: EventCalandar, dateJour: Date): any
     {
         const start = new Date(event.startDate);
@@ -351,6 +359,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected OnEventDragEnded(_dragEvent: CdkDragEnd, ev: PositionedEvent): void 
     {
+        this.eventEnCoursDeDrag.set(null);
+
         const distance = _dragEvent.distance;
 
         // la distance a pas trop bougé click normal
@@ -428,6 +438,115 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const DATE = new Date(this.dateReference());
         DATE.setDate(DATE.getDate() + 7);
         this.dateReference.set(DATE);
+    }
+
+    protected InitialiserResize(mouseEvent: MouseEvent | TouchEvent, ev: PositionedEvent, dateJour: Date, direction: 'top' | 'bottom'): void 
+    {
+        mouseEvent.stopPropagation();
+        mouseEvent.preventDefault();
+
+        const cible = mouseEvent.target as HTMLElement;
+        const blockElement = cible.closest('.event-block') as HTMLElement;
+        
+        if (!blockElement) 
+            return;
+
+        const topInitial = blockElement.offsetTop;
+        const hauteurInitiale = blockElement.offsetHeight;
+        const Y_CLIENT_DEBUT = mouseEvent instanceof MouseEvent ? mouseEvent.clientY : mouseEvent.touches[0].clientY;
+
+        const onMouseMove = (_moveEvent: MouseEvent | TouchEvent) => 
+        {
+            const Y_ACTUELLE = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
+            const DIFFERENCE_Y = Y_ACTUELLE - Y_CLIENT_DEBUT;
+            const DIFFERENCE_Y_ARRONDI = Math.round(DIFFERENCE_Y / 15) * 15;
+
+            let nouveauTop = topInitial;
+            let nouvelleHauteur = hauteurInitiale;
+
+            if (direction == "bottom") 
+                nouvelleHauteur = hauteurInitiale + DIFFERENCE_Y_ARRONDI;
+
+            else if (direction == "top") 
+            {
+                nouveauTop = topInitial + DIFFERENCE_Y_ARRONDI;
+                nouvelleHauteur = hauteurInitiale - DIFFERENCE_Y_ARRONDI;
+
+                if (nouveauTop < 0)
+                {
+                    nouvelleHauteur += nouveauTop;
+                    nouveauTop = 0;
+                }
+            }
+
+            if (nouvelleHauteur >= 15) 
+            {
+                // Maj des heures en temps réel
+                let minutesDeDifference = (direction == "bottom") 
+                    ? nouvelleHauteur - hauteurInitiale 
+                    : nouveauTop - topInitial;
+
+                let dateMajDebut = new Date(ev.startDate);
+                let dateMajFin = new Date(ev.endDate);
+
+                if (direction == "bottom")
+                    dateMajFin.setMinutes(dateMajFin.getMinutes() + minutesDeDifference);
+
+                else
+                    dateMajDebut.setMinutes(dateMajDebut.getMinutes() + minutesDeDifference);
+
+                const stringHeureModifiee = this.GenererFormatHeure(dateMajDebut, dateMajFin, this.useAmPm());
+
+                this.resizeEnCours.set({
+                    id: ev.id,
+                    dateTime: dateJour.getTime(),
+                    top: nouveauTop,
+                    height: nouvelleHauteur,
+                    formatHeure: stringHeureModifiee
+                });
+            }
+        };
+
+        const onMouseUp = () => 
+        {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            window.removeEventListener('touchmove', onMouseMove);
+            window.removeEventListener('touchend', onMouseUp);
+
+            let resizeFini = this.resizeEnCours();
+            this.resizeEnCours.set(null);
+
+            if (resizeFini) 
+            {
+                let nouvelleDateDebut = new Date(ev.startDate);
+                let nouvelleDateFin = new Date(ev.endDate);
+
+                if (direction == "bottom") 
+                {
+                    const minutesEnPlus = resizeFini.height - hauteurInitiale;
+                    nouvelleDateFin.setMinutes(nouvelleDateFin.getMinutes() + minutesEnPlus);
+                } 
+                else if (direction == "top") 
+                {
+                    const minutesDeDifference = resizeFini.top - topInitial;
+                    nouvelleDateDebut.setMinutes(nouvelleDateDebut.getMinutes() + minutesDeDifference);
+                }
+
+                this.eventUpdated.emit({
+                    id: ev.id,
+                    titre: ev.titre,
+                    description: ev.description,
+                    startDate: nouvelleDateDebut,
+                    endDate: nouvelleDateFin
+                });
+            }
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('touchmove', onMouseMove, { passive: false });
+        window.addEventListener('touchend', onMouseUp);
     }
 
     protected EstAujourdhui(_date: Date): boolean

@@ -180,11 +180,33 @@
     overflow: hidden;
     transition: width 0.2s ease, left 0.2s ease;
     cursor: grab;
+    touch-action: none;
+}
+
+.event-block:hover .resize-handle 
+{
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+.event-block:hover .resize-line {
+    opacity: 0.4;
+}
+
+.resize-handle:hover .resize-line {
+    opacity: 0.8;
 }
 
 .event-block:active 
 {
     cursor: grabbing;
+}
+
+.event-block.event-phantom {
+    opacity: 0.4; 
+    border: 1px dashed var(--mat-sys-primary);
+    background-color: var(--mat-sys-surface-variant);
+    pointer-events: none;
+    z-index: 2;
 }
 
 .event-content 
@@ -206,6 +228,38 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     padding: 0 2px;
+}
+
+.resize-handle 
+{
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    cursor: ns-resize;
+    z-index: 10;
+    display: flex;
+    background: transparent;
+}
+
+.resize-handle.top 
+{
+    top: 0;
+    align-items: flex-start;
+}
+
+.resize-handle.bottom 
+{
+    bottom: 0;
+    align-items: flex-end;
+}
+
+.resize-line {
+    width: 100%;
+    height: 4px;
+    background-color: var(--mat-sys-primary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
 /* ICON ÉVÉNEMENT CONTINUE */
@@ -280,21 +334,24 @@
     background-color: var(--mat-sys-surface-container-high);
 }
 
-/* L'élément pendant qu'on le glisse */
-.cdk-drag-preview {
+.cdk-drag-preview 
+{
     box-sizing: border-box;
     border-radius: 4px;
-    box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.4); /* Ombre portée stylée */
+    box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.4);
     opacity: 0.9;
-    z-index: 1000 !important; /* Passe au-dessus de tout le reste */
+    z-index: 1000 !important; 
 }
 
-/* L'élément d'origine (on le masque ou on le rend transparent pendant le drag) */
+.cdk-drag-preview .resize-handle 
+{
+    display: none;
+}
+
 .cdk-drag-placeholder {
     opacity: 0.3;
 }
 
-/* Animation fluide quand on relâche l'événement et qu'il retourne à sa place */
 .cdk-drag-animating {
     transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
@@ -357,7 +414,6 @@
         border-radius: 50%;
     }
 
-    /* Force le scroll horizontal pour ne pas écraser les colonnes */
     .days-labels-grid, .days-grid 
     {
         min-width: 600px;
@@ -366,5 +422,31 @@
     .week-number-label {
         font-size: 0.65rem;
         padding: 2px 4px;
+    }
+
+    .resize-handle {
+        height: 24px;
+    }
+
+    .resize-handle.top {
+        top: -10px; 
+        padding-bottom: 10px;
+    }
+
+    .resize-handle.bottom {
+        bottom: -10px;
+        padding-top: 10px;
+    }
+
+    .resize-handle.top .resize-line {
+        margin-top: 10px;
+    }
+    
+    .resize-handle.bottom .resize-line {
+        margin-bottom: 10px;
+    }
+
+    .resize-line {
+        opacity: 0.25;
     }
 }

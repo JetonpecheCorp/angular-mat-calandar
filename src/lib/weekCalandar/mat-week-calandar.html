@@ -57,27 +57,64 @@
 
                         @for (ev of getPositionedEvents(jour.date); track $index) 
                         {
-                            <div class="event-block"
-                                    cdkDrag
-                                    (cdkDragEnded)="OnEventDragEnded($event, ev)"
+                            @if (eventEnCoursDeDrag()?.id == ev.id) 
+                            {
+                                <div class="event-block event-phantom"
                                     [ngStyle]="CalculerStyleEvent(ev, jour.date)"
                                     [style.width.%]="100 / ev.nbColonneTotal"
                                     [style.left.%]="(100 / ev.nbColonneTotal) * ev.colonne">
-                                    
                                     <div class="event-content">
+                                        <span class="event-title">{{ ev.titre }}</span>
+                                        <span class="event-time">{{ ev.formatHeure }}</span>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="event-block"
+                                    cdkDrag
+                                    (cdkDragStarted)="OnEventDragStarted(ev)" 
+                                    (cdkDragEnded)="OnEventDragEnded($event, ev)"
+                                    [ngStyle]="(resizeEnCours()?.id === ev.id && resizeEnCours()?.dateTime === jour.date.getTime()) ? 
+                                        { 'top.px': resizeEnCours()?.top, 'height.px': resizeEnCours()?.height, 'display': 'flex' } : 
+                                        CalculerStyleEvent(ev, jour.date)"
+                                    [style.width.%]="100 / ev.nbColonneTotal"
+                                    [style.left.%]="(100 / ev.nbColonneTotal) * ev.colonne">
+                                    
+                                    @if (!ev.continueAvant) 
+                                    {
+                                        <div class="resize-handle top" 
+                                            (mousedown)="InitialiserResize($event, ev, jour.date, 'top')"
+                                            (touchstart)="InitialiserResize($event, ev, jour.date, 'top')">
+                                            <div class="resize-line"></div>
+                                        </div>
+                                    }
+                                        
+                                    <div class="event-content">
+                                        
                                         @if (ev.continueAvant) 
                                         {
                                             <mat-icon class="continue-icon top">keyboard_arrow_up</mat-icon>
                                         }
 
                                         <span class="event-title">{{ ev.titre }}</span>
-                                        <span class="event-time">{{ ev.formatHeure }}</span>
+                                        <span class="event-time">
+                                            {{ resizeEnCours()?.id === ev.id ? resizeEnCours()?.formatHeure : ev.formatHeure }}
+                                        </span>
 
                                         @if (ev.continueApres) 
                                         {
                                             <mat-icon class="continue-icon bottom">keyboard_arrow_down</mat-icon>
                                         }
                                     </div>
+
+                                        @if (!ev.continueApres) 
+                                        {
+                                            <div class="resize-handle bottom" 
+                                                (mousedown)="InitialiserResize($event, ev, jour.date, 'bottom')"
+                                                (touchstart)="InitialiserResize($event, ev, jour.date, 'bottom')">
+                                                <div class="resize-line"></div>
+                                            </div>
+                                        }
                                 </div>
                         }
 
