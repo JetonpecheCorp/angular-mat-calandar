@@ -412,6 +412,7 @@
     :host { --time-column-width: 50px; }
     .name.long { display: none; }
     .name.short { display: block; text-transform: capitalize; }
+        .special-events-container { max-width: 80px; }
 }
 
 @media (max-width: 600px) 
@@ -426,6 +427,8 @@
     }
     
     .calendar-header { min-height: 60px; }
+
+    .special-events-container { max-width: 60px; }
     
     .day-label .number {
         font-size: 1.1rem;
