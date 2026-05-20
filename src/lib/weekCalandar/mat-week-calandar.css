@@ -56,17 +56,21 @@
 
 .special-event-badge 
 {
-    font-size: .8rem;
+    font-size: 0.8rem;
     padding: 3px 6px;
     border-radius: 4px;
     text-align: center;
+    
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    
     font-weight: 500;
     background-color: var(--mat-sys-tertiary-container, #e8def8); 
     color: var(--mat-sys-on-tertiary-container, #1d192b);
-    
     pointer-events: none; 
     user-select: none;
 }
@@ -181,6 +185,7 @@
     flex-direction: column;
     border-left: 1px solid var(--mat-sys-outline-variant);
     cursor: pointer;
+    min-width: 0;
 }
 
 .day-label .number {
@@ -412,7 +417,6 @@
     :host { --time-column-width: 50px; }
     .name.long { display: none; }
     .name.short { display: block; text-transform: capitalize; }
-        .special-events-container { max-width: 80px; }
 }
 
 @media (max-width: 600px) 
@@ -427,8 +431,6 @@
     }
     
     .calendar-header { min-height: 60px; }
-
-    .special-events-container { max-width: 60px; }
     
     .day-label .number {
         font-size: 1.1rem;
