@@ -37,6 +37,7 @@ Traduction automatique celons la **langue du navigateur.**
 ## Attribut
 - `dateReference`: Affiche la semaine entière a partir de cette date
 - `events`: Liste des evenements à mettre sur le calandrier
+- `specialEvents`: Liste des evenements spécials (vacances, noel, jour de l'an...)
 - `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
 - `hourMin`: Heure début du calendrier (0 - 23)
 - `hourMax`: Heure de fin du calandrier (0 - 23)
