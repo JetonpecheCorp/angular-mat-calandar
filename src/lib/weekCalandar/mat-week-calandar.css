@@ -44,6 +44,33 @@
 }
 /* FIN MENU SEMAINE */
 
+/* --- ÉVÉNEMENTS SPÉCIAUX (VACANCES / FÉRIÉS) --- */
+.special-events-container 
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 6px;
+    margin-top: 4px;
+}
+
+.special-event-badge 
+{
+    font-size: .8rem;
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    background-color: var(--mat-sys-tertiary-container, #e8def8); 
+    color: var(--mat-sys-on-tertiary-container, #1d192b);
+    
+    pointer-events: none; 
+    user-select: none;
+}
+
 .main-scroll-viewport {
     flex: 1;
     overflow: auto;

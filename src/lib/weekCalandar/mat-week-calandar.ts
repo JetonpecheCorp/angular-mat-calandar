@@ -8,6 +8,7 @@ import { EventCalandar } from '../../public-api';
 import {MatMenuModule} from '@angular/material/menu';
 import { DateInterval } from '../../models/DateInterval';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
+import { DateSpecialEvent } from '../../models/DateSpecialEvent';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -30,6 +31,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 {
     dateReference = model.required<Date>();
     events = input<EventCalandar[]>([]);
+    specialEvents = input<DateSpecialEvent[]>([]);
     mondayFirst = input(false, { transform: booleanAttribute });
 
     /** 0 min */
@@ -93,14 +95,39 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             const DATE = new Date(startOfWeek);
             DATE.setDate(startOfWeek.getDate() + i);
 
-            if (this.joursAExclure().includes(DATE.getDay()))
+            if (this.jourDeSemaineAExclure().includes(DATE.getDay()))
                 continue;
+
+            // --- VÉRIFICATION DE L'INTERVALLE DES ÉVÉNEMENTS SPÉCIAUX ---
+            const M = DATE.getMonth() + 1; // 1 => janvier
+            const D = DATE.getDate();  
+
+            const eventsSpeciauxDuJour = this.specialEvents().filter(sp => 
+            {
+                const startM = sp.dateStart.month;
+                const startD = sp.dateStart.day;
+                const endM = sp.dateEnd.month;
+                const endD = sp.dateEnd.day;
+
+                // Gère les intervalles normaux (ex: Mai à Juillet) et ceux à cheval sur l'année (ex: Décembre à Janvier)
+                const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
+
+                if (isNormalInterval) 
+                {
+                    return (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
+                } 
+                else 
+                {
+                    return (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
+                }
+            });
 
             liste.push({
                 date: DATE,
                 estAujourdhui: this.EstAujourdhui(DATE),
                 reduit: DATE.toLocaleString(navigator.language, { weekday: 'short' }).replace('.', ''),
-                normal: DATE.toLocaleString(navigator.language, { weekday: 'long' })
+                normal: DATE.toLocaleString(navigator.language, { weekday: 'long' }),
+                specialEvents: eventsSpeciauxDuJour
             });
         }
 
@@ -185,7 +212,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return this.RecupererNumeroSemaine(this.dateReference());
     });
 
-    private joursAExclure = computed(() => 
+    private jourDeSemaineAExclure = computed(() => 
     {
         const A_MASQUER = new Set(this.daysOfWeekDisabled());
 

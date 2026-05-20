@@ -34,6 +34,17 @@
                         <span class="name long">{{ element.normal }}</span>
                         <span class="name short">{{ element.reduit }}</span>
                         <span class="number">{{ element.date.getDate() }}</span>
+                        @if (element.specialEvents && element.specialEvents.length > 0) 
+                        {
+                            <div class="special-events-container">
+                                @for (sp of element.specialEvents; track sp.title) 
+                                {
+                                    <div class="special-event-badge">
+                                        {{ sp.title }}
+                                    </div>
+                                }
+                            </div>
+                        }
                     </div>
                 }
             </div>
