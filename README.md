@@ -44,6 +44,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `daysOfWeekDisabled`: Jours de la semaine à masquer
 - `weekendDisabled`: Masquer le weekend
 - `useAmPm`: Afficher les heures en AM / PM
+- `matRippleDisabled`: Désactiver l'effet ripple
 
 - `timeSlotClicked`: Event click sur une heure du calendrier
 - `eventClicked`: Event click sur un évènement
