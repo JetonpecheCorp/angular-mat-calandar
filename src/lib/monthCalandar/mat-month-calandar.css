@@ -146,6 +146,7 @@ display: grid;
 .weekdays-grid 
 {
     display: grid;
+    gap: 1px;
     background-color: var(--mat-sys-primary);
     color: var(--mat-sys-on-primary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -157,6 +158,8 @@ display: grid;
     text-transform: lowercase;
     font-weight: 300;
     text-align: center;
+    background-color: var(--mat-sys-primary); 
+    color: var(--mat-sys-on-primary);
 }
 
 .day-short { display: inline; }
@@ -164,13 +167,14 @@ display: grid;
 
 .days-grid {
     display: grid;
+    background-color: var(--mat-sys-outline-variant);
     width: 100%;
+    gap: 1px;
 }
 
 .day-cell {
     min-height: 120px;
-    border-right: 1px solid var(--mat-sys-outline-variant);
-    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    border: none;
     padding: 8px;
     background-color: var(--mat-sys-surface);
     transition: background-color 0.2s;
@@ -180,12 +184,9 @@ display: grid;
     gap: 4px;
 }
 
-.day-cell.last-column {
-    border-right: none;
-}
-
-.day-cell:last-child {
-    border-right: none;
+/* supprime le bug qui fait disparaitre les bordures de la grid sur certains element */
+.day-cell.mat-ripple {
+    transform: none !important;
 }
 
 .day-disabled {
