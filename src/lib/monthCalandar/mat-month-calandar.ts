@@ -250,17 +250,20 @@ export class MatMonthCalandar implements OnInit
                 continue;
 
             let listeDateInterval = this.events()?.filter(x => this.EstDansIntervalle(date, x.startDate, x.endDate)) ?? [];
-            let estBloquer = this.daysDisabled()?.findIndex(x => this.DateSontEgaux(x, date))
+            let estBloquer = this.daysDisabled()?.findIndex(x => this.DateSontEgaux(x, date)) ?? -1;
 
             liste.push({
                 date,
                 estBloquer: estBloquer != -1,
                 estAujourdhui: this.EstDateJour(date),
-                estMoisCourant: date.getMonth() === _de.getMonth(),
-                estWeekend: date.getDay() === 0 || date.getDay() === 6,
+                estMoisCourant: date.getMonth() == _de.getMonth(),
+                estWeekend: date.getDay() == 0 || date.getDay() == 6,
                 listeEvent: listeDateInterval
             });
         }
+
+        console.log(liste);
+        
 
         return liste;
     }
