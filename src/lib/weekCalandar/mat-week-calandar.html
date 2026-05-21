@@ -40,7 +40,7 @@
                                 @for (sp of element.specialEvents; track sp.title) 
                                 {
                                     <div class="special-event-badge">
-                                        {{ sp.title }}
+                                        <span>{{ sp.title }}</span>
                                     </div>
                                 }
                             </div>
@@ -138,7 +138,7 @@
 
                         @for (h of heures(); track h) 
                         {
-                            <div class="hour-slot" (click)="ClickTimeSlot(jour.date, h)"></div>
+                            <div matRipple [matRippleDisabled]="matRippleDisabled()" class="hour-slot" (click)="ClickTimeSlot(jour.date, h)"></div>
                         }
                         </div>
                     }

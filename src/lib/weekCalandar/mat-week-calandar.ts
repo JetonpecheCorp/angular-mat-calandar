@@ -9,6 +9,7 @@ import {MatMenuModule} from '@angular/material/menu';
 import { DateInterval } from '../../models/DateInterval';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { DateSpecialEvent } from '../../models/DateSpecialEvent';
+import {MatRippleModule} from '@angular/material/core';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -22,7 +23,7 @@ interface PositionedEvent extends EventCalandar
 @Component({
   selector: 'jp-mat-week-calandar',
   standalone: true,
-  imports: [DragDropModule, MatMenuModule, CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
+  imports: [MatRippleModule, DragDropModule, MatMenuModule, CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
   templateUrl: './mat-week-calandar.html',
   styleUrls: ['./mat-week-calandar.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -44,6 +45,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     daysOfWeekDisabled = input<number[]>([]);
     weekendDisabled = input(false, { transform: booleanAttribute });
     useAmPm = input(false, { transform: booleanAttribute });
+    matRippleDisabled = input(false, { transform: booleanAttribute });
 
     eventClicked = output<EventCalandar>();
     dayClicked = output<EventCalandar[]>();
