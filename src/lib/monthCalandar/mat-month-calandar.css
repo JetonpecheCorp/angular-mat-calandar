@@ -142,6 +142,46 @@ display: grid;
     align-items: center;
 }
 
+/* --- DRAG AND DROP (CDK) --- */
+.cdk-drag-preview 
+{
+    box-sizing: border-box;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.4);
+    opacity: 0.9;
+    z-index: 1000 !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    background-color: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
+    border-left: 3px solid var(--mat-sys-primary);
+    font-size: 0.72rem;
+    cursor: grabbing;
+}
+
+.cdk-drag-preview .event-time {
+    display: none;
+}
+
+/* L'espace vide (fantôme) laissé dans la liste de départ */
+.cdk-drag-placeholder {
+    opacity: 0.3;
+    background-color: var(--mat-sys-surface-variant);
+    border: 1px dashed var(--mat-sys-primary);
+}
+
+/* Animation fluide du retour à la normale ou du réagencement */
+.cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Annule l'animation si on drag par dessus d'autres éléments pour éviter les bugs visuels */
+.events-list.cdk-drop-list-dragging .event-item:not(.cdk-drag-placeholder) {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
 /* --- GRILLE DES JOURS DE LA SEMAINE --- */
 .weekdays-grid 
 {
@@ -243,6 +283,12 @@ display: grid;
     overflow: hidden;
     text-overflow: ellipsis;
     transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: grab;
+}
+
+.event-item:active 
+{
+    cursor: grabbing;
 }
 
 .event-item:hover 

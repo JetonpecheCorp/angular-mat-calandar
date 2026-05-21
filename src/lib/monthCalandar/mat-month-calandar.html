@@ -44,12 +44,15 @@
         }
     </div>
 
-    <div class="days-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
+    <div cdkDropListGroup class="days-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
         @for (element of listeDate(); track $index) 
         {
             <div class="day-cell" 
-                   matRipple
+                    matRipple
+                    cdkDropList
                    [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
+                   [cdkDropListData]="element"
+                   (cdkDropListDropped)="OnEventDropped($event)"
                    (click)="ClickJour(element)"
                    [class.last-column]="($index + 1) % nbColonnes() === 0"
                    [class.day-disabled]="(element.estWeekend && weekendDisabled()) || element.estBloquer"
@@ -61,7 +64,12 @@
                 <div class="events-list">
                     @for (ev of element.listeEvent.slice(0, 3); track $index) 
                     {
-                        <div class="event-item" [title]="ev.description || ev.titre" 
+                        <div class="event-item" 
+                                cdkDrag
+                                [cdkDragData]="ev"
+                                (cdkDragStarted)="OnDragStarted()" 
+                                (cdkDragEnded)="OnDragEnded()"
+                                [title]="ev.description || ev.titre" 
                                (mouseenter)="overrideRipple.set(true)" 
                                (mouseleave)="overrideRipple.set(false)"
                                (touchstart)="overrideRipple.set(true)"

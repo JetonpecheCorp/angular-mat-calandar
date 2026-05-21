@@ -7,10 +7,11 @@ import { DateCalendrier } from '../../models/DateCalandar';
 import { DatePipe } from '@angular/common';
 import {MatRippleModule} from '@angular/material/core';
 import {MatMenuModule} from '@angular/material/menu';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'jp-mat-month-calandar',
-  imports: [MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule],
+  imports: [DragDropModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule],
   templateUrl: './mat-month-calandar.html',
   styleUrl: './mat-month-calandar.css',
 })
@@ -34,11 +35,13 @@ export class MatMonthCalandar implements OnInit
 
     eventClickJour = output<DateCalendrier>({ alias: "dayClicked" });
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
+    eventUpdated = output<EventCalandar>();
 
     protected overrideRipple = signal(false);
     protected texteEventPlus = signal<string>("one more");
     protected texteBtnAujourdhui = signal<string>("Today");
 
+    private eventEnCoursDeDrag = false;
     private readonly langueNavigateur = navigator.language || "fr-FR";
 
     protected nomMois = computed(() =>
@@ -222,9 +225,50 @@ export class MatMonthCalandar implements OnInit
 
     protected ClickEvent(_event: EventCalandar): void
     {
-        console.log("event");
+        if (this.eventEnCoursDeDrag) 
+            return;
         
         this.eventClickEvent.emit(_event);
+    }
+
+    protected OnDragStarted(): void 
+    {   
+        this.eventEnCoursDeDrag = true;
+    }
+
+    protected OnDragEnded(): void 
+    {
+        // attend un peu pour que l'event click passe
+        setTimeout(() => {
+            this.eventEnCoursDeDrag = false;
+        }, 100);
+    }
+
+    protected OnEventDropped(dropEvent: CdkDragDrop<DateCalendrier>): void 
+    {
+        if (dropEvent.previousContainer == dropEvent.container) 
+            return;
+
+        const eventObj = dropEvent.item.data as EventCalandar;
+        const targetDay = dropEvent.container.data as DateCalendrier;
+
+        // On remet les heures à zéro pour comparer uniquement les jours purs (évite les bugs liés à l'heure d'été/hiver)
+        const DATE_DEBUT_SANS_HEURE = new Date(eventObj.startDate.getFullYear(), eventObj.startDate.getMonth(), eventObj.startDate.getDate()).getTime();
+        const DATE_CIBLE_SANS_HEURE = new Date(targetDay.date.getFullYear(), targetDay.date.getMonth(), targetDay.date.getDate()).getTime();
+        
+        // La différence en millisecondes
+        let differenceTemps = DATE_CIBLE_SANS_HEURE - DATE_DEBUT_SANS_HEURE;
+
+        const nouvelleDateDebut = new Date(eventObj.startDate.getTime() + differenceTemps);
+        const nouvelleDateFin = new Date(eventObj.endDate.getTime() + differenceTemps);
+
+        this.eventUpdated.emit({
+            id: eventObj.id,
+            titre: eventObj.titre,
+            description: eventObj.description,
+            startDate: nouvelleDateDebut,
+            endDate: nouvelleDateFin
+        });
     }
 
     private Generer(_de: Date, _a: Date): DateCalendrier[] 
@@ -261,9 +305,6 @@ export class MatMonthCalandar implements OnInit
                 listeEvent: listeDateInterval
             });
         }
-
-        console.log(liste);
-        
 
         return liste;
     }
