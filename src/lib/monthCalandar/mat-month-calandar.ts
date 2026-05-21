@@ -16,7 +16,6 @@ import {MatMenuModule} from '@angular/material/menu';
 })
 export class MatMonthCalandar implements OnInit
 {
-    matRippleDisabled = input<boolean>(false);
     events = input<EventCalandar[]>();
 
     /** 1 => January, 12 => december */
@@ -24,6 +23,7 @@ export class MatMonthCalandar implements OnInit
     annee = model.required<number>({ alias: "year" });
     weekendDisabled = input(false, { transform: booleanAttribute });
     mondayFirst = input(false, { transform: booleanAttribute });
+    matRippleDisabled = input(false, { transform: booleanAttribute });
 
     /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
