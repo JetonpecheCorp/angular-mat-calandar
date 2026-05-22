@@ -59,10 +59,24 @@
                    [class.today]="element.estAujourdhui"
                    [class.different-month]="!element.estMoisCourant">
                     
-                <span class="day-number">{{ element.date.getDate() }}</span>
+                <div class="day-cell-header">
+                    <span class="day-number">{{ element.date.getDate() }}</span>
+                    
+                    @if (element.listeEventSpecial && element.listeEventSpecial.length > 0) 
+                    {
+                        <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
+                            @for (sp of element.listeEventSpecial; track sp.title) 
+                            {
+                                <div class="special-badge" [title]="sp.title">
+                                    <span class="special-text">{{ sp.title }}</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
 
                 <div class="events-list">
-                    @for (ev of element.listeEvent.slice(0, 3); track $index) 
+                    @for (ev of element.listeEvent.slice(0, LimiteNbEventVisible(element)); track $index) 
                     {
                         <div class="event-item" 
                                 cdkDrag
@@ -80,10 +94,10 @@
                         </div>
                     }
 
-                    @if (element.listeEvent.length > 3)
+                    @if (element.listeEvent.length > LimiteNbEventVisible(element))
                     {
                         <div class="more-indicator">
-                            + {{ element.listeEvent.length - 3 }} {{ texteEventPlus() }}...
+                            + {{ element.listeEvent.length - LimiteNbEventVisible(element) }} {{(estPetitEcran() ? '' :  texteEventPlus() + '...')}}
                         </div>
                     }
                 </div>
@@ -115,7 +129,7 @@
             <button mat-button 
                     class="year-chip" 
                     [class.active-year]="element === annee()"
-                    (click)="changerAnnee(element)">
+                    (click)="ChangerAnnee(element)">
                 {{ element }}
             </button>
         }

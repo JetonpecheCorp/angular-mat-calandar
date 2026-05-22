@@ -1,4 +1,4 @@
-import { booleanAttribute, Component, computed, input, model, OnInit, output, signal } from '@angular/core';
+import { booleanAttribute, Component, computed, HostListener, input, model, OnInit, output, signal } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { DatePipe } from '@angular/common';
 import {MatRippleModule} from '@angular/material/core';
 import {MatMenuModule} from '@angular/material/menu';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
+import { DateSpecialEvent } from '../../public-api';
 
 @Component({
   selector: 'jp-mat-month-calandar',
@@ -18,6 +19,7 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 export class MatMonthCalandar implements OnInit
 {
     events = input<EventCalandar[]>();
+    specialEvents = input<DateSpecialEvent[]>([]);
 
     /** 1 => January, 12 => december */
     mois = model.required<number>({ alias: "month" });
@@ -37,6 +39,7 @@ export class MatMonthCalandar implements OnInit
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
     eventUpdated = output<EventCalandar>();
 
+    protected estPetitEcran = signal(false);
     protected overrideRipple = signal(false);
     protected texteEventPlus = signal<string>("one more");
     protected texteBtnAujourdhui = signal<string>("Today");
@@ -137,6 +140,7 @@ export class MatMonthCalandar implements OnInit
 
     ngOnInit(): void 
     {
+        this.onResize();
         const LANGUE = this.langueNavigateur.split('-')[0];
         
         const DICT_TRADUCTION: Record<string, string> = 
@@ -211,9 +215,34 @@ export class MatMonthCalandar implements OnInit
         this.mois.set(_numeroMois);
     }
 
-    protected changerAnnee(_annee: number): void
+    protected ChangerAnnee(_annee: number): void
     {
         this.annee.set(_annee);
+    }
+
+    protected LimiteNbEventVisible(element: DateCalendrier): number 
+    {
+        if (this.estPetitEcran()) 
+            return 3;
+
+        const aDesEventsSpeciaux = element.listeEventSpecial && element.listeEventSpecial.length > 0;
+        
+        if (aDesEventsSpeciaux)
+            return 2;
+        
+        return 3; 
+    }
+
+    protected ScrollHorizontal(event: WheelEvent): void 
+    {
+        const conteneur = event.currentTarget as HTMLElement;
+
+        // On vérifie il on peut scroller
+        if (conteneur.scrollWidth > conteneur.clientWidth)
+        {
+            event.preventDefault();  
+            conteneur.scrollLeft += event.deltaY; 
+        }
     }
 
     protected ClickJour(_dateCalandrier: DateCalendrier): void
@@ -296,13 +325,36 @@ export class MatMonthCalandar implements OnInit
             let listeDateInterval = this.events()?.filter(x => this.EstDansIntervalle(date, x.startDate, x.endDate)) ?? [];
             let estBloquer = this.daysDisabled()?.findIndex(x => this.DateSontEgaux(x, date)) ?? -1;
 
+            const M = date.getMonth() + 1; // 1 => janvier
+            const D = date.getDate();  
+            const eventsSpeciauxDuJour = this.specialEvents().filter(sp => 
+            {
+                const startM = sp.dateStart.month;
+                const startD = sp.dateStart.day;
+                const endM = sp.dateEnd.month;
+                const endD = sp.dateEnd.day;
+
+                // Gère les intervalles normaux (ex: Mai à Juillet) et ceux à cheval sur l'année (ex: Décembre à Janvier)
+                const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
+
+                if (isNormalInterval) 
+                {
+                    return (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
+                } 
+                else 
+                {
+                    return (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
+                }
+            });
+
             liste.push({
                 date,
                 estBloquer: estBloquer != -1,
                 estAujourdhui: this.EstDateJour(date),
                 estMoisCourant: date.getMonth() == _de.getMonth(),
                 estWeekend: date.getDay() == 0 || date.getDay() == 6,
-                listeEvent: listeDateInterval
+                listeEvent: listeDateInterval,
+                listeEventSpecial: eventsSpeciauxDuJour
             });
         }
 
@@ -333,5 +385,13 @@ export class MatMonthCalandar implements OnInit
         return _date.getDate() === DATE_JOUR.getDate() &&
             _date.getMonth() === DATE_JOUR.getMonth() &&
             _date.getFullYear() === DATE_JOUR.getFullYear();
+    }
+
+    @HostListener('window:resize')
+    protected onResize(): void
+    {
+        console.log(window.innerWidth <= 600);
+        
+        this.estPetitEcran.set(window.innerWidth <= 600);
     }
 }
