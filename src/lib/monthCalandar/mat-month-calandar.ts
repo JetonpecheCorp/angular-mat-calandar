@@ -9,6 +9,7 @@ import {MatRippleModule} from '@angular/material/core';
 import {MatMenuModule} from '@angular/material/menu';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DateSpecialEvent } from '../../public-api';
+import { DateInterval } from '../../models/DateInterval';
 
 @Component({
   selector: 'jp-mat-month-calandar',
@@ -38,6 +39,7 @@ export class MatMonthCalandar implements OnInit
     eventClickJour = output<DateCalendrier>({ alias: "dayClicked" });
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
     eventUpdated = output<EventCalandar>();
+    eventCreated = output<DateInterval>();
 
     protected estPetitEcran = signal(false);
     protected overrideRipple = signal(false);
@@ -46,6 +48,11 @@ export class MatMonthCalandar implements OnInit
 
     private eventEnCoursDeDrag = false;
     private readonly langueNavigateur = navigator.language || "fr-FR";
+    
+    private dernierTouchTime = 0;
+    protected dragCreationEnCours = signal(false);
+    protected dateDebutCreation = signal<Date | null>(null);
+    protected dateFinCreation = signal<Date | null>(null);
 
     protected nomMois = computed(() =>
     {
@@ -245,11 +252,6 @@ export class MatMonthCalandar implements OnInit
         }
     }
 
-    protected ClickJour(_dateCalandrier: DateCalendrier): void
-    {
-        this.eventClickJour.emit(_dateCalandrier);
-    }
-
     protected ClickEvent(_event: EventCalandar): void
     {
         if (this.eventEnCoursDeDrag) 
@@ -296,6 +298,166 @@ export class MatMonthCalandar implements OnInit
             startDate: nouvelleDateDebut,
             endDate: nouvelleDateFin
         });
+    }
+
+    // Vérifie si un jour fait partie de la sélection en cours
+    protected EstEnCreation(_date: Date): boolean 
+    {
+        const debut = this.dateDebutCreation();
+        const fin = this.dateFinCreation();
+        if (!this.dragCreationEnCours() || !debut || !fin) return false;
+
+        const tDate = new Date(_date.getFullYear(), _date.getMonth(), _date.getDate()).getTime();
+        const tDebut = new Date(debut.getFullYear(), debut.getMonth(), debut.getDate()).getTime();
+        const tFin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate()).getTime();
+
+        const min = Math.min(tDebut, tFin);
+        const max = Math.max(tDebut, tFin);
+
+        return tDate >= min && tDate <= max;
+    }
+
+    // Gère le clic, le drag et la compatibilité mobile
+    protected OnMouseDownCreation(event: MouseEvent | TouchEvent, dateJour: Date, estBloquer: boolean): void 
+    {
+        if (estBloquer) 
+            return;
+
+        // Anti-Ghost Click Mobile
+        if (event.type == 'touchstart') 
+            this.dernierTouchTime = Date.now();
+
+        else if (event.type === 'mousedown' && Date.now() - this.dernierTouchTime < 500) 
+            return;
+
+        if (event instanceof MouseEvent && event.button != 0) 
+            return;
+
+        // ignorer si l'utilisateur essaie d'attraper un événement existant
+        const target = event.target as HTMLElement;
+        if (target.closest('.event-item') || target.closest('.special-event-indicators-container')) 
+            return;
+
+        const clientXDebut = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
+        const clientYDebut = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+
+        this.dateDebutCreation.set(dateJour);
+        this.dateFinCreation.set(dateJour);
+        this.dragCreationEnCours.set(false);
+
+        let aBouge = false;
+        let intentionScroll = false;
+        let modeDragCreation = false;
+        let timeoutAppuiLong: any;
+
+        if (event.type.startsWith('touch')) 
+        {
+            timeoutAppuiLong = setTimeout(() => {
+                if (!aBouge) 
+                {
+                    modeDragCreation = true;
+                    this.dragCreationEnCours.set(true);
+
+                    if (navigator.vibrate) 
+                        navigator.vibrate(50);
+                }
+            }, 350);
+        } 
+        else 
+            modeDragCreation = true;
+
+        const onMouseMove = (_moveEvent: MouseEvent | TouchEvent) => 
+        {
+            if (intentionScroll) 
+                return;
+
+            const moveX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
+            const moveY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
+
+            if (Math.abs(moveX - clientXDebut) > 5 || Math.abs(moveY - clientYDebut) > 5)
+                aBouge = true;
+
+            if (!modeDragCreation) 
+            {
+                if (aBouge) 
+                {
+                    intentionScroll = true;
+                    clearTimeout(timeoutAppuiLong);
+                    return;
+                }
+            } 
+            else 
+            {
+                if (aBouge) 
+                    this.dragCreationEnCours.set(true);
+
+                if (_moveEvent.cancelable) 
+                    _moveEvent.preventDefault();
+
+                let hoveredCell: HTMLElement | null = null;
+                if (_moveEvent instanceof MouseEvent)
+                    hoveredCell = (_moveEvent.target as HTMLElement).closest('.day-cell');
+
+                else 
+                {
+                    const touch = _moveEvent.touches[0];
+                    const elementFromPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+                    hoveredCell = elementFromPoint ? elementFromPoint.closest('.day-cell') : null;
+                }
+
+                if (hoveredCell && hoveredCell.dataset['date']) 
+                {
+                    let timestamp = parseInt(hoveredCell.dataset['date'], 10);
+
+                    if (!isNaN(timestamp))
+                        this.dateFinCreation.set(new Date(timestamp));
+                }
+            }
+        };
+
+        const onMouseUp = () => 
+        {
+            clearTimeout(timeoutAppuiLong);
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            window.removeEventListener('touchmove', onMouseMove);
+            window.removeEventListener('touchend', onMouseUp);
+
+            // CLIC SIMPLE
+            if (!intentionScroll) 
+            {
+                if (!aBouge && !this.dragCreationEnCours()) 
+                {
+                    let dateCalendrier = this.listeDate().find(x => x.date.getTime() == dateJour.getTime());
+
+                    if (dateCalendrier) 
+                        this.eventClickJour.emit(dateCalendrier);
+                } 
+                // DRAG MULTI-JOURS
+                else if (modeDragCreation && aBouge && this.dragCreationEnCours()) 
+                {
+                    let debut = this.dateDebutCreation();
+                    let fin = this.dateFinCreation();
+
+                    if (debut && fin) 
+                    {   
+                        this.eventCreated.emit({ 
+                            start:  new Date(Math.min(debut.getTime(), fin.getTime())), 
+                            end: new Date(Math.max(debut.getTime(), fin.getTime()))
+                        });
+                    }
+                }
+            }
+
+            this.dragCreationEnCours.set(false);
+            this.dateDebutCreation.set(null);
+            this.dateFinCreation.set(null);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('touchmove', onMouseMove, { passive: false });
+        window.addEventListener('touchend', onMouseUp);
     }
 
     private Generer(_de: Date, _a: Date): DateCalendrier[] 
@@ -388,8 +550,6 @@ export class MatMonthCalandar implements OnInit
     @HostListener('window:resize')
     protected onResize(): void
     {
-        console.log(window.innerWidth <= 600);
-        
         this.estPetitEcran.set(window.innerWidth <= 600);
     }
 }

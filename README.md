@@ -19,9 +19,10 @@ Traduction automatique celons la **langue du navigateur.**
 - `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
 - `daysOfWeekDisabled`: Masquer des jours de la semaine (0 => dimanche, 6 => lundi)
 - `daysDisabled`: Liste des jours à désactiver
-- `monthsDisabled`=> Masquer des mois (1 => janvier 12 => decembre)
-- `eventClickJour` => Event click sur le jour
-- `eventClickEvent` => Event click sur un évènement
+- `monthsDisabled`: Masquer des mois (1 => janvier 12 => decembre)
+- `eventClickJour`: Event click sur le jour
+- `eventClickEvent`: Event click sur un évènement
+- `eventCreated`: Event drag pour créer un event
 
 ## Exemple
 ```html

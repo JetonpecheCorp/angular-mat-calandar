@@ -53,7 +53,9 @@
                    [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
                    [cdkDropListData]="element"
                    (cdkDropListDropped)="OnEventDropped($event)"
-                   (click)="ClickJour(element)"
+                   (mousedown)="OnMouseDownCreation($event, element.date, element.estBloquer)"
+                   (touchstart)="OnMouseDownCreation($event, element.date, element.estBloquer)"
+                   [attr.data-date]="element.date.getTime()"
                    [class.last-column]="($index + 1) % nbColonnes() === 0"
                    [class.day-disabled]="(element.estWeekend && weekendDisabled()) || element.estBloquer"
                    [class.today]="element.estAujourdhui"
@@ -98,6 +100,13 @@
                     {
                         <div class="more-indicator">
                             + {{ element.listeEvent.length - LimiteNbEventVisible(element) }} {{(estPetitEcran() ? '' :  texteEventPlus() + '...')}}
+                        </div>
+                    }
+
+                    @if (EstEnCreation(element.date)) 
+                    {
+                        <div class="event-item event-phantom">
+                            <span class="event-title">(Nouveau)</span>
                         </div>
                     }
                 </div>
