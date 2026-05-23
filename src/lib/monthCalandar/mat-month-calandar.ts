@@ -1,4 +1,4 @@
-import { booleanAttribute, Component, computed, HostListener, input, model, OnInit, output, signal } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, HostListener, input, model, OnInit, output, signal } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,6 +16,7 @@ import { DateInterval } from '../../models/DateInterval';
   imports: [DragDropModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule],
   templateUrl: './mat-month-calandar.html',
   styleUrl: './mat-month-calandar.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MatMonthCalandar implements OnInit
 {
