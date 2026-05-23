@@ -247,8 +247,6 @@ export class MatMonthCalandar implements OnInit
 
     protected ClickJour(_dateCalandrier: DateCalendrier): void
     {
-        console.log("jour");
-        
         this.eventClickJour.emit(_dateCalandrier);
     }
 

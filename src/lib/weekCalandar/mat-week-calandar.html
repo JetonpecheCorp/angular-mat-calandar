@@ -72,8 +72,8 @@
                             {
                                 <div class="event-block event-phantom"
                                     [ngStyle]="CalculerStyleEvent(ev, jour.date)"
-                                    [style.width.%]="100 / ev.nbColonneTotal"
-                                    [style.left.%]="(100 / ev.nbColonneTotal) * ev.colonne">
+                                    [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
+                                    [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'">
                                     <div class="event-content">
                                         <span class="event-title">{{ ev.titre }}</span>
                                         <span class="event-time">{{ ev.formatHeure }}</span>
@@ -88,8 +88,8 @@
                                     [ngStyle]="(resizeEnCours()?.id === ev.id && resizeEnCours()?.dateTime === jour.date.getTime()) ? 
                                         { 'top.px': resizeEnCours()?.top, 'height.px': resizeEnCours()?.height, 'display': 'flex' } : 
                                         CalculerStyleEvent(ev, jour.date)"
-                                    [style.width.%]="100 / ev.nbColonneTotal"
-                                    [style.left.%]="(100 / ev.nbColonneTotal) * ev.colonne">
+                                    [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
+                                    [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'">
                                     
                                     @if (!ev.continueAvant) 
                                     {
@@ -136,9 +136,21 @@
                             </div>
                         }
 
+                        @if (dragCreationEnCours() && dateDebutCreation() && EstMemeJour(jour.date, dateDebutCreation()!)) {
+                            <div class="creation-preview-block" [ngStyle]="styleApercuCreation()">
+                                <div class="event-content">
+                                    <span class="event-title">(Nouveau)</span>
+                                    <span class="event-time">{{ formatHeureCreation() }}</span>
+                                </div>
+                            </div>
+                        }
+
                         @for (h of heures(); track h) 
                         {
-                            <div matRipple [matRippleDisabled]="matRippleDisabled()" class="hour-slot" (click)="ClickTimeSlot(jour.date, h)"></div>
+                            <div matRipple [matRippleDisabled]="matRippleDisabled()" 
+                                    class="hour-slot" 
+                                    (mousedown)="OnMouseDownHoraire(jour.date, $event)"
+                                    (touchstart)="OnMouseDownHoraire(jour.date, $event)"></div>
                         }
                         </div>
                     }

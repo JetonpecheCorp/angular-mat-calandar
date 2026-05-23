@@ -13,6 +13,22 @@
     flex-direction: column;
 }
 
+/* --- APERÇU DU GLISSER POUR CRÉER --- */
+.creation-preview-block {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    background-color: rgba(var(--mat-sys-primary-rgb, 103, 80, 164), 0.3) !important;
+    border: 2px dashed var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary-container);
+    border-radius: 4px;
+    padding: 4px;
+    font-size: 0.7rem;
+    z-index: 4;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
 /* MENU SEMAINE */
 .menu-scroll-container {
     max-height: 400px;
@@ -215,19 +231,6 @@
     touch-action: none;
 }
 
-.event-block:hover .resize-handle 
-{
-    background-color: rgba(0, 0, 0, 0.06);
-}
-
-.event-block:hover .resize-line {
-    opacity: 0.4;
-}
-
-.resize-handle:hover .resize-line {
-    opacity: 0.8;
-}
-
 .event-block:active 
 {
     cursor: grabbing;
@@ -357,8 +360,7 @@
     height: var(--hour-height) !important;
     border-bottom: 1px solid var(--mat-sys-outline-variant);
     box-sizing: border-box;
-    cursor: pointer;
-    transition: background-color 0.1s ease;
+    touch-action: none;
 }
 
 .hour-slot:hover 
@@ -456,29 +458,7 @@
         padding: 2px 4px;
     }
 
-    .resize-handle {
-        height: 24px;
-    }
-
-    .resize-handle.top {
-        top: -10px; 
-        padding-bottom: 10px;
-    }
-
-    .resize-handle.bottom {
-        bottom: -10px;
-        padding-top: 10px;
-    }
-
-    .resize-handle.top .resize-line {
-        margin-top: 10px;
-    }
-    
-    .resize-handle.bottom .resize-line {
-        margin-bottom: 10px;
-    }
-
     .resize-line {
-        opacity: 0.25;
+        opacity: 0.4;
     }
 }

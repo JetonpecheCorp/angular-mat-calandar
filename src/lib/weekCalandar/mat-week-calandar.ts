@@ -1,4 +1,4 @@
-import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output, ChangeDetectionStrategy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -51,6 +51,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     dayClicked = output<EventCalandar[]>();
     timeSlotClicked = output<DateInterval>();
     eventUpdated = output<EventCalandar>();
+    eventCreated = output<DateInterval>();
 
     protected texteBtnAujourdhui = signal<string>("Today");
     protected prefixSemaine = signal<string>("W");
@@ -60,6 +61,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     private readonly langueNavigateur = navigator.language || "fr-FR";
     private timerInterval: any;
     private heureActuelle = signal(new Date());
+
+    protected dragCreationEnCours = signal(false);
+    protected dateDebutCreation = signal<Date | null>(null);
+    protected dateFinCreation = signal<Date | null>(null);
 
     protected titrePeriode = computed(() => 
     {
@@ -214,6 +219,30 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return this.RecupererNumeroSemaine(this.dateReference());
     });
 
+    protected styleApercuCreation = computed(() => {
+        const debut = this.dateDebutCreation();
+        const fin = this.dateFinCreation();
+        if (!debut || !fin) return null;
+
+        const minH = this.hourMin();
+        const top = ((debut.getHours() - minH) * 60) + debut.getMinutes();
+        const hauteur = (((fin.getTime() - debut.getTime()) / 1000) / 60);
+
+        return {
+            'top.px': top,
+            'height.px': hauteur,
+            'display': 'block'
+        };
+    });
+
+    protected formatHeureCreation = computed(() => 
+    {
+        let debut = this.dateDebutCreation();
+        let fin = this.dateFinCreation();
+
+        return !debut || !fin ? "" : this.GenererFormatHeure(debut, fin, this.useAmPm());
+    });
+
     private jourDeSemaineAExclure = computed(() => 
     {
         const A_MASQUER = new Set(this.daysOfWeekDisabled());
@@ -362,18 +391,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             'min-height.px': 15,
             'display': 'flex'
         };
-    }
-
-    protected ListerEventsDuJour(_date: Date): EventCalandar[]
-    {
-        return this.events().filter(ev => 
-        {
-            const DATE = new Date(ev.startDate);
-
-            return DATE.getDate() === _date.getDate() &&
-                   DATE.getMonth() === _date.getMonth() &&
-                   DATE.getFullYear() === _date.getFullYear();
-        });
     }
 
     protected AllerAujourdhui(): void
@@ -585,8 +602,111 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             _date.getMonth() == DATE.getMonth() && 
             _date.getFullYear() == DATE.getFullYear();
     }
+    
+    protected OnMouseDownHoraire(dateJour: Date, event: MouseEvent | TouchEvent): void 
+    {
+        if (event instanceof MouseEvent && event.button != 0) 
+            return;
 
-    private EstMemeJour(_date1: Date, _date2: Date): boolean 
+        const column = (event.target as HTMLElement).closest('.day-column') as HTMLElement;
+
+        if (!column) 
+            return;
+
+        if (event instanceof MouseEvent) 
+            event.preventDefault();
+
+        const initialRect = column.getBoundingClientRect();
+        
+        const clientYDebut = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+        const yActuel = clientYDebut - initialRect.top;
+
+        let minutesCliquees = Math.floor(yActuel / 15) * 15;
+        const minutesTotales = (this.hourMin() * 60) + minutesCliquees;
+        const heure = Math.floor(minutesTotales / 60);
+        const minute = minutesTotales % 60;
+
+        let dateComplete = new Date(dateJour);
+        dateComplete.setHours(heure, minute, 0, 0);
+
+        this.dragCreationEnCours.set(false);
+        this.dateDebutCreation.set(dateComplete);
+        this.dateFinCreation.set(new Date(dateComplete.getTime() + 15 * 60 * 1000));
+
+        let sourisABouge = false;
+
+        const onMouseMove = (_moveEvent: MouseEvent | TouchEvent) => 
+        {
+            const moveClientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
+            
+            if (Math.abs(moveClientY - clientYDebut) > 5) 
+            {
+                sourisABouge = true;
+                this.dragCreationEnCours.set(true); 
+            }
+
+            // On ne modifie la zone d'aperçu que si c'est un vrai Drag
+            if (sourisABouge) 
+            {
+                const currentRect = column.getBoundingClientRect();
+                const moveYActuel = moveClientY - currentRect.top;
+
+                let minutesFin = Math.ceil(moveYActuel / 15) * 15;
+                let hauteurMax = (this.hourMax() - this.hourMin() + 1) * 60;
+
+                if (minutesFin > hauteurMax) 
+                    minutesFin = hauteurMax;
+
+                const totalMinsFin = (this.hourMin() * 60) + minutesFin;
+                const hFin = Math.floor(totalMinsFin / 60);
+                const mFin = totalMinsFin % 60;
+
+                let dateFinCalc = new Date(dateJour);
+                dateFinCalc.setHours(hFin, mFin, 0, 0);
+
+                if (dateFinCalc.getTime() > dateComplete.getTime())
+                    this.dateFinCreation.set(dateFinCalc);
+            }
+        };
+
+        const onMouseUp = () => 
+        {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            window.removeEventListener('touchmove', onMouseMove);
+            window.removeEventListener('touchend', onMouseUp);
+
+            this.dragCreationEnCours.set(false);
+
+            // CAS 1 : CLIC SIMPLE
+            if (!sourisABouge) 
+            {
+                let dateFinClick = new Date(dateComplete);
+                dateFinClick.setHours(dateComplete.getHours() + 1);
+                
+                this.timeSlotClicked.emit({ start: dateComplete, end: dateFinClick });
+            }
+            // CAS 2 : DRAG
+            else 
+            {
+                let debut = this.dateDebutCreation();
+                let fin = this.dateFinCreation();
+
+                if (debut && fin)
+                    this.eventCreated.emit({ start: debut, end: fin });
+            }
+
+            this.dateDebutCreation.set(null);
+            this.dateFinCreation.set(null);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('touchmove', onMouseMove, { passive: false });
+        window.addEventListener('touchend', onMouseUp);
+    }
+
+    protected EstMemeJour(_date1: Date, _date2: Date): boolean 
     {
         return _date1.getFullYear() == _date2.getFullYear() &&
             _date1.getMonth() == _date2.getMonth() &&
