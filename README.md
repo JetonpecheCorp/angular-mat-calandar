@@ -50,6 +50,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `eventClicked`: Event click sur un évènement
 - `dayClicked`: Event click sur un jour, liste les events inclus dans le jour
 - `eventUpdated`: Event drag and drop ou resize d'un event
+- `eventCreated`: Event drag pour créer un event
 
 ## Exemple
 ```html

@@ -621,9 +621,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const cible = event.target as HTMLElement;
         const column = cible.closest('.day-column') as HTMLElement;
 
-        if (!column) return;
+        if (!column) 
+            return;
 
-        // 🔥 CORRECTION : RETOUR DU CALCUL DE L'HEURE VIA LES PIXELS !
         const initialRect = column.getBoundingClientRect();
         const clientYDebut = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
         const clientXDebut = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
@@ -637,7 +637,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         let dateComplete = new Date(dateJour);
         dateComplete.setHours(heure, minute, 0, 0);
-        // 🔥 FIN DE LA CORRECTION
 
         this.dragCreationEnCours.set(false);
         this.dateDebutCreation.set(dateComplete);
