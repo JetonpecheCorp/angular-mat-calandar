@@ -622,6 +622,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         // GESTION DU GHOST CLICK MOBILE
         if (event.type == 'touchstart')
             this.dernierTouchTime = Date.now();
+
         else if (event.type == 'mousedown') 
         {
             // Si on a reçu un touchstart il y a moins de 500ms, on ignore cette fausse souris !
@@ -641,8 +642,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const clientYDebut = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
         const clientXDebut = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
         
-        const yActuel = clientYDebut - initialRect.top;
+        let yActuel = clientYDebut - initialRect.top;
+        if (yActuel < 0) yActuel = 0; // Sécurité
 
+        // DATE D'ANCRAGE : On mémorise la case exacte où l'utilisateur a cliqué
         let minutesCliquees = Math.floor(yActuel / 15) * 15;
         const minutesTotales = (this.hourMin() * 60) + minutesCliquees;
         const heure = Math.floor(minutesTotales / 60);
@@ -650,10 +653,11 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         let dateComplete = new Date(dateJour);
         dateComplete.setHours(heure, minute, 0, 0);
+        const timestampAncrage = dateComplete.getTime();
 
         this.dragCreationEnCours.set(false);
         this.dateDebutCreation.set(dateComplete);
-        this.dateFinCreation.set(new Date(dateComplete.getTime() + 15 * 60 * 1000));
+        this.dateFinCreation.set(new Date(timestampAncrage + 15 * 60 * 1000));
 
         let intentionScroll = false;
         let modeDragCreation = false; 
@@ -713,23 +717,39 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                     _moveEvent.preventDefault();
 
                 const currentRect = column.getBoundingClientRect();
-                const moveYActuel = moveClientY - currentRect.top;
+                let moveYActuel = moveClientY - currentRect.top;
+                
+                // Sécurité pour ne pas sortir du haut de la grille
+                if (moveYActuel < 0) moveYActuel = 0;
 
-                let minutesFin = Math.ceil(moveYActuel / 15) * 15;
+                // CALCUL BIDIRECTIONNEL : On calcule la case survolée par la souris
+                let minutesSurvolees = Math.floor(moveYActuel / 15) * 15;
                 const hauteurMax = (this.hourMax() - this.hourMin() + 1) * 60;
 
-                if (minutesFin > hauteurMax) 
-                    minutesFin = hauteurMax;
+                if (minutesSurvolees > hauteurMax - 15) 
+                    minutesSurvolees = hauteurMax - 15;
 
-                const totalMinsFin = (this.hourMin() * 60) + minutesFin;
-                const hFin = Math.floor(totalMinsFin / 60);
-                const mFin = totalMinsFin % 60;
+                const totalMinsSurvolees = (this.hourMin() * 60) + minutesSurvolees;
+                const hSurvole = Math.floor(totalMinsSurvolees / 60);
+                const mSurvole = totalMinsSurvolees % 60;
 
-                let dateFinCalc = new Date(dateJour);
-                dateFinCalc.setHours(hFin, mFin, 0, 0);
+                let dateSurvolee = new Date(dateJour);
+                dateSurvolee.setHours(hSurvole, mSurvole, 0, 0);
+                const timestampSurvole = dateSurvolee.getTime();
 
-                if (dateFinCalc.getTime() > dateComplete.getTime())
-                    this.dateFinCreation.set(dateFinCalc);
+                // 🔥 On compare la case survolée avec la case d'ancrage cliquée au début
+                if (timestampSurvole < timestampAncrage) 
+                {
+                    // Drag vers le HAUT 
+                    this.dateDebutCreation.set(new Date(timestampSurvole));
+                    this.dateFinCreation.set(new Date(timestampAncrage + 15 * 60 * 1000));
+                } 
+                else 
+                {
+                    // Drag vers le BAS
+                    this.dateDebutCreation.set(new Date(timestampAncrage));
+                    this.dateFinCreation.set(new Date(timestampSurvole + 15 * 60 * 1000));
+                }
             }
         };
 
