@@ -1,3 +1,4 @@
+import { DateSpecialEvent } from "./DateSpecialEvent"
 import { EventCalandar } from "./EventCalandar"
 
 export type DateCalendrier =
@@ -7,5 +8,6 @@ export type DateCalendrier =
     estAujourdhui: boolean,
     estMoisCourant: boolean,
     estWeekend: boolean,
-    listeEvent: EventCalandar[]
+    listeEvent: EventCalandar[],
+    listeEventSpecial: DateSpecialEvent[]
 }
