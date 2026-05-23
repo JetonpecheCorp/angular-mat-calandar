@@ -61,6 +61,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     private readonly langueNavigateur = navigator.language || "fr-FR";
     private timerInterval: any;
     private heureActuelle = signal(new Date());
+    private dernierTouchTime = 0;
 
     protected dragCreationEnCours = signal(false);
     protected dateDebutCreation = signal<Date | null>(null);
@@ -605,20 +606,28 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     
     protected OnMouseDownHoraire(dateJour: Date, event: MouseEvent | TouchEvent): void 
     {
-        if (event instanceof MouseEvent && event.button != 0) 
+        // GESTION DU GHOST CLICK MOBILE
+        if (event.type == 'touchstart')
+            this.dernierTouchTime = Date.now();
+        else if (event.type == 'mousedown') 
+        {
+            // Si on a reçu un touchstart il y a moins de 500ms, on ignore cette fausse souris !
+            if (Date.now() - this.dernierTouchTime < 500) return;
+        }
+
+        if (event instanceof MouseEvent && event.button !== 0) 
             return;
 
-        const column = (event.target as HTMLElement).closest('.day-column') as HTMLElement;
+        const cible = event.target as HTMLElement;
+        const column = cible.closest('.day-column') as HTMLElement;
 
-        if (!column) 
-            return;
+        if (!column) return;
 
-        if (event instanceof MouseEvent) 
-            event.preventDefault();
-
+        // 🔥 CORRECTION : RETOUR DU CALCUL DE L'HEURE VIA LES PIXELS !
         const initialRect = column.getBoundingClientRect();
-        
         const clientYDebut = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+        const clientXDebut = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
+        
         const yActuel = clientYDebut - initialRect.top;
 
         let minutesCliquees = Math.floor(yActuel / 15) * 15;
@@ -628,31 +637,74 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         let dateComplete = new Date(dateJour);
         dateComplete.setHours(heure, minute, 0, 0);
+        // 🔥 FIN DE LA CORRECTION
 
         this.dragCreationEnCours.set(false);
         this.dateDebutCreation.set(dateComplete);
         this.dateFinCreation.set(new Date(dateComplete.getTime() + 15 * 60 * 1000));
 
-        let sourisABouge = false;
+        let intentionScroll = false;
+        let modeDragCreation = false; 
+        let aBouge = false;
+        let timeoutAppuiLong: any;
+
+        // ecran tactile
+        if (event.type.startsWith('touch')) 
+        {
+            // active le drag si on reste appuyer 350ms
+            timeoutAppuiLong = setTimeout(() => 
+            {
+                if (!aBouge) 
+                {
+                    modeDragCreation = true;
+                    this.dragCreationEnCours.set(true);
+                    
+                    if (navigator.vibrate) 
+                        navigator.vibrate(50);
+                }
+            }, 350);
+        } 
+        else 
+            modeDragCreation = true;
 
         const onMouseMove = (_moveEvent: MouseEvent | TouchEvent) => 
         {
-            const moveClientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
-            
-            if (Math.abs(moveClientY - clientYDebut) > 5) 
-            {
-                sourisABouge = true;
-                this.dragCreationEnCours.set(true); 
-            }
+            if (intentionScroll) 
+                return;
 
-            // On ne modifie la zone d'aperçu que si c'est un vrai Drag
-            if (sourisABouge) 
+            const moveClientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
+            const moveClientX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
+            
+            const deltaY = Math.abs(moveClientY - clientYDebut);
+            const deltaX = Math.abs(moveClientX - clientXDebut);
+
+            if (deltaX > 5 || deltaY > 5)
+                aBouge = true;
+
+            if (!modeDragCreation) 
             {
+                // Si on a bougé le doigt avant la fin des 350ms, c'est qu'on veut scroller !
+                if (aBouge) 
+                {
+                    intentionScroll = true;
+                    clearTimeout(timeoutAppuiLong);
+                    return;
+                }
+            } 
+            else 
+            {
+                // MODE DRAG (Appui long réussi ou PC)
+                if (aBouge) 
+                    this.dragCreationEnCours.set(true);
+
+                if (_moveEvent.cancelable)
+                    _moveEvent.preventDefault();
+
                 const currentRect = column.getBoundingClientRect();
                 const moveYActuel = moveClientY - currentRect.top;
 
                 let minutesFin = Math.ceil(moveYActuel / 15) * 15;
-                let hauteurMax = (this.hourMax() - this.hourMin() + 1) * 60;
+                const hauteurMax = (this.hourMax() - this.hourMin() + 1) * 60;
 
                 if (minutesFin > hauteurMax) 
                     minutesFin = hauteurMax;
@@ -671,6 +723,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         const onMouseUp = () => 
         {
+            clearTimeout(timeoutAppuiLong);
+            
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('touchmove', onMouseMove);
@@ -678,23 +732,27 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
             this.dragCreationEnCours.set(false);
 
-            // CAS 1 : CLIC SIMPLE
-            if (!sourisABouge) 
+            if (!intentionScroll) 
             {
-                let dateFinClick = new Date(dateComplete);
-                dateFinClick.setHours(dateComplete.getHours() + 1);
-                
-                this.timeSlotClicked.emit({ start: dateComplete, end: dateFinClick });
-            }
-            // CAS 2 : DRAG
-            else 
-            {
-                let debut = this.dateDebutCreation();
-                let fin = this.dateFinCreation();
+                if (!aBouge) 
+                {
+                    let dateDebutClic = new Date(dateComplete);
+                    dateDebutClic.setMinutes(0, 0, 0); 
 
-                if (debut && fin)
-                    this.eventCreated.emit({ start: debut, end: fin });
-            }
+                    let dateFinClic = new Date(dateDebutClic);
+                    dateFinClic.setHours(dateDebutClic.getHours() + 1);
+                    
+                    this.timeSlotClicked.emit({ start: dateDebutClic, end: dateFinClic });
+                } 
+                else if (modeDragCreation && aBouge) 
+                {
+                    let debut = this.dateDebutCreation();
+                    let fin = this.dateFinCreation();
+                    
+                    if (debut && fin)
+                        this.eventCreated.emit({ start: debut, end: fin });
+                }
+            } 
 
             this.dateDebutCreation.set(null);
             this.dateFinCreation.set(null);

@@ -360,7 +360,6 @@
     height: var(--hour-height) !important;
     border-bottom: 1px solid var(--mat-sys-outline-variant);
     box-sizing: border-box;
-    touch-action: none;
 }
 
 .hour-slot:hover 
