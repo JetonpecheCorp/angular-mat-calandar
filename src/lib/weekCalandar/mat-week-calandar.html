@@ -139,7 +139,7 @@
                         @if (dragCreationEnCours() && dateDebutCreation() && EstMemeJour(jour.date, dateDebutCreation()!)) {
                             <div class="creation-preview-block" [ngStyle]="styleApercuCreation()">
                                 <div class="event-content">
-                                    <span class="event-title">(Nouveau)</span>
+                                    <span class="event-title">({{ texteEventDragNouveau() }})</span>
                                     <span class="event-time">{{ formatHeureCreation() }}</span>
                                 </div>
                             </div>

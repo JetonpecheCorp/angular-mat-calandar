@@ -46,6 +46,7 @@ export class MatMonthCalandar implements OnInit
     protected overrideRipple = signal(false);
     protected texteEventPlus = signal<string>("one more");
     protected texteBtnAujourdhui = signal<string>("Today");
+    protected texteEventDragNouveau = signal<string>("new");
 
     private eventEnCoursDeDrag = false;
     private readonly langueNavigateur = navigator.language || "fr-FR";
@@ -174,6 +175,18 @@ export class MatMonthCalandar implements OnInit
         };
 
         this.texteBtnAujourdhui.set(DICT_TRADUCTION_BTN[LANGUE] || DICT_TRADUCTION_BTN['en']);
+
+        const DICT_TRADUCTION_NOUVEAU: Record<string, string> = 
+        {
+            "fr": "nouveau",
+            "it": "nuovo",
+            "de": "neu",
+            "es": "nuevo",
+            "pt": "novo",
+            "en": "new"
+        };
+
+        this.texteEventDragNouveau.set(DICT_TRADUCTION_NOUVEAU[LANGUE] || DICT_TRADUCTION_BTN['en']);
     }
 
     protected Precedent(): void 

@@ -54,6 +54,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     eventCreated = output<DateInterval>();
 
     protected texteBtnAujourdhui = signal<string>("Today");
+    protected texteEventDragNouveau = signal<string>("new");
     protected prefixSemaine = signal<string>("W");
     protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
     protected resizeEnCours = signal<{ id: string | number, dateTime: number, top: number, height: number, formatHeure: string } | null>(null);
@@ -289,6 +290,18 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         };
 
         this.prefixSemaine.set(DICT_TRADUCTION_SEMAINE[LANGUE] || DICT_TRADUCTION_SEMAINE['en']);
+
+        const DICT_TRADUCTION_NOUVEAU: Record<string, string> = 
+        {
+            "fr": "nouveau",
+            "it": "nuovo",
+            "de": "neu",
+            "es": "nuevo",
+            "pt": "novo",
+            "en": "new"
+        };
+
+        this.texteEventDragNouveau.set(DICT_TRADUCTION_NOUVEAU[LANGUE] || DICT_TRADUCTION_BTN['en']);
     }
 
     ngOnDestroy(): void 
