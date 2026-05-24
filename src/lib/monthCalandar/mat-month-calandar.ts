@@ -11,6 +11,18 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DateSpecialEvent } from '../../public-api';
 import { DateInterval } from '../../models/DateInterval';
 
+interface EventPositionne {
+    event: EventCalandar;
+    jourDebutIndex: number; /* de 0 à (nbColonnes - 1) */
+    dureeJours: number;
+    ligne: number;          /* Position verticale (0, 1, 2...) */
+}
+
+interface SemaineCalendrier {
+    jours: DateCalendrier[];
+    eventsPositionnes: EventPositionne[];
+}
+
 @Component({
   selector: 'jp-mat-month-calandar',
   imports: [DragDropModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule],
@@ -46,9 +58,8 @@ export class MatMonthCalandar implements OnInit
     protected overrideRipple = signal(false);
     protected texteEventPlus = signal<string>("one more");
     protected texteBtnAujourdhui = signal<string>("Today");
-    protected texteEventDragNouveau = signal<string>("new");
+    protected hoveredEvent = signal<EventCalandar | null>(null);
 
-    private eventEnCoursDeDrag = false;
     private readonly langueNavigateur = navigator.language || "fr-FR";
     
     private dernierTouchTime = 0;
@@ -63,6 +74,7 @@ export class MatMonthCalandar implements OnInit
     });
 
     protected nbColonnes = computed(() => 7 - this.joursAExclure().length);
+    protected maxLignesVisibles = computed(() => this.estPetitEcran() ? 3 : 4); 
 
     protected listeDate = computed(() =>
     {
@@ -108,6 +120,76 @@ export class MatMonthCalandar implements OnInit
         }
 
         return liste;
+    });
+
+    protected listeSemaines = computed<SemaineCalendrier[]>(() => 
+    {
+        const joursPlats = this.listeDate(); 
+        const nbCols = this.nbColonnes();
+        const semaines: SemaineCalendrier[] = [];
+
+        for (let i = 0; i < joursPlats.length; i += nbCols) 
+        {
+            const joursSemaine = joursPlats.slice(i, i + nbCols);
+            let eventsPositionnes: EventPositionne[] = [];
+            let slotsOccuppes: { [jour: number]: number[] } = {};
+
+            // 1. Récupérer tous les événements uniques de cette semaine
+            const setEvents = new Set<EventCalandar>();
+            joursSemaine.forEach(j => 
+            {
+                j.listeEvent.forEach(ev => setEvents.add(ev));
+            });
+
+            // 2. Trier : on place en haut les plus anciens et les plus longs
+            const eventsTries = Array.from(setEvents).sort((a, b) => 
+            {
+                const startDiff = a.startDate.getTime() - b.startDate.getTime();
+
+                if (startDiff != 0) 
+                    return startDiff;
+
+                return (b.endDate.getTime() - b.startDate.getTime()) - (a.endDate.getTime() - a.startDate.getTime());
+            });
+
+            // 3. Calculer les slots
+            eventsTries.forEach(ev => {
+                // Trouver les index de début et fin DANS LA SEMAINE
+                const startIdx = joursSemaine.findIndex(j => this.EstMemeJour(j.date, ev.startDate));
+                const actualStartIdx = startIdx === -1 ? 0 : startIdx; 
+
+                const endIdx = joursSemaine.findIndex(j => this.EstMemeJour(j.date, ev.endDate));
+                const actualEndIdx = endIdx === -1 ? (nbCols - 1) : endIdx; 
+
+                const duree = (actualEndIdx - actualStartIdx) + 1;
+
+                // Trouver la première ligne libre
+                let ligne = 0;
+                let ligneLibre = false;
+                while (!ligneLibre) {
+                    ligneLibre = true;
+                    for (let j = actualStartIdx; j <= actualEndIdx; j++) {
+                        if (!slotsOccuppes[j]) slotsOccuppes[j] = [];
+                        if (slotsOccuppes[j].includes(ligne)) {
+                            ligneLibre = false;
+                            ligne++;
+                            break;
+                        }
+                    }
+                }
+
+                // Réserver les slots pour ces jours
+                for (let j = actualStartIdx; j <= actualEndIdx; j++) {
+                    if (!slotsOccuppes[j]) slotsOccuppes[j] = [];
+                    slotsOccuppes[j].push(ligne);
+                }
+
+                eventsPositionnes.push({ event: ev, jourDebutIndex: actualStartIdx, dureeJours: duree, ligne: ligne });
+            });
+
+            semaines.push({ jours: joursSemaine, eventsPositionnes });
+        }
+        return semaines;
     });
 
     protected listeMoisTraduit = computed(() => 
@@ -175,18 +257,13 @@ export class MatMonthCalandar implements OnInit
         };
 
         this.texteBtnAujourdhui.set(DICT_TRADUCTION_BTN[LANGUE] || DICT_TRADUCTION_BTN['en']);
+    }
 
-        const DICT_TRADUCTION_NOUVEAU: Record<string, string> = 
-        {
-            "fr": "nouveau",
-            "it": "nuovo",
-            "de": "neu",
-            "es": "nuevo",
-            "pt": "novo",
-            "en": "new"
-        };
-
-        this.texteEventDragNouveau.set(DICT_TRADUCTION_NOUVEAU[LANGUE] || DICT_TRADUCTION_BTN['en']);
+    protected EstMemeJour(date1: Date, date2: Date): boolean 
+    {
+        return date1.getDate() === date2.getDate() &&
+            date1.getMonth() === date2.getMonth() &&
+            date1.getFullYear() === date2.getFullYear();
     }
 
     protected Precedent(): void 
@@ -241,19 +318,6 @@ export class MatMonthCalandar implements OnInit
         this.annee.set(_annee);
     }
 
-    protected LimiteNbEventVisible(element: DateCalendrier): number 
-    {
-        if (this.estPetitEcran()) 
-            return 3;
-
-        const aDesEventsSpeciaux = element.listeEventSpecial && element.listeEventSpecial.length > 0;
-        
-        if (aDesEventsSpeciaux)
-            return 2;
-        
-        return 3; 
-    }
-
     protected ScrollHorizontal(event: WheelEvent): void 
     {
         const conteneur = event.currentTarget as HTMLElement;
@@ -267,24 +331,18 @@ export class MatMonthCalandar implements OnInit
     }
 
     protected ClickEvent(_event: EventCalandar): void
-    {
-        if (this.eventEnCoursDeDrag) 
-            return;
-        
+    {   
         this.eventClickEvent.emit(_event);
     }
 
     protected OnDragStarted(): void 
     {   
-        this.eventEnCoursDeDrag = true;
+        this.hoveredEvent.set(null);
     }
 
     protected OnDragEnded(): void 
     {
-        // attend un peu pour que l'event click passe
-        setTimeout(() => {
-            this.eventEnCoursDeDrag = false;
-        }, 100);
+        this.hoveredEvent.set(null);
     }
 
     protected OnEventDropped(dropEvent: CdkDragDrop<DateCalendrier>): void 
@@ -564,6 +622,6 @@ export class MatMonthCalandar implements OnInit
     @HostListener('window:resize')
     protected onResize(): void
     {
-        this.estPetitEcran.set(window.innerWidth <= 600);
+        this.estPetitEcran.set(window.innerWidth <= 768);
     }
 }

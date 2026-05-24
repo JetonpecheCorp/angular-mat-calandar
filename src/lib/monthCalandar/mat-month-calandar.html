@@ -44,72 +44,93 @@
         }
     </div>
 
-    <div cdkDropListGroup class="days-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
-        @for (element of listeDate(); track $index) 
+    <div cdkDropListGroup class="calendar-body">
+        @for (semaine of listeSemaines(); track $index) 
         {
-            <div class="day-cell" 
-                    matRipple
-                    cdkDropList
-                   [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
-                   [cdkDropListData]="element"
-                   (cdkDropListDropped)="OnEventDropped($event)"
-                   (mousedown)="OnMouseDownCreation($event, element.date, element.estBloquer)"
-                   (touchstart)="OnMouseDownCreation($event, element.date, element.estBloquer)"
-                   [attr.data-date]="element.date.getTime()"
-                   [class.last-column]="($index + 1) % nbColonnes() === 0"
-                   [class.day-disabled]="(element.estWeekend && weekendDisabled()) || element.estBloquer"
-                   [class.today]="element.estAujourdhui"
-                   [class.different-month]="!element.estMoisCourant">
-                    
-                <div class="day-cell-header">
-                    <span class="day-number">{{ element.date.getDate() }}</span>
-                    
-                    @if (element.listeEventSpecial && element.listeEventSpecial.length > 0) 
+            <div class="week-row">
+                
+                <div class="days-background-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
+                    @for (element of semaine.jours; track $index) 
                     {
-                        <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
-                            @for (sp of element.listeEventSpecial; track sp.title) 
-                            {
-                                <div class="special-badge" [title]="sp.title">
-                                    <span class="special-text">{{ sp.title }}</span>
-                                </div>
-                            }
+                        <div class="day-cell" 
+                            matRipple
+                            cdkDropList
+                            cdkDropListSortingDisabled="true"
+                            [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
+                            [cdkDropListData]="element"
+                            (cdkDropListDropped)="OnEventDropped($event)"
+                            (mousedown)="OnMouseDownCreation($event, element.date, element.estBloquer)"
+                            (touchstart)="OnMouseDownCreation($event, element.date, element.estBloquer)"
+                            [attr.data-date]="element.date.getTime()"
+                            [class.last-column]="($index + 1) % nbColonnes() == 0"
+                            [class.day-disabled]="(element.estWeekend && weekendDisabled()) || element.estBloquer"
+                            [class.today]="element.estAujourdhui"
+                            [class.different-month]="!element.estMoisCourant"
+                            [class.is-creating]="EstEnCreation(element.date)">
+                            
+                            <div class="day-cell-header">
+                                <span class="day-number">{{ element.date.getDate() }}</span>
+                                
+                                @if (element.listeEventSpecial && element.listeEventSpecial.length > 0) 
+                                {
+                                    <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
+                                        @for (sp of element.listeEventSpecial; track sp.title) 
+                                        {
+                                            <div class="special-badge" [title]="sp.title">
+                                                <span class="special-text">{{ sp.title }}</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="day-cell-footer">
+                                @if (element.listeEvent.length > maxLignesVisibles()) 
+                                {
+                                    <div class="more-indicator">
+                                        +{{ element.listeEvent.length - maxLignesVisibles() }} 
+                                        
+                                        @if (!estPetitEcran()) 
+                                        {
+                                            {{ texteEventPlus() }}...
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
                     }
                 </div>
 
-                <div class="events-list">
-                    @for (ev of element.listeEvent.slice(0, LimiteNbEventVisible(element)); track $index) 
+                <div cdkDropList class="events-foreground-layer">
+                    @for (pos of semaine.eventsPositionnes; track pos.event) 
                     {
-                        <div class="event-item" 
+                        @if (pos.ligne < maxLignesVisibles()) 
+                        {
+                            <div class="event-item absolute-event" 
                                 cdkDrag
-                                [cdkDragData]="ev"
+                                [cdkDragData]="pos.event"
+                                [style.--pos-start]="pos.jourDebutIndex"
+                                [style.--pos-duree]="pos.dureeJours"
+                                [style.--pos-ligne]="pos.ligne"
+                                [style.--nb-cols]="nbColonnes()"
+                                
                                 (cdkDragStarted)="OnDragStarted()" 
                                 (cdkDragEnded)="OnDragEnded()"
-                                [title]="ev.description || ev.titre" 
-                               (mouseenter)="overrideRipple.set(true)" 
-                               (mouseleave)="overrideRipple.set(false)"
-                               (touchstart)="overrideRipple.set(true)"
-                               (click)="$event.stopPropagation(); ClickEvent(ev)">
+                                [title]="pos.event.description || pos.event.titre" 
+                                [class.is-hovered]="hoveredEvent() == pos.event"
+                                (mouseenter)="overrideRipple.set(true); hoveredEvent.set(pos.event)" 
+                                (mouseleave)="overrideRipple.set(false); hoveredEvent.set(null)"
+                                (touchstart)="overrideRipple.set(true); hoveredEvent.set(pos.event)"
+                                (touchend)="hoveredEvent.set(null)"
+                                (click)="$event.stopPropagation(); ClickEvent(pos.event)">
                                 
-                            <span class="event-time">{{ ev.startDate | date:'HH:mm' }}</span>
-                            <span class="event-title">{{ ev.titre }}</span>
-                        </div>
-                    }
-
-                    @if (element.listeEvent.length > LimiteNbEventVisible(element))
-                    {
-                        <div class="more-indicator">
-                            + {{ element.listeEvent.length - LimiteNbEventVisible(element) }} {{(estPetitEcran() ? '' :  texteEventPlus() + '...')}}
-                        </div>
-                    }
-
-                    @if (EstEnCreation(element.date)) 
-                    {
-                        <div class="event-item event-phantom">
-                            <span class="event-title">({{ texteEventDragNouveau() }})</span>
-                        </div>
+                                <span class="event-time">{{ pos.event.startDate | date:'HH:mm' }}</span>
+                                <span class="event-title">{{ pos.event.titre }}</span>
+                            </div>
+                        }
                     }
                 </div>
+                
             </div>
         }
     </div>
@@ -137,7 +158,7 @@
         {
             <button mat-button 
                     class="year-chip" 
-                    [class.active-year]="element === annee()"
+                    [class.active-year]="element == annee()"
                     (click)="ChangerAnnee(element)">
                 {{ element }}
             </button>
