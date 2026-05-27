@@ -1,4 +1,4 @@
-<div class="calendar-wrapper mat-elevation-z2">
+<div class="calendar-wrapper mat-elevation-z2" [class.is-resizing-calendar]="previewResize() !== null">
 
     <mat-toolbar class="calendar-header">
         <div class="header-main-container">
@@ -102,9 +102,9 @@
                 </div>
 
                 <div cdkDropList cdkDropListSortingDisabled class="events-foreground-layer">
-                    @for (pos of semaine.eventsPositionnes; track pos.event) 
+                    @for (pos of semaine.eventsPositionnes; track pos.event.id) 
                     {
-                        @if (pos.ligne < maxLignesVisibles()) 
+                        @if (pos.ligne < maxLignesVisibles())
                         {
                             <div class="event-item absolute-event" 
                                 cdkDrag
@@ -121,11 +121,21 @@
                                 (mouseenter)="overrideRipple.set(true); hoveredEvent.set(pos.event)" 
                                 (mouseleave)="overrideRipple.set(false); hoveredEvent.set(null)"
                                 (touchstart)="overrideRipple.set(true); hoveredEvent.set(pos.event)"
-                                (touchend)="hoveredEvent.set(null); hoveredEvent.set(null)"
+                                (touchend)="overrideRipple.set(false); hoveredEvent.set(null)"
                                 (click)="$event.stopPropagation(); ClickEvent(pos.event)">
                                 
+                                <div class="resize-handle left" 
+                                    (mousedown)="OnResizeStart($event, pos.event, 'left')" 
+                                    (touchstart)="OnResizeStart($event, pos.event, 'left')">
+                                </div>
+
                                 <span class="event-time">{{ pos.event.startDate | date:'HH:mm' }}</span>
                                 <span class="event-title">{{ pos.event.titre }}</span>
+
+                                <div class="resize-handle right" 
+                                    (mousedown)="OnResizeStart($event, pos.event, 'right')" 
+                                    (touchstart)="OnResizeStart($event, pos.event, 'right')">
+                                </div>
                             </div>
                         }
                     }

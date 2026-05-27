@@ -66,6 +66,21 @@ export class MatMonthCalandar implements OnInit
     protected dragCreationEnCours = signal(false);
     protected dateDebutCreation = signal<Date | null>(null);
     protected dateFinCreation = signal<Date | null>(null);
+    protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
+
+    protected displayEvents = computed(() => 
+    {
+        const preview = this.previewResize();
+        const baseEvents = this.events() ?? [];
+
+        if (!preview)
+            return baseEvents;
+
+        // Si on est en train de redimensionner, on remplace temporairement les dates de l'événement concerné
+        return baseEvents.map(ev => 
+            ev.id == preview.eventId ? { ...ev, startDate: preview.startDate, endDate: preview.endDate } : ev
+        );
+    });
 
     protected nomMois = computed(() =>
     {
@@ -361,16 +376,19 @@ export class MatMonthCalandar implements OnInit
         // La différence en millisecondes
         let differenceTemps = DATE_CIBLE_SANS_HEURE - DATE_DEBUT_SANS_HEURE;
 
-        const nouvelleDateDebut = new Date(eventObj.startDate.getTime() + differenceTemps);
-        const nouvelleDateFin = new Date(eventObj.endDate.getTime() + differenceTemps);
+        if(differenceTemps != 0)
+        {
+            const nouvelleDateDebut = new Date(eventObj.startDate.getTime() + differenceTemps);
+            const nouvelleDateFin = new Date(eventObj.endDate.getTime() + differenceTemps);
 
-        this.eventUpdated.emit({
-            id: eventObj.id,
-            titre: eventObj.titre,
-            description: eventObj.description,
-            startDate: nouvelleDateDebut,
-            endDate: nouvelleDateFin
-        });
+            this.eventUpdated.emit({
+                id: eventObj.id,
+                titre: eventObj.titre,
+                description: eventObj.description,
+                startDate: nouvelleDateDebut,
+                endDate: nouvelleDateFin
+            });
+        }
     }
 
     // Vérifie si un jour fait partie de la sélection en cours
@@ -390,7 +408,6 @@ export class MatMonthCalandar implements OnInit
         return tDate >= min && tDate <= max;
     }
 
-    // Gère le clic, le drag et la compatibilité mobile
     protected OnMouseDownCreation(event: MouseEvent | TouchEvent, dateJour: Date, estBloquer: boolean): void 
     {
         if (estBloquer) 
@@ -533,6 +550,86 @@ export class MatMonthCalandar implements OnInit
         window.addEventListener('touchend', onMouseUp);
     }
 
+    protected OnResizeStart(_e: MouseEvent | TouchEvent, _eventObj: EventCalandar, _side: 'left' | 'right'): void 
+    {
+        _e.preventDefault();
+        _e.stopPropagation();
+
+        let dateTrouvee = false;
+        let finalStartDate = new Date(_eventObj.startDate);
+        let finalEndDate = new Date(_eventObj.endDate);
+
+        const onMouseMove = (_moveEvent: MouseEvent | TouchEvent) => 
+        {
+            if (_moveEvent.cancelable) 
+                _moveEvent.preventDefault(); 
+
+            let clientX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
+            let clientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
+
+            const elementFromPoint = document.elementFromPoint(clientX, clientY);
+            let hoveredCell = elementFromPoint ? elementFromPoint.closest('.day-cell') as HTMLElement : null;
+
+            if (hoveredCell && hoveredCell.dataset['date']) 
+            {
+                let timestamp = parseInt(hoveredCell.dataset['date'], 10);
+                if (!isNaN(timestamp)) 
+                {
+                    let hoveredDate = new Date(timestamp);
+                    dateTrouvee = true;
+
+                    if (_side == "left") 
+                    {
+                        if (hoveredDate.getTime() > _eventObj.endDate.getTime()) 
+                            hoveredDate = new Date(_eventObj.endDate);
+
+                        finalStartDate = hoveredDate;
+                    } 
+                    else 
+                    {
+                        if (hoveredDate.getTime() < _eventObj.startDate.getTime()) 
+                            hoveredDate = new Date(_eventObj.startDate);
+
+                        finalEndDate = hoveredDate;
+                    }
+
+                    // actualiser automatiquement le front la barre selon le cuseur
+                    this.previewResize.set({
+                        eventId: _eventObj.id,
+                        startDate: finalStartDate,
+                        endDate: finalEndDate
+                    });
+                }
+            }
+        };
+
+        const onMouseUp = () => 
+        {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            window.removeEventListener('touchmove', onMouseMove);
+            window.removeEventListener('touchend', onMouseUp);
+            
+            // supprime le fantôme
+            this.previewResize.set(null);
+
+            // On émet si les dates ont changé
+            if (dateTrouvee && (finalStartDate.getTime() != _eventObj.startDate.getTime() || finalEndDate.getTime() != _eventObj.endDate.getTime())) 
+            {
+                this.eventUpdated.emit({
+                    ..._eventObj,
+                    startDate: finalStartDate,
+                    endDate: finalEndDate
+                });
+            }
+        };
+
+        window.addEventListener('mousemove', onMouseMove, { passive: false });
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('touchmove', onMouseMove, { passive: false });
+        window.addEventListener('touchend', onMouseUp);
+    }
+
     private Generer(_de: Date, _a: Date): DateCalendrier[] 
     {
         const DATE_DEBUT = new Date(_de.getFullYear(), _de.getMonth(), 1);
@@ -555,7 +652,7 @@ export class MatMonthCalandar implements OnInit
             if (this.joursAExclure().includes(date.getDay())) 
                 continue;
 
-            let listeDateInterval = this.events()?.filter(x => this.EstDansIntervalle(date, x.startDate, x.endDate)) ?? [];
+            let listeDateInterval = this.displayEvents().filter(x => this.EstDansIntervalle(date, x.startDate, x.endDate));            
             let estBloquer = this.daysDisabled()?.findIndex(x => this.DateSontEgaux(x, date)) ?? -1;
 
             const M = date.getMonth() + 1; // 1 => janvier
