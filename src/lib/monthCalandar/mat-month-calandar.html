@@ -101,7 +101,7 @@
                     }
                 </div>
 
-                <div cdkDropList class="events-foreground-layer">
+                <div cdkDropList cdkDropListSortingDisabled class="events-foreground-layer">
                     @for (pos of semaine.eventsPositionnes; track pos.event) 
                     {
                         @if (pos.ligne < maxLignesVisibles()) 
