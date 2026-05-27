@@ -343,6 +343,7 @@ export class MatMonthCalandar implements OnInit
     protected OnDragEnded(): void 
     {
         this.hoveredEvent.set(null);
+        this.overrideRipple.set(false);
     }
 
     protected OnEventDropped(dropEvent: CdkDragDrop<DateCalendrier>): void 

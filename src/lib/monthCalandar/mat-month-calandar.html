@@ -35,7 +35,7 @@
     </mat-toolbar>
 
     <div class="weekdays-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
-        @for (element of listeNomSemaine(); track $index) 
+        @for (element of listeNomSemaine(); track element.index) 
         {
             <div class="weekday">
                 <span class="day-short">{{ element.reduit }}</span>
@@ -55,7 +55,7 @@
                         <div class="day-cell" 
                             matRipple
                             cdkDropList
-                            cdkDropListSortingDisabled="true"
+                            cdkDropListSortingDisabled
                             [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
                             [cdkDropListData]="element"
                             (cdkDropListDropped)="OnEventDropped($event)"
@@ -74,7 +74,7 @@
                                 @if (element.listeEventSpecial && element.listeEventSpecial.length > 0) 
                                 {
                                     <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
-                                        @for (sp of element.listeEventSpecial; track sp.title) 
+                                        @for (sp of element.listeEventSpecial; track $index) 
                                         {
                                             <div class="special-badge" [title]="sp.title">
                                                 <span class="special-text">{{ sp.title }}</span>
@@ -121,7 +121,7 @@
                                 (mouseenter)="overrideRipple.set(true); hoveredEvent.set(pos.event)" 
                                 (mouseleave)="overrideRipple.set(false); hoveredEvent.set(null)"
                                 (touchstart)="overrideRipple.set(true); hoveredEvent.set(pos.event)"
-                                (touchend)="hoveredEvent.set(null)"
+                                (touchend)="hoveredEvent.set(null); hoveredEvent.set(null)"
                                 (click)="$event.stopPropagation(); ClickEvent(pos.event)">
                                 
                                 <span class="event-time">{{ pos.event.startDate | date:'HH:mm' }}</span>
