@@ -278,6 +278,23 @@ export class MatMonthCalandar implements OnInit
         this.texteBtnAujourdhui.set(DICT_TRADUCTION_BTN[LANGUE] || DICT_TRADUCTION_BTN['en']);
     }
 
+    protected ScrollVersAnneeActive(): void 
+    {
+        // le temps que le mat menu existe reelement
+        setTimeout(() => 
+        {
+            const boutonActif = document.querySelector('.year-grid .active-year');
+            
+            if (boutonActif) 
+            {
+                boutonActif.scrollIntoView({
+                    behavior: "instant",
+                    block: "center"
+                });
+            }
+        }, 50);
+    }
+
     protected EstMemeJour(date1: Date, date2: Date): boolean 
     {
         return date1.getDate() === date2.getDate() &&
