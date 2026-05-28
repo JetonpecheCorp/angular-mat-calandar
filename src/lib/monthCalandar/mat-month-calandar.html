@@ -168,7 +168,7 @@
         {
             <button [matButton]="element == annee() ? 'filled' : 'text'"
                     class="year-chip" 
-                    [class.year-active]="element == annee()"
+                    [class.active-year]="element == annee()"
                     (click)="ChangerAnnee(element)">
                 {{ element }}
             </button>
