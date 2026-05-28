@@ -42,6 +42,7 @@ export class MatMonthCalandar implements OnInit
     weekendDisabled = input(false, { transform: booleanAttribute });
     mondayFirst = input(false, { transform: booleanAttribute });
     matRippleDisabled = input(false, { transform: booleanAttribute });
+    hideNavYearBtn = input(false, { transform: booleanAttribute });
 
     /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
@@ -335,6 +336,16 @@ export class MatMonthCalandar implements OnInit
 
         this.annee.set(nouvelleAnnee);
         this.mois.set(nouveauMois);
+    }
+
+    protected AnneePrecedente(): void 
+    {
+        this.annee.set(this.annee() - 1);
+    }
+
+    protected AnneeSuivante(): void 
+    {
+        this.annee.set(this.annee() + 1);
     }
 
     protected AllerAujourdhui(): void 
