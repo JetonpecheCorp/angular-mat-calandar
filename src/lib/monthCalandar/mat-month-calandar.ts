@@ -39,6 +39,7 @@ export class MatMonthCalandar implements OnInit
     /** 1 => January, 12 => december */
     mois = model.required<number>({ alias: "month" });
     annee = model.required<number>({ alias: "year" });
+    useAmPm = input(false, { transform: booleanAttribute });
     weekendDisabled = input(false, { transform: booleanAttribute });
     mondayFirst = input(false, { transform: booleanAttribute });
     matRippleDisabled = input(false, { transform: booleanAttribute });

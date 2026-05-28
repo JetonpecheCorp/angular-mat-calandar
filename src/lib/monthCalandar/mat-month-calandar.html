@@ -143,7 +143,7 @@
                                     (touchstart)="OnResizeStart($event, pos.event, 'left')">
                                 </div>
 
-                                <span class="event-time">{{ pos.event.startDate | date:'HH:mm' }}</span>
+                                <span class="event-time">{{ pos.event.startDate | date:(useAmPm() ? 'h:mm a' : 'HH:mm') }}</span>
                                 <span class="event-title">{{ pos.event.titre }}</span>
 
                                 <div class="resize-handle right" 
