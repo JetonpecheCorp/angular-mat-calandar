@@ -130,7 +130,7 @@ display: grid;
 .active-year 
 {
     background-color: var(--mat-sys-primary);
-    color: var(--mat-sys-on-primary);
+    color: var(--mat-sys-on-primary) !important;
     font-weight: 700;
 }
 
