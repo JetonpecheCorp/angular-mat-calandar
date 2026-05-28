@@ -127,13 +127,6 @@ display: grid;
     font-size: 0.9rem;
 }
 
-.active-year 
-{
-    background-color: var(--mat-sys-primary);
-    color: var(--mat-sys-on-primary) !important;
-    font-weight: 700;
-}
-
 .year-grid::-webkit-scrollbar 
 {
     width: 6px;
