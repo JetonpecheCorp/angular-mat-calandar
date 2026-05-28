@@ -10,6 +10,7 @@ import {MatMenuModule} from '@angular/material/menu';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DateSpecialEvent } from '../../public-api';
 import { DateInterval } from '../../models/DateInterval';
+import { DateCalandarDisabled } from '../../models/DateCalandarDisabled';
 
 interface EventPositionne {
     event: EventCalandar;
@@ -48,6 +49,9 @@ export class MatMonthCalandar implements OnInit
     /** 1 => January, 12 => december */
     monthsDisabled = input<number[]>([]);
     daysDisabled = input<Date[]>();
+
+    /** Disabled interval date */
+    intervalsDisabled = input<DateCalandarDisabled[]>([]);
 
     eventClickJour = output<DateCalendrier>({ alias: "dayClicked" });
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
@@ -653,10 +657,63 @@ export class MatMonthCalandar implements OnInit
                 continue;
 
             let listeDateInterval = this.displayEvents().filter(x => this.EstDansIntervalle(date, x.startDate, x.endDate));            
-            let estBloquer = this.daysDisabled()?.findIndex(x => this.DateSontEgaux(x, date)) ?? -1;
-
+            
             const M = date.getMonth() + 1; // 1 => janvier
             const D = date.getDate();  
+            const Y = date.getFullYear();
+            
+            // --- LOGIQUE DE BLOCAGE DES JOURS ---
+            
+            // 1. Vérification des dates précises
+            let estBloquerDatePrecise = this.daysDisabled()?.some(x => this.DateSontEgaux(x, date)) ?? false;
+
+            // 2. Vérification de tes intervalles (récurrents ou ponctuels)
+            let estBloquerIntervalle = this.intervalsDisabled().some(inter => {
+                const startM = inter.start.month;
+                const startD = inter.start.day;
+                const startY = inter.start.year;
+
+                const endM = inter.end.month;
+                const endD = inter.end.day;
+                const endY = inter.end.year;
+
+                // CAS 1 : C'est un événement ponctuel (les deux années sont fournies)
+                if (startY != undefined && startY != null && endY !== undefined && endY != null) 
+                {
+                    const tDate = new Date(Y, M - 1, D).getTime();
+                    const tStart = new Date(startY, startM - 1, startD).getTime();
+                    const tEnd = new Date(endY, endM - 1, endD).getTime();
+                    
+                    return tDate >= tStart && tDate <= tEnd;
+                }
+
+                // CAS 2 : C'est une période récurrente (ex: été ou hiver)
+                const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
+                let estDansLaPeriode = false;
+
+                if (isNormalInterval)
+                    estDansLaPeriode = (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
+
+                else
+                    estDansLaPeriode = (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
+
+                if (estDansLaPeriode) 
+                {
+                    if (startY !== undefined && Y < startY) 
+                        return false;
+
+                    if (endY !== undefined && Y > endY) 
+                        return false;
+
+                    return true;
+                }
+
+                return false;
+            });
+
+            let estBloquer = estBloquerDatePrecise || estBloquerIntervalle;
+            
+            // --- GESTION DES ÉVÉNEMENTS SPÉCIAUX (BADGES) ---
             const eventsSpeciauxDuJour = this.specialEvents().filter(sp => 
             {
                 const startM = sp.dateStart.month;
@@ -664,22 +721,20 @@ export class MatMonthCalandar implements OnInit
                 const endM = sp.dateEnd.month;
                 const endD = sp.dateEnd.day;
 
-                // Gère les intervalles normaux (ex: Mai à Juillet) et ceux à cheval sur l'année (ex: Décembre à Janvier)
+                // Gere les intervalles normaux et ceux à cheval sur l'année
                 const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
 
                 if (isNormalInterval) 
-                {
                     return (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
-                } 
+
                 else 
-                {
                     return (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
-                }
+
             });
 
             liste.push({
                 date,
-                estBloquer: estBloquer != -1,
+                estBloquer: estBloquer,
                 estAujourdhui: this.EstDateJour(date),
                 estMoisCourant: date.getMonth() == _de.getMonth(),
                 estWeekend: date.getDay() == 0 || date.getDay() == 6,

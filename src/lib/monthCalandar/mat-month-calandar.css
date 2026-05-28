@@ -389,6 +389,11 @@ display: grid;
     text-overflow: ellipsis;
 }
 
+.mat-ripple:not(:empty)
+{
+    transform: none;
+}
+
 /* --- ÉVÉNEMENTS --- */
 .event-time {
     font-weight: 700;
