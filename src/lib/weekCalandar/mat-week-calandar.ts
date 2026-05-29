@@ -46,6 +46,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     weekendDisabled = input(false, { transform: booleanAttribute });
     useAmPm = input(false, { transform: booleanAttribute });
     matRippleDisabled = input(false, { transform: booleanAttribute });
+    hideNavYearBtn = input(false, { transform: booleanAttribute });
 
     eventClicked = output<EventCalandar>();
     dayClicked = output<EventCalandar[]>();
@@ -503,6 +504,20 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         dateFin.setHours(dateDebut.getHours() + 1);
         
         this.timeSlotClicked.emit({ start: dateDebut, end: dateFin });
+    }
+
+    protected MoisPrecedent(): void
+    {
+        const DATE = new Date(this.dateReference());
+        DATE.setMonth(DATE.getMonth() - 1);
+        this.dateReference.set(DATE);
+    }
+
+    protected MoisSuivant(): void
+    {
+        const DATE = new Date(this.dateReference());
+        DATE.setMonth(DATE.getMonth() + 1);
+        this.dateReference.set(DATE);
     }
 
     protected Precedent(): void

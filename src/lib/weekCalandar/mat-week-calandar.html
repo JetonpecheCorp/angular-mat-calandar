@@ -6,6 +6,13 @@
             <div class="header-main-container">
                 <div class="header-nav-row">
 
+                    @if(!hideNavYearBtn())
+                    {
+                        <button mat-icon-button (click)="MoisPrecedent()">
+                            <mat-icon>keyboard_double_arrow_left</mat-icon>
+                        </button>
+                    }
+
                     <button mat-icon-button (click)="Precedent()">
                         <mat-icon>chevron_left</mat-icon>
                     </button>
@@ -15,6 +22,13 @@
                     <button mat-icon-button (click)="Suivant()">
                         <mat-icon>chevron_right</mat-icon>
                     </button>
+
+                    @if(!hideNavYearBtn())
+                    {
+                        <button mat-icon-button (click)="MoisSuivant()">
+                            <mat-icon>keyboard_double_arrow_right</mat-icon>
+                        </button>
+                    }
                 </div>
                 <div>
                     <button matButton="filled" class="today-btn-flat" (click)="AllerAujourdhui()">
