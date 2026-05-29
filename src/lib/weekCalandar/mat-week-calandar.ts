@@ -1,4 +1,4 @@
-import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output, ChangeDetectionStrategy, HostListener } from '@angular/core';
+import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -57,7 +57,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected texteEventDragNouveau = signal<string>("new");
     protected prefixSemaine = signal<string>("W");
     protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
-    protected resizeEnCours = signal<{ id: string | number, dateTime: number, top: number, height: number, formatHeure: string } | null>(null);
+    protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
 
     private readonly langueNavigateur = navigator.language || "fr-FR";
     private timerInterval: any;
@@ -67,6 +67,19 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected dragCreationEnCours = signal(false);
     protected dateDebutCreation = signal<Date | null>(null);
     protected dateFinCreation = signal<Date | null>(null);
+
+    protected displayEvents = computed(() => 
+    {
+        const preview = this.previewResize();
+        const baseEvents = this.events() ?? [];
+
+        if (!preview) 
+            return baseEvents;
+
+        return baseEvents.map(ev => 
+            ev.id == preview.eventId ? { ...ev, startDate: preview.startDate, endDate: preview.endDate } : ev
+        );
+    });
 
     protected titrePeriode = computed(() => 
     {
@@ -221,22 +234,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return this.RecupererNumeroSemaine(this.dateReference());
     });
 
-    protected styleApercuCreation = computed(() => {
-        const debut = this.dateDebutCreation();
-        const fin = this.dateFinCreation();
-        if (!debut || !fin) return null;
-
-        const minH = this.hourMin();
-        const top = ((debut.getHours() - minH) * 60) + debut.getMinutes();
-        const hauteur = (((fin.getTime() - debut.getTime()) / 1000) / 60);
-
-        return {
-            'top.px': top,
-            'height.px': hauteur,
-            'display': 'block'
-        };
-    });
-
     protected formatHeureCreation = computed(() => 
     {
         let debut = this.dateDebutCreation();
@@ -339,7 +336,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected getPositionedEvents(dateJour: Date): PositionedEvent[]
     {
-        const LISTE_EVENT = this.events().filter(x =>
+        const LISTE_EVENT = this.displayEvents().filter(x =>
         {
             return this.EstDansIntervalle(dateJour, x.startDate, x.endDate);
         })
@@ -415,6 +412,28 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected ChoisirSemaine(_date: Date): void
     {
         this.dateReference.set(_date);
+    }
+
+    protected OnEventDragMoved(dragEvent: any, ev: PositionedEvent): void 
+    {
+        const distance = dragEvent.distance;
+        
+        // On retrouve la largeur de la colonne
+        const GRID_ELEMENT = dragEvent.source.element.nativeElement.closest('.days-grid');
+        const LARGEUR_COLONNE = GRID_ELEMENT ? GRID_ELEMENT.clientWidth / this.listeNomSemaine().length : 1;
+
+        // On reprend exactement ton calcul de décalage existant
+        const joursDecalage = Math.round(distance.x / LARGEUR_COLONNE);
+        const minutesDecalage = Math.round(distance.y / 15) * 15;
+
+        // On simule les nouvelles dates
+        let nouvelleDateDebut = new Date(ev.startDate);
+        nouvelleDateDebut.setDate(nouvelleDateDebut.getDate() + joursDecalage);
+        nouvelleDateDebut.setMinutes(nouvelleDateDebut.getMinutes() + minutesDecalage);
+
+        let nouvelleDateFin = new Date(ev.endDate);
+        nouvelleDateFin.setDate(nouvelleDateFin.getDate() + joursDecalage);
+        nouvelleDateFin.setMinutes(nouvelleDateFin.getMinutes() + minutesDecalage);
     }
 
     protected OnEventDragEnded(_dragEvent: CdkDragEnd, ev: PositionedEvent): void 
@@ -500,70 +519,62 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         this.dateReference.set(DATE);
     }
 
-    protected InitialiserResize(mouseEvent: MouseEvent | TouchEvent, ev: PositionedEvent, dateJour: Date, direction: 'top' | 'bottom'): void 
+    protected InitialiserResize(mouseEvent: MouseEvent | TouchEvent, ev: PositionedEvent, direction: 'top' | 'bottom'): void 
     {
         mouseEvent.stopPropagation();
         mouseEvent.preventDefault();
 
-        const cible = mouseEvent.target as HTMLElement;
-        const blockElement = cible.closest('.event-block') as HTMLElement;
+        // 1. Initialise le fantôme
+        this.previewResize.set({ eventId: ev.id, startDate: ev.startDate, endDate: ev.endDate });
         
-        if (!blockElement) 
-            return;
-
-        const topInitial = blockElement.offsetTop;
-        const hauteurInitiale = blockElement.offsetHeight;
-        const Y_CLIENT_DEBUT = mouseEvent instanceof MouseEvent ? mouseEvent.clientY : mouseEvent.touches[0].clientY;
+        let newStart = new Date(ev.startDate);
+        let newEnd = new Date(ev.endDate);
 
         const onMouseMove = (_moveEvent: MouseEvent | TouchEvent) => 
         {
-            const Y_ACTUELLE = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
-            const DIFFERENCE_Y = Y_ACTUELLE - Y_CLIENT_DEBUT;
-            const DIFFERENCE_Y_ARRONDI = Math.round(DIFFERENCE_Y / 15) * 15;
+            if (_moveEvent.cancelable) 
+                _moveEvent.preventDefault();
 
-            let nouveauTop = topInitial;
-            let nouvelleHauteur = hauteurInitiale;
+            const clientX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
+            const clientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
 
-            if (direction == "bottom") 
-                nouvelleHauteur = hauteurInitiale + DIFFERENCE_Y_ARRONDI;
+            // 2. Détecte la colonne survolée
+            const elementUnder = document.elementFromPoint(clientX, clientY);
+            const hoveredCol = elementUnder ? elementUnder.closest('.day-column') as HTMLElement : null;
 
-            else if (direction == "top") 
+            if (hoveredCol && hoveredCol.dataset['date']) 
             {
-                nouveauTop = topInitial + DIFFERENCE_Y_ARRONDI;
-                nouvelleHauteur = hauteurInitiale - DIFFERENCE_Y_ARRONDI;
+                const colTimestamp = parseInt(hoveredCol.dataset['date'], 10);
+                const colRect = hoveredCol.getBoundingClientRect();
+                
+                // 3. Calcule l'heure selon la position Y DANS la colonne survolée
+                let yActuel = clientY - colRect.top;
+                if (yActuel < 0) yActuel = 0;
+                
+                let minutesSurvolees = Math.floor(yActuel / 15) * 15;
+                const totalMins = (this.hourMin() * 60) + minutesSurvolees;
+                const h = Math.floor(totalMins / 60);
+                const m = totalMins % 60;
 
-                if (nouveauTop < 0)
+                let hoveredDate = new Date(colTimestamp);
+                hoveredDate.setHours(h, m, 0, 0);
+
+                if (direction == 'top') 
                 {
-                    nouvelleHauteur += nouveauTop;
-                    nouveauTop = 0;
+                    if (hoveredDate.getTime() >= ev.endDate.getTime()) 
+                        hoveredDate = new Date(ev.endDate.getTime() - 15 * 60000);
+
+                    newStart = hoveredDate;
+                } 
+                else 
+                {
+                    if (hoveredDate.getTime() <= ev.startDate.getTime())
+                        hoveredDate = new Date(ev.startDate.getTime() + 15 * 60000);
+
+                    newEnd = hoveredDate;
                 }
-            }
 
-            if (nouvelleHauteur >= 15) 
-            {
-                // Maj des heures en temps réel
-                let minutesDeDifference = (direction == "bottom") 
-                    ? nouvelleHauteur - hauteurInitiale 
-                    : nouveauTop - topInitial;
-
-                let dateMajDebut = new Date(ev.startDate);
-                let dateMajFin = new Date(ev.endDate);
-
-                if (direction == "bottom")
-                    dateMajFin.setMinutes(dateMajFin.getMinutes() + minutesDeDifference);
-
-                else
-                    dateMajDebut.setMinutes(dateMajDebut.getMinutes() + minutesDeDifference);
-
-                const stringHeureModifiee = this.GenererFormatHeure(dateMajDebut, dateMajFin, this.useAmPm());
-
-                this.resizeEnCours.set({
-                    id: ev.id,
-                    dateTime: dateJour.getTime(),
-                    top: nouveauTop,
-                    height: nouvelleHauteur,
-                    formatHeure: stringHeureModifiee
-                });
+                this.previewResize.set({ eventId: ev.id, startDate: newStart, endDate: newEnd });
             }
         };
 
@@ -574,36 +585,15 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
 
-            let resizeFini = this.resizeEnCours();
-            this.resizeEnCours.set(null);
+            this.previewResize.set(null);
 
-            if (resizeFini) 
+            if (newStart.getTime() !== ev.startDate.getTime() || newEnd.getTime() !== ev.endDate.getTime()) 
             {
-                let nouvelleDateDebut = new Date(ev.startDate);
-                let nouvelleDateFin = new Date(ev.endDate);
-
-                if (direction == "bottom") 
-                {
-                    const minutesEnPlus = resizeFini.height - hauteurInitiale;
-                    nouvelleDateFin.setMinutes(nouvelleDateFin.getMinutes() + minutesEnPlus);
-                } 
-                else if (direction == "top") 
-                {
-                    const minutesDeDifference = resizeFini.top - topInitial;
-                    nouvelleDateDebut.setMinutes(nouvelleDateDebut.getMinutes() + minutesDeDifference);
-                }
-
-                this.eventUpdated.emit({
-                    id: ev.id,
-                    titre: ev.titre,
-                    description: ev.description,
-                    startDate: nouvelleDateDebut,
-                    endDate: nouvelleDateFin
-                });
+                this.eventUpdated.emit({ ...ev, startDate: newStart, endDate: newEnd });
             }
         };
 
-        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mousemove', onMouseMove, { passive: false });
         window.addEventListener('mouseup', onMouseUp);
         window.addEventListener('touchmove', onMouseMove, { passive: false });
         window.addEventListener('touchend', onMouseUp);
@@ -685,23 +675,15 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         const onMouseMove = (_moveEvent: MouseEvent | TouchEvent) => 
         {
-            if (intentionScroll) 
-                return;
+            if (intentionScroll) return;
 
             const moveClientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
             const moveClientX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
             
-            const deltaY = Math.abs(moveClientY - clientYDebut);
-            const deltaX = Math.abs(moveClientX - clientXDebut);
+            if (Math.abs(moveClientX - clientXDebut) > 5 || Math.abs(moveClientY - clientYDebut) > 5) aBouge = true;
 
-            if (deltaX > 5 || deltaY > 5)
-                aBouge = true;
-
-            if (!modeDragCreation) 
-            {
-                // Si on a bougé le doigt avant la fin des 350ms, c'est qu'on veut scroller !
-                if (aBouge) 
-                {
+            if (!modeDragCreation) {
+                if (aBouge) {
                     intentionScroll = true;
                     clearTimeout(timeoutAppuiLong);
                     return;
@@ -709,46 +691,37 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             } 
             else 
             {
-                // MODE DRAG (Appui long réussi ou PC)
-                if (aBouge) 
-                    this.dragCreationEnCours.set(true);
+                if (aBouge) this.dragCreationEnCours.set(true);
+                if (_moveEvent.cancelable) _moveEvent.preventDefault();
 
-                if (_moveEvent.cancelable)
-                    _moveEvent.preventDefault();
+                // DÉTECTION DE LA COLONNE SURVOLÉE
+                const elementFromPoint = document.elementFromPoint(moveClientX, moveClientY);
+                const hoveredCol = elementFromPoint ? elementFromPoint.closest('.day-column') as HTMLElement : null;
 
-                const currentRect = column.getBoundingClientRect();
-                let moveYActuel = moveClientY - currentRect.top;
-                
-                // Sécurité pour ne pas sortir du haut de la grille
-                if (moveYActuel < 0) moveYActuel = 0;
+                if (hoveredCol && hoveredCol.dataset['date']) {
+                    const colTimestamp = parseInt(hoveredCol.dataset['date'], 10);
+                    const colRect = hoveredCol.getBoundingClientRect();
 
-                // CALCUL BIDIRECTIONNEL : On calcule la case survolée par la souris
-                let minutesSurvolees = Math.floor(moveYActuel / 15) * 15;
-                const hauteurMax = (this.hourMax() - this.hourMin() + 1) * 60;
+                    let yActuel = moveClientY - colRect.top;
+                    if (yActuel < 0) yActuel = 0;
 
-                if (minutesSurvolees > hauteurMax - 15) 
-                    minutesSurvolees = hauteurMax - 15;
+                    let minutesSurvolees = Math.floor(yActuel / 15) * 15;
+                    const totalMins = (this.hourMin() * 60) + minutesSurvolees;
+                    const hSurvole = Math.floor(totalMins / 60);
+                    const mSurvole = totalMins % 60;
 
-                const totalMinsSurvolees = (this.hourMin() * 60) + minutesSurvolees;
-                const hSurvole = Math.floor(totalMinsSurvolees / 60);
-                const mSurvole = totalMinsSurvolees % 60;
+                    let dateSurvolee = new Date(colTimestamp);
+                    dateSurvolee.setHours(hSurvole, mSurvole, 0, 0);
+                    const timestampSurvole = dateSurvolee.getTime();
 
-                let dateSurvolee = new Date(dateJour);
-                dateSurvolee.setHours(hSurvole, mSurvole, 0, 0);
-                const timestampSurvole = dateSurvolee.getTime();
-
-                // 🔥 On compare la case survolée avec la case d'ancrage cliquée au début
-                if (timestampSurvole < timestampAncrage) 
-                {
-                    // Drag vers le HAUT 
-                    this.dateDebutCreation.set(new Date(timestampSurvole));
-                    this.dateFinCreation.set(new Date(timestampAncrage + 15 * 60 * 1000));
-                } 
-                else 
-                {
-                    // Drag vers le BAS
-                    this.dateDebutCreation.set(new Date(timestampAncrage));
-                    this.dateFinCreation.set(new Date(timestampSurvole + 15 * 60 * 1000));
+                    // Compare la case survolée avec la toute première case cliquée (ancrage)
+                    if (timestampSurvole < timestampAncrage) {
+                        this.dateDebutCreation.set(new Date(timestampSurvole));
+                        this.dateFinCreation.set(new Date(timestampAncrage + 15 * 60 * 1000));
+                    } else {
+                        this.dateDebutCreation.set(new Date(timestampAncrage));
+                        this.dateFinCreation.set(new Date(timestampSurvole + 15 * 60 * 1000));
+                    }
                 }
             }
         };
@@ -794,6 +767,44 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         window.addEventListener('mouseup', onMouseUp);
         window.addEventListener('touchmove', onMouseMove, { passive: false });
         window.addEventListener('touchend', onMouseUp);
+    }
+
+    protected styleApercuCreation(colDate: Date): any 
+    {
+        if (!this.dragCreationEnCours()) return null;
+        
+        const debut = this.dateDebutCreation();
+        const fin = this.dateFinCreation();
+        if (!debut || !fin) return null;
+
+        const tCol = new Date(colDate.getFullYear(), colDate.getMonth(), colDate.getDate()).getTime();
+        const dMin = new Date(Math.min(debut.getTime(), fin.getTime()));
+        const dMax = new Date(Math.max(debut.getTime(), fin.getTime()));
+
+        const tMin = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate()).getTime();
+        const tMax = new Date(dMax.getFullYear(), dMax.getMonth(), dMax.getDate()).getTime();
+
+        // Si la colonne qu'on dessine n'est pas comprise dans la sélection, on ne dessine rien !
+        if (tCol < tMin || tCol > tMax) return null;
+
+        const minH = this.hourMin();
+        const maxH = this.hourMax();
+
+        let hDeb = (tCol === tMin) ? dMin.getHours() : minH;
+        let mDeb = (tCol === tMin) ? dMin.getMinutes() : 0;
+        
+        let hFin = (tCol === tMax) ? dMax.getHours() : maxH + 1; // Le jour du milieu fait toute la hauteur
+        let mFin = (tCol === tMax) ? dMax.getMinutes() : 0;
+
+        let top = ((hDeb - minH) * 60) + mDeb;
+        let endTotal = ((hFin - minH) * 60) + mFin;
+        const maxGrid = (maxH - minH + 1) * 60;
+
+        return {
+            'top.px': Math.max(0, top),
+            'height.px': Math.min(maxGrid, endTotal) - Math.max(0, top),
+            'display': 'flex' // ou block
+        };
     }
 
     protected EstMemeJour(_date1: Date, _date2: Date): boolean 

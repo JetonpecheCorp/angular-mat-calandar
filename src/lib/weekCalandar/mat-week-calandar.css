@@ -399,6 +399,11 @@
     pointer-events: none;
 }
 
+/* Rend les barres transparentes pour la souris pendant une action */
+.week-calendar-container.is-resizing-calendar .event-block {
+    pointer-events: none !important;
+}
+
 .time-circle {
     position: absolute;
     left: -6px;

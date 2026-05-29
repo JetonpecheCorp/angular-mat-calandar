@@ -1,10 +1,11 @@
-<div class="week-calendar-container">
+<div class="week-calendar-container" [class.is-resizing-calendar]="previewResize() !== null || dragCreationEnCours()">
     
     <div class="main-scroll-viewport">
         
         <mat-toolbar class="calendar-header">
             <div class="header-main-container">
                 <div class="header-nav-row">
+
                     <button mat-icon-button (click)="Precedent()">
                         <mat-icon>chevron_left</mat-icon>
                     </button>
@@ -64,7 +65,7 @@
             <div class="days-grid" [style.grid-template-columns]="'repeat(' + listeNomSemaine().length + ', 1fr)'">
                 @for (jour of listeNomSemaine(); track jour.date) 
                 {
-                    <div class="day-column">
+                    <div class="day-column" [attr.data-date]="jour.date.getTime()">
 
                         @for (ev of getPositionedEvents(jour.date); track $index) 
                         {
@@ -82,51 +83,40 @@
                             }
 
                             <div class="event-block"
-                                    cdkDrag
-                                    (cdkDragStarted)="OnEventDragStarted(ev)" 
-                                    (cdkDragEnded)="OnEventDragEnded($event, ev)"
-                                    [ngStyle]="(resizeEnCours()?.id === ev.id && resizeEnCours()?.dateTime === jour.date.getTime()) ? 
-                                        { 'top.px': resizeEnCours()?.top, 'height.px': resizeEnCours()?.height, 'display': 'flex' } : 
-                                        CalculerStyleEvent(ev, jour.date)"
-                                    [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
-                                    [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'">
-                                    
-                                    @if (!ev.continueAvant) 
-                                    {
-                                        <div class="resize-handle top" 
-                                            (mousedown)="InitialiserResize($event, ev, jour.date, 'top')"
-                                            (touchstart)="InitialiserResize($event, ev, jour.date, 'top')">
-                                            <div class="resize-line"></div>
-                                        </div>
-                                    }
-                                        
-                                    <div class="event-content">
-                                        
-                                        @if (ev.continueAvant) 
-                                        {
-                                            <mat-icon class="continue-icon top">keyboard_arrow_up</mat-icon>
-                                        }
+                                cdkDrag
+                                (cdkDragStarted)="OnEventDragStarted(ev)" 
+                                (cdkDragEnded)="OnEventDragEnded($event, ev)"
+                                [ngStyle]="CalculerStyleEvent(ev, jour.date)"
+                                [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
+                                [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'">
 
-                                        <span class="event-title">{{ ev.titre }}</span>
-                                        <span class="event-time">
-                                            {{ resizeEnCours()?.id === ev.id ? resizeEnCours()?.formatHeure : ev.formatHeure }}
-                                        </span>
-
-                                        @if (ev.continueApres) 
-                                        {
-                                            <mat-icon class="continue-icon bottom">keyboard_arrow_down</mat-icon>
-                                        }
+                                @if (!ev.continueAvant) 
+                                {
+                                    <div class="resize-handle top" 
+                                          (mousedown)="InitialiserResize($event, ev, 'top')" 
+                                          (touchstart)="InitialiserResize($event, ev, 'top')">
+                                        <div class="resize-line"></div>
                                     </div>
+                                }
+                                    
+                                <div class="event-content">
+                                    @if (ev.continueAvant) { <mat-icon class="continue-icon top">keyboard_arrow_up</mat-icon> }
 
-                                        @if (!ev.continueApres) 
-                                        {
-                                            <div class="resize-handle bottom" 
-                                                (mousedown)="InitialiserResize($event, ev, jour.date, 'bottom')"
-                                                (touchstart)="InitialiserResize($event, ev, jour.date, 'bottom')">
-                                                <div class="resize-line"></div>
-                                            </div>
-                                        }
+                                    <span class="event-title">{{ ev.titre }}</span>
+                                    <span class="event-time">{{ ev.formatHeure }}</span>
+
+                                    @if (ev.continueApres) { <mat-icon class="continue-icon bottom">keyboard_arrow_down</mat-icon> }
                                 </div>
+
+                                @if (!ev.continueApres) 
+                                {
+                                    <div class="resize-handle bottom" 
+                                           (mousedown)="InitialiserResize($event, ev, 'bottom')" 
+                                           (touchstart)="InitialiserResize($event, ev, 'bottom')">
+                                        <div class="resize-line"></div>
+                                    </div>
+                                }
+                            </div>
                         }
 
                         @if (jour.estAujourdhui && positionBarreRouge() >= 0) 
@@ -136,8 +126,8 @@
                             </div>
                         }
 
-                        @if (dragCreationEnCours() && dateDebutCreation() && EstMemeJour(jour.date, dateDebutCreation()!)) {
-                            <div class="creation-preview-block" [ngStyle]="styleApercuCreation()">
+                        @if (styleApercuCreation(jour.date); as styleApercu) {
+                            <div class="creation-preview-block" [ngStyle]="styleApercu">
                                 <div class="event-content">
                                     <span class="event-title">({{ texteEventDragNouveau() }})</span>
                                     <span class="event-time">{{ formatHeureCreation() }}</span>
