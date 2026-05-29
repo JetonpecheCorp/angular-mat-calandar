@@ -1,4 +1,4 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, HostListener, input, model, OnInit, output, signal } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, input, model, OnInit, output, signal } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -66,13 +66,18 @@ export class MatMonthCalandar implements OnInit
     protected texteBtnAujourdhui = signal<string>("Today");
     protected hoveredEvent = signal<EventCalandar | null>(null);
 
-    private readonly langueNavigateur = navigator.language || "fr-FR";
+    private readonly langueNavigateur = navigator.language || "en-US";
     
     private dernierTouchTime = 0;
     protected dragCreationEnCours = signal(false);
     protected dateDebutCreation = signal<Date | null>(null);
     protected dateFinCreation = signal<Date | null>(null);
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
+    protected zoneNavigationActive = signal<'left' | 'right' | null>(null);
+    protected bulleSurvolee = signal<'left' | 'right' | null>(null);
+
+    private el = inject(ElementRef);
+    private navigationInterval: any = null;
 
     protected displayEvents = computed(() => 
     {
@@ -392,6 +397,14 @@ export class MatMonthCalandar implements OnInit
     {
         this.hoveredEvent.set(null);
         this.overrideRipple.set(false);
+        this.NettoyerNavigationBulle();
+    }
+
+    protected OnEventDragMoved(dragEvent: any): void 
+    {
+        const clientX = dragEvent.pointerPosition.x;
+        const clientY = dragEvent.pointerPosition.y;
+        this.GererNavigationBulle(clientX, clientY);
     }
 
     protected OnEventDropped(dropEvent: CdkDragDrop<DateCalendrier>): void 
@@ -511,6 +524,8 @@ export class MatMonthCalandar implements OnInit
             } 
             else 
             {
+                this.GererNavigationBulle(moveX, moveY);
+
                 if (aBouge) 
                     this.dragCreationEnCours.set(true);
 
@@ -541,6 +556,8 @@ export class MatMonthCalandar implements OnInit
         const onMouseUp = () => 
         {
             clearTimeout(timeoutAppuiLong);
+            this.NettoyerNavigationBulle();
+
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('touchmove', onMouseMove);
@@ -600,6 +617,8 @@ export class MatMonthCalandar implements OnInit
             let clientX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
             let clientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
 
+            this.GererNavigationBulle(clientX, clientY);
+
             const elementFromPoint = document.elementFromPoint(clientX, clientY);
             let hoveredCell = elementFromPoint ? elementFromPoint.closest('.day-cell') as HTMLElement : null;
 
@@ -645,6 +664,7 @@ export class MatMonthCalandar implements OnInit
             
             // supprime le fantôme
             this.previewResize.set(null);
+            this.NettoyerNavigationBulle();
 
             // On émet si les dates ont changé
             if (dateTrouvee && (finalStartDate.getTime() != _eventObj.startDate.getTime() || finalEndDate.getTime() != _eventObj.endDate.getTime())) 
@@ -661,6 +681,75 @@ export class MatMonthCalandar implements OnInit
         window.addEventListener('mouseup', onMouseUp);
         window.addEventListener('touchmove', onMouseMove, { passive: false });
         window.addEventListener('touchend', onMouseUp);
+    }
+
+    private DeclencherNavigation(direction: 'left' | 'right'): void 
+    {
+        if (direction == 'left') 
+            this.Precedent();
+
+        else 
+            this.Suivant();
+    }
+
+    private NettoyerNavigationBulle(): void 
+    {
+        this.zoneNavigationActive.set(null);
+        this.bulleSurvolee.set(null);
+
+        if (this.navigationInterval) 
+        {
+            clearInterval(this.navigationInterval);
+            this.navigationInterval = null;
+        }
+    }
+
+    private GererNavigationBulle(clientX: number, clientY: number): void 
+    {
+        const rect = this.el.nativeElement.getBoundingClientRect();
+        const MARGE = Math.max(60, rect.width * 0.1);
+        
+        let zoneActive: 'left' | 'right' | null = null;
+        if (clientX < rect.left + MARGE) zoneActive = 'left';
+        else if (clientX > rect.right - MARGE) zoneActive = 'right';
+        
+        this.zoneNavigationActive.set(zoneActive);
+
+        let surLaBulle: 'left' | 'right' | null = null;
+        if (zoneActive) 
+        {
+            const bulleEl = this.el.nativeElement.querySelector(`.nav-edge-indicator.${zoneActive} .nav-bubble`);
+            if (bulleEl) 
+            {
+                const bRect = bulleEl.getBoundingClientRect();
+                const padding = 15; 
+                
+                const estSurLaBulleX = clientX >= bRect.left - padding && clientX <= bRect.right + padding;
+                const estSurLaBulleY = clientY >= bRect.top - padding && clientY <= bRect.bottom + padding;
+
+                if (estSurLaBulleX && estSurLaBulleY) surLaBulle = zoneActive;
+            }
+        }
+        
+        if (surLaBulle !== this.bulleSurvolee()) 
+        {
+            if (this.navigationInterval) 
+            {
+                clearInterval(this.navigationInterval);
+                this.navigationInterval = null;
+            }
+
+            if (surLaBulle) 
+            {
+                this.DeclencherNavigation(surLaBulle);
+
+                this.navigationInterval = setInterval(() => {
+                    this.DeclencherNavigation(surLaBulle);
+                }, 800);
+            }
+            
+            this.bulleSurvolee.set(surLaBulle);
+        }
     }
 
     private Generer(_de: Date, _a: Date): DateCalendrier[] 

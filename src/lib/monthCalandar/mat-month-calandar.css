@@ -28,6 +28,7 @@
 
 .calendar-wrapper 
 {
+    position: relative;
     width: 100%;
     max-width: 100%;
     border: 1px solid var(--mat-sys-outline-variant);
@@ -148,6 +149,62 @@ display: grid;
     gap: 8px;
     align-items: center;
 }
+
+/* --- INDICATEURS VISUELS DE NAVIGATION (BORD D'ÉCRAN) --- */
+.nav-edge-indicator {
+    position: absolute;
+    top: 80px; /* En dessous du header */
+    bottom: 0;
+    width: 10%;
+    min-width: 60px;
+    z-index: 150;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.nav-edge-indicator.left { left: 0; background: linear-gradient(90deg, rgba(0,0,0,0.03) 0%, transparent 100%); }
+.nav-edge-indicator.right { right: 0; background: linear-gradient(270deg, rgba(0,0,0,0.03) 0%, transparent 100%); }
+
+.nav-bubble {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0.8);
+    transition: transform 0.2s ease;
+}
+
+.nav-bubble mat-icon { font-size: 28px; width: 28px; height: 28px; }
+
+.calendar-wrapper.nav-hover-left .nav-edge-indicator.left,
+.calendar-wrapper.nav-hover-right .nav-edge-indicator.right { opacity: 1; }
+
+.calendar-wrapper.nav-hover-left .nav-edge-indicator.left .nav-bubble,
+.calendar-wrapper.nav-hover-right .nav-edge-indicator.right .nav-bubble { transform: scale(1); }
+
+@keyframes pulse-nav-bubble {
+    0% { transform: scale(1); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    50% { transform: scale(1.15); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+    100% { transform: scale(1); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+}
+
+.nav-bubble.is-hovered {
+    background-color: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+    animation: pulse-nav-bubble 0.8s infinite ease-in-out;
+}
+
+.calendar-wrapper.nav-hover-left .nav-edge-indicator.left .nav-bubble.is-hovered,
+.calendar-wrapper.nav-hover-right .nav-edge-indicator.right .nav-bubble.is-hovered { transform: none; }
 
 /* --- DRAG AND DROP (CDK) --- */
 .cdk-drag-preview 

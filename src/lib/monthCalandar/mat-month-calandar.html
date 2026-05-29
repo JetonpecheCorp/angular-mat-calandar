@@ -1,4 +1,18 @@
-<div class="calendar-wrapper mat-elevation-z2" [class.is-resizing-calendar]="previewResize() !== null">
+<div class="calendar-wrapper mat-elevation-z2" 
+      [class.is-resizing-calendar]="previewResize() !== null || dragCreationEnCours()"
+      [class.nav-hover-left]="zoneNavigationActive() === 'left'"
+      [class.nav-hover-right]="zoneNavigationActive() === 'right'">
+
+    <div class="nav-edge-indicator left">
+        <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'left'">
+            <mat-icon>keyboard_double_arrow_left</mat-icon>
+        </div>
+    </div>
+    <div class="nav-edge-indicator right">
+        <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'right'">
+            <mat-icon>keyboard_double_arrow_right</mat-icon>
+        </div>
+    </div>
 
     <mat-toolbar class="calendar-header">
         <div class="header-main-container">
@@ -130,6 +144,7 @@
                                 
                                 (cdkDragStarted)="OnDragStarted()" 
                                 (cdkDragEnded)="OnDragEnded()"
+                                (cdkDragMoved)="OnEventDragMoved($event)"
                                 [title]="pos.event.description || pos.event.titre" 
                                 [class.is-hovered]="hoveredEvent() == pos.event"
                                 (mouseenter)="overrideRipple.set(true); hoveredEvent.set(pos.event)" 
