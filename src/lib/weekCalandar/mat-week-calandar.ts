@@ -1,4 +1,4 @@
-import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output, ChangeDetectionStrategy, inject, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -60,14 +60,19 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
 
+    private el = inject(ElementRef);
     private readonly langueNavigateur = navigator.language || "fr-FR";
     private timerInterval: any;
     private heureActuelle = signal(new Date());
     private dernierTouchTime = 0;
+    private semainesDecaleesPendantDrag = 0;
+    private navigationInterval: any;
 
     protected dragCreationEnCours = signal(false);
     protected dateDebutCreation = signal<Date | null>(null);
     protected dateFinCreation = signal<Date | null>(null);
+    protected zoneNavigationActive = signal<'left' | 'right' | null>(null);
+    protected bulleSurvolee = signal<'left' | 'right' | null>(null);
 
     protected displayEvents = computed(() => 
     {
@@ -373,6 +378,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected OnEventDragStarted(ev: PositionedEvent): void 
     {
         this.eventEnCoursDeDrag.set(ev);
+        this.semainesDecaleesPendantDrag = 0;
     }
 
     protected CalculerStyleEvent(event: EventCalandar, dateJour: Date): any
@@ -417,17 +423,20 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected OnEventDragMoved(dragEvent: any, ev: PositionedEvent): void 
     {
+        // On passe les coordonnées X et Y, et "true" pour dire que c'est un glisser-déposer CDK
+        const clientX = dragEvent.pointerPosition.x; 
+        const clientY = dragEvent.pointerPosition.y; 
+        
+        this.GererNavigationBulle(clientX, clientY, true);
+
         const distance = dragEvent.distance;
         
-        // On retrouve la largeur de la colonne
         const GRID_ELEMENT = dragEvent.source.element.nativeElement.closest('.days-grid');
         const LARGEUR_COLONNE = GRID_ELEMENT ? GRID_ELEMENT.clientWidth / this.listeNomSemaine().length : 1;
 
-        // On reprend exactement ton calcul de décalage existant
         const joursDecalage = Math.round(distance.x / LARGEUR_COLONNE);
         const minutesDecalage = Math.round(distance.y / 15) * 15;
 
-        // On simule les nouvelles dates
         let nouvelleDateDebut = new Date(ev.startDate);
         nouvelleDateDebut.setDate(nouvelleDateDebut.getDate() + joursDecalage);
         nouvelleDateDebut.setMinutes(nouvelleDateDebut.getMinutes() + minutesDecalage);
@@ -440,10 +449,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected OnEventDragEnded(_dragEvent: CdkDragEnd, ev: PositionedEvent): void 
     {
         this.eventEnCoursDeDrag.set(null);
+        this.NettoyerNavigationBulle();
 
         const distance = _dragEvent.distance;
 
-        // la distance a pas trop bougé click normal
         if (Math.abs(distance.x) < 5 && Math.abs(distance.y) < 5) 
         {
             this.ClickEvent(ev);
@@ -451,16 +460,13 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             return;
         }
         
-        // calcul largeur d'une colonne
         const GRID_ELEMENT = _dragEvent.source.element.nativeElement.closest('.days-grid');
         const LARGEUR_COLONNE = GRID_ELEMENT ? GRID_ELEMENT.clientWidth / this.listeNomSemaine().length : 1;
 
-        // 2. Calculer le décalage
-        // Distance X divisée par largeur colonne = nombre de jours
-        const joursDecalage = Math.round(distance.x / LARGEUR_COLONNE);
+        // 👇 MAGIE : On ajoute au décalage les semaines qui ont été sautées pendant le drag !
+        const joursDecalage = Math.round(distance.x / LARGEUR_COLONNE) + (this.semainesDecaleesPendantDrag * 7);
         const minutesDecalage = Math.round(distance.y / 15) * 15;
 
-        // modifier la date et heures
         let nouvelleDateDebut = new Date(ev.startDate);
         nouvelleDateDebut.setDate(nouvelleDateDebut.getDate() + joursDecalage);
         nouvelleDateDebut.setMinutes(nouvelleDateDebut.getMinutes() + minutesDecalage);
@@ -469,7 +475,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         nouvelleDateFin.setDate(nouvelleDateFin.getDate() + joursDecalage);
         nouvelleDateFin.setMinutes(nouvelleDateFin.getMinutes() + minutesDecalage);
 
-        // 4. On réinitialise visuellement le drag pour que le CSS reprenne le relais
         _dragEvent.source._dragRef.reset();
 
         this.eventUpdated.emit({
@@ -552,6 +557,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
             const clientX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
             const clientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
+            
+            this.GererNavigationBulle(clientX, clientY, false);
 
             // 2. Détecte la colonne survolée
             const elementUnder = document.elementFromPoint(clientX, clientY);
@@ -601,6 +608,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             window.removeEventListener('touchend', onMouseUp);
 
             this.previewResize.set(null);
+            this.NettoyerNavigationBulle();
 
             if (newStart.getTime() !== ev.startDate.getTime() || newEnd.getTime() !== ev.endDate.getTime()) 
             {
@@ -694,11 +702,14 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
             const moveClientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
             const moveClientX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
-            
-            if (Math.abs(moveClientX - clientXDebut) > 5 || Math.abs(moveClientY - clientYDebut) > 5) aBouge = true;
 
-            if (!modeDragCreation) {
-                if (aBouge) {
+            if (Math.abs(moveClientX - clientXDebut) > 5 || Math.abs(moveClientY - clientYDebut) > 5) 
+                aBouge = true;
+
+            if (!modeDragCreation) 
+            {
+                if (aBouge) 
+                {
                     intentionScroll = true;
                     clearTimeout(timeoutAppuiLong);
                     return;
@@ -709,11 +720,14 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 if (aBouge) this.dragCreationEnCours.set(true);
                 if (_moveEvent.cancelable) _moveEvent.preventDefault();
 
+                this.GererNavigationBulle(moveClientX, moveClientY, false);
+
                 // DÉTECTION DE LA COLONNE SURVOLÉE
                 const elementFromPoint = document.elementFromPoint(moveClientX, moveClientY);
                 const hoveredCol = elementFromPoint ? elementFromPoint.closest('.day-column') as HTMLElement : null;
 
-                if (hoveredCol && hoveredCol.dataset['date']) {
+                if (hoveredCol && hoveredCol.dataset['date']) 
+                {
                     const colTimestamp = parseInt(hoveredCol.dataset['date'], 10);
                     const colRect = hoveredCol.getBoundingClientRect();
 
@@ -751,6 +765,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             window.removeEventListener('touchend', onMouseUp);
 
             this.dragCreationEnCours.set(false);
+            this.NettoyerNavigationBulle();
 
             if (!intentionScroll) 
             {
@@ -829,6 +844,93 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             _date1.getDate() == _date2.getDate();
     }
 
+    private DeclencherNavigation(direction: 'left' | 'right', isCdkDrag: boolean): void 
+    {
+        if (direction == 'left') 
+        {
+            this.Precedent();
+            if (isCdkDrag) 
+                this.semainesDecaleesPendantDrag--;
+        } 
+        else 
+        {
+            this.Suivant();
+            if (isCdkDrag) 
+                this.semainesDecaleesPendantDrag++;
+        }
+    }
+
+    // Fonction pour tout arrêter proprement quand on lâche le clic
+    private NettoyerNavigationBulle(): void 
+    {
+        this.zoneNavigationActive.set(null);
+        this.bulleSurvolee.set(null);
+
+        if (this.navigationInterval) 
+        {
+            clearInterval(this.navigationInterval);
+            this.navigationInterval = null;
+        }
+    }
+
+    private GererNavigationBulle(clientX: number, clientY: number, isCdkDrag: boolean = false): void 
+    {
+        const rect = this.el.nativeElement.getBoundingClientRect();
+        const MARGE = Math.max(60, rect.width * 0.1);
+        
+        let zoneActive: 'left' | 'right' | null = null;
+        if (clientX < rect.left + MARGE)
+            zoneActive = 'left';
+
+        else if (clientX > rect.right - MARGE) 
+            zoneActive = 'right';
+        
+        this.zoneNavigationActive.set(zoneActive);
+
+        let surLaBulle: 'left' | 'right' | null = null;
+
+        if (zoneActive) 
+        {
+            const bulleEl = this.el.nativeElement.querySelector(`.nav-edge-indicator.${zoneActive} .nav-bubble`);
+            if (bulleEl) 
+            {
+                const bRect = bulleEl.getBoundingClientRect();
+                const padding = 15; 
+                
+                const estSurLaBulleX = clientX >= bRect.left - padding && clientX <= bRect.right + padding;
+                const estSurLaBulleY = clientY >= bRect.top - padding && clientY <= bRect.bottom + padding;
+
+                if (estSurLaBulleX && estSurLaBulleY) 
+                    surLaBulle = zoneActive;
+            }
+        }
+        
+        // On vérifie si on VIENT d'entrer ou de sortir de la bulle
+        if (surLaBulle != this.bulleSurvolee()) 
+        {
+            // On arrête toujours l'ancien défilement
+            if (this.navigationInterval) 
+            {
+                clearInterval(this.navigationInterval);
+                this.navigationInterval = null;
+            }
+
+            // Si on vient de se poser sur la bulle
+            if (surLaBulle) 
+            {
+                // On navigue une 1ère fois
+                this.DeclencherNavigation(surLaBulle, isCdkDrag);
+                
+                // On lance un défilement auto toutes les 800ms
+                this.navigationInterval = setInterval(() => {
+                    this.DeclencherNavigation(surLaBulle, isCdkDrag);
+                }, 800);
+            }
+            
+            this.bulleSurvolee.set(surLaBulle);
+        }
+    }
+
     private AjouterEventAuGroupeColonne(_groupe: EventCalandar[], _listeEventPosition: PositionedEvent[], _dateJour: Date): void
     {
         if (_groupe.length == 0) 
@@ -880,7 +982,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     private GenererFormatHeure(start: Date, end: Date, isAmPm: boolean): string 
     {
-        const format = (d: Date) => 
+        const formatHeure = (d: Date) => 
         {
             const h = d.getHours();
             const m = d.getMinutes().toString().padStart(2, '0');
@@ -894,7 +996,14 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             return `${displayHour}:${m} ${period}`;
         };
 
-        return `${format(start)} - ${format(end)}`;
+        // 2. Si l'événement s'étale sur plusieurs jours : Date + Heure
+        if (!this.EstMemeJour(start, end)) 
+        {
+            const formatterDate = new Intl.DateTimeFormat(this.langueNavigateur, { day: 'numeric', month: 'short' });
+            return `${formatterDate.format(start)} ${formatHeure(start)} - ${formatterDate.format(end)} ${formatHeure(end)}`;
+        }
+
+        return `${formatHeure(start)} - ${formatHeure(end)}`;
     }
 
     private RecupererNumeroSemaine(_date: Date): number
