@@ -61,12 +61,17 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
 
     private el = inject(ElementRef);
-    private readonly langueNavigateur = navigator.language || "fr-FR";
+    private readonly langueNavigateur = navigator.language || "en-US";
     private timerInterval: any;
     private heureActuelle = signal(new Date());
     private dernierTouchTime = 0;
     private semainesDecaleesPendantDrag = 0;
     private navigationInterval: any;
+
+    // pour le scroll horizontal en cas de drag
+    private pointerX = 0;
+    private pointerY = 0;
+    private autoScrollInterval: any = null;
 
     protected dragCreationEnCours = signal(false);
     protected dateDebutCreation = signal<Date | null>(null);
@@ -427,6 +432,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const clientX = dragEvent.pointerPosition.x; 
         const clientY = dragEvent.pointerPosition.y; 
         
+        this.pointerX = clientX;
+        this.pointerY = clientY;
+        this.DemarrerAutoScrollContinu();
+
         this.GererNavigationBulle(clientX, clientY, true);
 
         const distance = dragEvent.distance;
@@ -450,6 +459,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     {
         this.eventEnCoursDeDrag.set(null);
         this.NettoyerNavigationBulle();
+        this.ArreterAutoScroll();
 
         const distance = _dragEvent.distance;
 
@@ -558,6 +568,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             const clientX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
             const clientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
             
+            this.pointerX = clientX;
+            this.pointerY = clientY;
+            this.DemarrerAutoScrollContinu();
+
             this.GererNavigationBulle(clientX, clientY, false);
 
             // 2. Détecte la colonne survolée
@@ -609,6 +623,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
             this.previewResize.set(null);
             this.NettoyerNavigationBulle();
+            this.ArreterAutoScroll();
 
             if (newStart.getTime() !== ev.startDate.getTime() || newEnd.getTime() !== ev.endDate.getTime()) 
             {
@@ -720,6 +735,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 if (aBouge) this.dragCreationEnCours.set(true);
                 if (_moveEvent.cancelable) _moveEvent.preventDefault();
 
+                this.pointerX = moveClientX;
+                this.pointerY = moveClientY;
+                this.DemarrerAutoScrollContinu();
+
                 this.GererNavigationBulle(moveClientX, moveClientY, false);
 
                 // DÉTECTION DE LA COLONNE SURVOLÉE
@@ -766,6 +785,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
             this.dragCreationEnCours.set(false);
             this.NettoyerNavigationBulle();
+            this.ArreterAutoScroll();
 
             if (!intentionScroll) 
             {
@@ -858,6 +878,53 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             if (isCdkDrag) 
                 this.semainesDecaleesPendantDrag++;
         }
+    }
+
+    private DemarrerAutoScrollContinu(): void 
+    {
+        if (this.autoScrollInterval) 
+            return;
+
+        this.autoScrollInterval = setInterval(() => 
+        {
+            // On cible la div qui possède le scroll horizontal et vertical !
+            const viewport = this.el.nativeElement.querySelector('.main-scroll-viewport');
+
+            if (!viewport) 
+                return;
+
+            const rect = viewport.getBoundingClientRect();
+            const MARGE = 50;
+
+            let deltaX = 0;
+            let deltaY = 0;
+
+            // Détection X (Droite / Gauche)
+            if (this.pointerX > 0 && this.pointerX < rect.left + MARGE) deltaX = -12;
+            else if (this.pointerX > 0 && this.pointerX > rect.right - MARGE) deltaX = 12;
+
+            // Détection Y (Bas / Haut) - Super pratique aussi pour scroller les heures !
+            if (this.pointerY > 0 && this.pointerY < rect.top + MARGE) deltaY = -12;
+            else if (this.pointerY > 0 && this.pointerY > rect.bottom - MARGE) deltaY = 12;
+
+            // Si on est près d'un bord, on fait défiler le calendrier artificiellement
+            if (deltaX !== 0 || deltaY !== 0) 
+            {
+                viewport.scrollLeft += deltaX;
+                viewport.scrollTop += deltaY;
+            }
+        }, 16);
+    }
+
+    private ArreterAutoScroll(): void 
+    {
+        if (this.autoScrollInterval) 
+        {
+            clearInterval(this.autoScrollInterval);
+            this.autoScrollInterval = null;
+        }
+        this.pointerX = 0;
+        this.pointerY = 0;
     }
 
     // Fonction pour tout arrêter proprement quand on lâche le clic
