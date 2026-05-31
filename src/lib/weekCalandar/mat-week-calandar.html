@@ -80,7 +80,13 @@
         </div>
 
         <div class="calendar-body">
-            
+            @if (loading()) 
+            {
+                <div class="loading-overlay">
+                    <mat-spinner diameter="48"></mat-spinner>
+                </div>
+            }
+
             <div class="time-column">
                 @for (h of heures(); track h) 
                 {

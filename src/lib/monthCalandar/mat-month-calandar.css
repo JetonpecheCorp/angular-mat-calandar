@@ -5,7 +5,9 @@
     box-sizing: border-box;
 }
 
-.calendar-body {
+.calendar-body 
+{
+    position: relative;
     display: flex;
     flex-direction: column;
 }
@@ -48,6 +50,41 @@
     padding-top: 8px 0;
     background-color: var(--mat-sys-primary);
     color: var(--mat-sys-on-primary);
+}
+
+/* --- OVERLAY DE CHARGEMENT --- */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    pointer-events: auto; 
+}
+
+/* C'est ce calque caché derrière le spinner qui gère la transparence */
+.loading-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    
+    background-color: var(--mat-sys-surface);
+    opacity: 0.6;
+    
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    
+    z-index: -1;
+    border-radius: inherit;
 }
 
 .header-main-container 

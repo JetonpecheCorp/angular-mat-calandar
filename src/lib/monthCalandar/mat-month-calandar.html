@@ -73,6 +73,14 @@
     </div>
 
     <div cdkDropListGroup class="calendar-body">
+
+        @if (loading()) 
+        {
+            <div class="loading-overlay">
+                <mat-spinner diameter="48"></mat-spinner>
+            </div>
+        }
+
         @for (semaine of listeSemaines(); track $index) 
         {
             <div class="week-row">

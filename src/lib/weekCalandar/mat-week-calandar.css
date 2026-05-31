@@ -15,6 +15,41 @@
     overflow: hidden;
 }
 
+/* --- OVERLAY DE CHARGEMENT --- */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    pointer-events: auto; 
+}
+
+/* C'est ce calque caché derrière le spinner qui gère la transparence */
+.loading-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    
+    background-color: var(--mat-sys-surface);
+    opacity: 0.6;
+    
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    
+    z-index: -1;
+    border-radius: inherit;
+}
+
 /* --- INDICATEURS VISUELS DE NAVIGATION (BORD D'ÉCRAN) --- */
 .nav-edge-indicator {
     position: absolute;
@@ -183,7 +218,7 @@
     position: sticky;
     top: 0;
     left: 0;
-    z-index: 120;
+    z-index: 10001;
     height: var(--header-height) !important;
     min-height: var(--header-height) !important;
     padding: 0;
@@ -229,7 +264,7 @@
 .days-header-sticky {
     position: sticky;
     top: var(--header-height); 
-    z-index: 110; 
+    z-index: 10000; 
     display: flex;
     background: var(--mat-sys-surface);
     border-bottom: 1px solid var(--mat-sys-outline-variant);
@@ -402,6 +437,7 @@
 
 /* --- CORPS DU CALENDRIER --- */
 .calendar-body {
+    position: relative;
     display: flex;
     flex: 1 0 auto;
     padding-top: 10px;

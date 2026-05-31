@@ -11,6 +11,7 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DateSpecialEvent } from '../../public-api';
 import { DateInterval } from '../../models/DateInterval';
 import { DateCalandarDisabled } from '../../models/DateCalandarDisabled';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 interface EventPositionne {
     event: EventCalandar;
@@ -26,7 +27,7 @@ interface SemaineCalendrier {
 
 @Component({
   selector: 'jp-mat-month-calandar',
-  imports: [DragDropModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule],
+  imports: [MatProgressSpinnerModule, DragDropModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule],
   templateUrl: './mat-month-calandar.html',
   styleUrl: './mat-month-calandar.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -45,6 +46,7 @@ export class MatMonthCalandar implements OnInit
     matRippleDisabled = input(false, { transform: booleanAttribute });
     hideNavYearBtn = input(false, { transform: booleanAttribute });
     readonly = input(false, { transform: booleanAttribute });
+    loading = input(false, { transform: booleanAttribute });
 
     /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
