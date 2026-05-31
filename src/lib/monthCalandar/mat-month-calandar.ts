@@ -44,6 +44,7 @@ export class MatMonthCalandar implements OnInit
     mondayFirst = input(false, { transform: booleanAttribute });
     matRippleDisabled = input(false, { transform: booleanAttribute });
     hideNavYearBtn = input(false, { transform: booleanAttribute });
+    readonly = input(false, { transform: booleanAttribute });
 
     /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
@@ -456,7 +457,7 @@ export class MatMonthCalandar implements OnInit
 
     protected OnMouseDownCreation(event: MouseEvent | TouchEvent, dateJour: Date, estBloquer: boolean): void 
     {
-        if (estBloquer) 
+        if (this.readonly() || estBloquer) 
             return;
 
         // Anti-Ghost Click Mobile

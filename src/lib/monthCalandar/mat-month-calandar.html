@@ -137,6 +137,7 @@
                             <div class="event-item absolute-event" 
                                 cdkDrag
                                 [cdkDragData]="pos.event"
+                                [cdkDragDisabled]="readonly() || pos.event.readonly"
                                 [style.--pos-start]="pos.jourDebutIndex"
                                 [style.--pos-duree]="pos.dureeJours"
                                 [style.--pos-ligne]="pos.ligne"

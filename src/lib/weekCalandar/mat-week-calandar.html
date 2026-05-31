@@ -112,6 +112,7 @@
 
                             <div class="event-block"
                                 cdkDrag
+                                [cdkDragDisabled]="readonly() || ev.readonly"
                                 (cdkDragStarted)="OnEventDragStarted(ev)" 
                                 (cdkDragMoved)="OnEventDragMoved($event, ev)"
                                 (cdkDragEnded)="OnEventDragEnded($event, ev)"

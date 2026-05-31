@@ -47,6 +47,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     useAmPm = input(false, { transform: booleanAttribute });
     matRippleDisabled = input(false, { transform: booleanAttribute });
     hideNavYearBtn = input(false, { transform: booleanAttribute });
+    readonly = input(false, { transform: booleanAttribute });
 
     eventClicked = output<EventCalandar>();
     dayClicked = output<EventCalandar[]>();
@@ -647,6 +648,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     
     protected OnMouseDownHoraire(dateJour: Date, event: MouseEvent | TouchEvent): void 
     {
+        if (this.readonly()) 
+            return;
+
         // GESTION DU GHOST CLICK MOBILE
         if (event.type == 'touchstart')
             this.dernierTouchTime = Date.now();
