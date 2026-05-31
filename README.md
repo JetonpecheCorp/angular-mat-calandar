@@ -19,6 +19,8 @@ Traduction automatique celons la **langue du navigateur.**
 - `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
 - `daysOfWeekDisabled`: Désactiver des jours de la semaine (0 => dimanche, 6 => lundi)
 - `daysDisabled`: Liste des jours à désactiver
+- `useAmPm`: Afficher les heures en AM / PM
+- `readonly`: Met le calandrier en lecture seul
 - `intervalDisabled`: Liste des intervals de jours a désactiver
 - `monthsDisabled`: Masquer des mois (1 => janvier 12 => decembre)
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'une année
@@ -39,7 +41,7 @@ Traduction automatique celons la **langue du navigateur.**
 # Par semaine
 
 ## Attribut
-- `dateReference`: Affiche la semaine entière a partir de cette date
+- `dateReference`: Affiche la semaine entière a partir de cette date (REQUIS)
 - `events`: Liste des evenements à mettre sur le calandrier
 - `specialEvents`: Liste des evenements spécials (vacances, noel, jour de l'an...)
 - `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
@@ -48,6 +50,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `daysOfWeekDisabled`: Jours de la semaine à masquer
 - `weekendDisabled`: Masquer le weekend
 - `useAmPm`: Afficher les heures en AM / PM
+- `readonly`: Met le calandrier en lecture seul
 - `matRippleDisabled`: Désactiver l'effet ripple
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'un mois
 - `timeSlotClicked`: Event click sur une heure du calendrier
