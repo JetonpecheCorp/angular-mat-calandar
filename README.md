@@ -24,6 +24,8 @@ Traduction automatique celons la **langue du navigateur.**
 - `intervalDisabled`: Liste des intervals de jours a désactiver
 - `monthsDisabled`: Masquer des mois (1 => janvier 12 => decembre)
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'une année
+
+## events
 - `eventClickJour`: Event click sur le jour
 - `eventClickEvent`: Event click sur un évènement
 - `eventCreated`: Event drag pour créer un event
@@ -53,6 +55,8 @@ Traduction automatique celons la **langue du navigateur.**
 - `readonly`: Met le calandrier en lecture seul
 - `matRippleDisabled`: Désactiver l'effet ripple
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'un mois
+
+## events
 - `timeSlotClicked`: Event click sur une heure du calendrier
 - `eventClicked`: Event click sur un évènement
 - `dayClicked`: Event click sur un jour, liste les events inclus dans le jour
