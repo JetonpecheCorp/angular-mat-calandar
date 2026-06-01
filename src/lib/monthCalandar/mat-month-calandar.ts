@@ -63,7 +63,7 @@ export class MatMonthCalandar implements OnInit
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
     eventUpdated = output<EventCalandar>();
     eventCreated = output<DateInterval>();
-    btnClicked = output();
+    btnAddClicked = output();
 
     protected estPetitEcran = signal(false);
     protected overrideRipple = signal(false);
@@ -403,7 +403,7 @@ export class MatMonthCalandar implements OnInit
 
     protected BtnAjouterClicker(): void
     {
-        this.btnClicked.emit();
+        this.btnAddClicked.emit();
     }
 
     protected ClickEvent(_event: EventCalandar): void
