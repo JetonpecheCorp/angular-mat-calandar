@@ -59,6 +59,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `readonly`: Met le calandrier en lecture seul
 - `matRippleDisabled`: Désactiver l'effet ripple
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'un mois
+- `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
 
 ## events
 - `timeSlotClicked`: Event click sur une heure du calendrier
@@ -66,6 +67,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `dayClicked`: Event click sur un jour, liste les events inclus dans le jour
 - `eventUpdated`: Event drag and drop ou resize d'un event
 - `eventCreated`: Event drag pour créer un event
+- `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
 
 ## Exemple
 ```html
