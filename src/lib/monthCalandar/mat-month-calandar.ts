@@ -45,6 +45,7 @@ export class MatMonthCalandar implements OnInit
     mondayFirst = input(false, { transform: booleanAttribute });
     matRippleDisabled = input(false, { transform: booleanAttribute });
     hideNavYearBtn = input(false, { transform: booleanAttribute });
+    showBtnAdd = input(false, { transform: booleanAttribute });
     readonly = input(false, { transform: booleanAttribute });
     loading = input(false, { transform: booleanAttribute });
 
@@ -62,11 +63,13 @@ export class MatMonthCalandar implements OnInit
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
     eventUpdated = output<EventCalandar>();
     eventCreated = output<DateInterval>();
+    btnClicked = output();
 
     protected estPetitEcran = signal(false);
     protected overrideRipple = signal(false);
     protected texteEventPlus = signal<string>("one more");
     protected texteBtnAujourdhui = signal<string>("Today");
+    protected texteBtnCreation = signal<string>("Add new");
     protected hoveredEvent = signal<EventCalandar | null>(null);
 
     private readonly langueNavigateur = navigator.language || "en-US";
@@ -286,6 +289,18 @@ export class MatMonthCalandar implements OnInit
         };
 
         this.texteBtnAujourdhui.set(DICT_TRADUCTION_BTN[LANGUE] || DICT_TRADUCTION_BTN['en']);
+
+        const DICT_TRADUCTION_BTN_AJOTUER: Record<string, string> = 
+        {
+            'fr': "Ajouter",
+            'it': "Aggiungi",
+            'de': "Hinzufügen",
+            'es': "Añadir",
+            'pt': "Adicionar",
+            'en': "Add new"
+        };
+
+        this.texteBtnCreation.set(DICT_TRADUCTION_BTN_AJOTUER[LANGUE] || DICT_TRADUCTION_BTN_AJOTUER['en']);
     }
 
     protected ScrollVersAnneeActive(): void 
@@ -384,6 +399,11 @@ export class MatMonthCalandar implements OnInit
             event.preventDefault();  
             conteneur.scrollLeft += event.deltaY; 
         }
+    }
+
+    protected BtnAjouterClicker(): void
+    {
+        this.btnClicked.emit();
     }
 
     protected ClickEvent(_event: EventCalandar): void
