@@ -25,12 +25,14 @@ Traduction automatique celons la **langue du navigateur.**
 - `intervalDisabled`: Liste des intervals de jours a désactiver
 - `monthsDisabled`: Masquer des mois (1 => janvier 12 => decembre)
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'une année
+- `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
 
 ## events
 - `eventClickJour`: Event click sur le jour
 - `eventClickEvent`: Event click sur un évènement
 - `eventCreated`: Event drag pour créer un event
-- `eventUpdated`: Event drag and drop ou resize d'un event 
+- `eventUpdated`: Event drag and drop ou resize d'un event
+- `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
 
 ## Exemple
 ```html
