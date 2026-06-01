@@ -48,6 +48,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     useAmPm = input(false, { transform: booleanAttribute });
     matRippleDisabled = input(false, { transform: booleanAttribute });
     hideNavYearBtn = input(false, { transform: booleanAttribute });
+    showBtnAdd = input(false, { transform: booleanAttribute });
     readonly = input(false, { transform: booleanAttribute });
     loading = input(false, { transform: booleanAttribute });
 
@@ -56,9 +57,11 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     timeSlotClicked = output<DateInterval>();
     eventUpdated = output<EventCalandar>();
     eventCreated = output<DateInterval>();
+    btnAddClicked = output();
 
     protected texteBtnAujourdhui = signal<string>("Today");
     protected texteEventDragNouveau = signal<string>("new");
+    protected texteBtnCreation = signal<string>("Add new");
     protected prefixSemaine = signal<string>("W");
     protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
@@ -313,6 +316,18 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         };
 
         this.texteEventDragNouveau.set(DICT_TRADUCTION_NOUVEAU[LANGUE] || DICT_TRADUCTION_BTN['en']);
+
+        const DICT_TRADUCTION_BTN_AJOTUER: Record<string, string> = 
+        {
+            'fr': "Ajouter",
+            'it': "Aggiungi",
+            'de': "Hinzufügen",
+            'es': "Añadir",
+            'pt': "Adicionar",
+            'en': "Add new"
+        };
+
+        this.texteBtnCreation.set(DICT_TRADUCTION_BTN_AJOTUER[LANGUE] || DICT_TRADUCTION_BTN_AJOTUER['en']);
     }
 
     ngOnDestroy(): void 
@@ -339,6 +354,11 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             titre: _event.titre,
             description: _event.description
         });
+    }
+
+    protected BtnAjouterClicker(): void
+    {
+        this.btnAddClicked.emit();
     }
 
     protected ClickJour(_date: Date): void

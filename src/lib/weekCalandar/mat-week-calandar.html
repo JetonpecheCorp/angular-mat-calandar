@@ -48,6 +48,15 @@
                     <button matButton="filled" class="today-btn-flat" (click)="AllerAujourdhui()">
                         {{ texteBtnAujourdhui() }}
                     </button>
+
+                    @if(showBtnAdd())
+                    {
+                        <button matButton="filled"
+                            class="today-btn-flat"
+                            (click)="BtnAjouterClicker()">
+                            {{ texteBtnCreation() }}
+                        </button>
+                    }
                 </div>
             </div>
         </mat-toolbar>
