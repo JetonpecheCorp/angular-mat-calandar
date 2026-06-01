@@ -67,10 +67,21 @@ export class MatMonthCalandar implements OnInit
 
     protected estPetitEcran = signal(false);
     protected overrideRipple = signal(false);
-    protected texteEventPlus = signal<string>("one more");
-    protected texteBtnAujourdhui = signal<string>("Today");
-    protected texteBtnCreation = signal<string>("Add new");
     protected hoveredEvent = signal<EventCalandar | null>(null);
+    protected trad = signal({
+        plus: "more", 
+        aujourdhui: "Today", 
+        ajouter: "Add new",
+        ariaPrecedent: "Previous", 
+        ariaSuivant: "Next", 
+        ariaAnneePrecedente: "Previous year", 
+        ariaAnneeSuivante: "Next year", 
+        ariaMenuMois: "Change month menu",
+        ariaMenuAnnee: "Change year menu",
+        ariaEvenement: "Event:", 
+        ariaCreer: "Create event on",
+        chargement: "Loading"
+    });
 
     private readonly langueNavigateur = navigator.language || "en-US";
     
@@ -266,41 +277,58 @@ export class MatMonthCalandar implements OnInit
         this.onResize();
         const LANGUE = this.langueNavigateur.split('-')[0];
         
-        const DICT_TRADUCTION: Record<string, string> = 
-        {
-            'fr': 'de plus',
-            'it': 'in più',
-            'de': 'mehr',
-            'es': 'más',
-            'pt': 'mais',
-            'en': 'more'
+        const DICT_TRADUCTION: Record<string, any> = {
+            'fr': { 
+                plus: "de plus", aujourdhui: "Aujourd'hui", ajouter: "Ajouter", 
+                ariaPrecedent: "Précédent", ariaSuivant: "Suivant", 
+                ariaAnneePrecedente: "Année précédente", ariaAnneeSuivante: "Année suivante", 
+                ariaMenuMois: "Menu changer le mois", ariaMenuAnnee: "Menu changer l'année", 
+                ariaEvenement: "Événement :", ariaCreer: "Créer un événement le",
+                chargement: "Chargement en cours" 
+            },
+            'it': { 
+                plus: "in più", aujourdhui: "Oggi", ajouter: "Aggiungi", 
+                ariaPrecedent: "Precedente", ariaSuivant: "Successivo", 
+                ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo", 
+                ariaMenuMois: "Menu cambia mese", ariaMenuAnnee: "Menu cambia anno", 
+                ariaEvenement: "Evento:", ariaCreer: "Crea evento il",
+                chargement: "Caricamento" 
+            },
+            'de': { 
+                plus: "mehr", aujourdhui: "Heute", ajouter: "Hinzufügen", 
+                ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", 
+                ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr", 
+                ariaMenuMois: "Menü Monat ändern", ariaMenuAnnee: "Menü Jahr ändern", 
+                ariaEvenement: "Ereignis:", ariaCreer: "Ereignis erstellen am",
+                chargement: "Wird geladen" 
+            },
+            'es': { 
+                plus: "más", aujourdhui: "Hoy", ajouter: "Añadir", 
+                ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", 
+                ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente", 
+                ariaMenuMois: "Menú cambiar mes", ariaMenuAnnee: "Menú cambiar año", 
+                ariaEvenement: "Evento:", ariaCreer: "Crear evento el",
+                chargement: "Cargando" 
+            },
+            'pt': { 
+                plus: "mais", aujourdhui: "Hoje", ajouter: "Adicionar", 
+                ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", 
+                ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte", 
+                ariaMenuMois: "Menu mudar mês", ariaMenuAnnee: "Menu mudar ano", 
+                ariaEvenement: "Evento:", ariaCreer: "Criar evento em",
+                chargement: "Carregando" 
+            },
+            'en': { 
+                plus: "more", aujourdhui: "Today", ajouter: "Add new", 
+                ariaPrecedent: "Previous", ariaSuivant: "Next", 
+                ariaAnneePrecedente: "Previous year", ariaAnneeSuivante: "Next year", 
+                ariaMenuMois: "Change month menu", ariaMenuAnnee: "Change year menu", 
+                ariaEvenement: "Event:", ariaCreer: "Create event on",
+                chargement: "Loading" 
+            }
         };
 
-        this.texteEventPlus.set(DICT_TRADUCTION[LANGUE] || DICT_TRADUCTION['en']);
-        
-        const DICT_TRADUCTION_BTN: Record<string, string> = 
-        {
-            'fr': "Aujourd'hui",
-            'it': "Oggi",
-            'de': "Heute",
-            'es': "Hoy",
-            'pt': "Hoje",
-            'en': "Today"
-        };
-
-        this.texteBtnAujourdhui.set(DICT_TRADUCTION_BTN[LANGUE] || DICT_TRADUCTION_BTN['en']);
-
-        const DICT_TRADUCTION_BTN_AJOTUER: Record<string, string> = 
-        {
-            'fr': "Ajouter",
-            'it': "Aggiungi",
-            'de': "Hinzufügen",
-            'es': "Añadir",
-            'pt': "Adicionar",
-            'en': "Add new"
-        };
-
-        this.texteBtnCreation.set(DICT_TRADUCTION_BTN_AJOTUER[LANGUE] || DICT_TRADUCTION_BTN_AJOTUER['en']);
+        this.trad.set(DICT_TRADUCTION[LANGUE] || DICT_TRADUCTION['en']);
     }
 
     protected ScrollVersAnneeActive(): void 
@@ -477,10 +505,21 @@ export class MatMonthCalandar implements OnInit
         return tDate >= min && tDate <= max;
     }
 
-    protected OnMouseDownCreation(event: MouseEvent | TouchEvent, dateJour: Date, estBloquer: boolean): void 
+    protected OnMouseDownCreation(event: MouseEvent | TouchEvent | Event, dateJour: Date, estBloquer: boolean): void 
     {
         if (this.readonly() || estBloquer) 
             return;
+
+        // Si événement clavier
+        if (event instanceof KeyboardEvent) 
+        {
+            let dateCalendrier = this.listeDate().find(x => x.date.getTime() == dateJour.getTime());
+            
+            if (dateCalendrier)
+                this.eventClickJour.emit(dateCalendrier);
+            
+            return;
+        }
 
         // Anti-Ghost Click Mobile
         if (event.type == 'touchstart') 
@@ -497,8 +536,8 @@ export class MatMonthCalandar implements OnInit
         if (target.closest('.event-item') || target.closest('.special-event-indicators-container')) 
             return;
 
-        const clientXDebut = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
-        const clientYDebut = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+        const clientXDebut = event instanceof MouseEvent ? event.clientX : (event as TouchEvent).touches[0].clientX;
+        const clientYDebut = event instanceof MouseEvent ? event.clientY : (event as TouchEvent).touches[0].clientY;
 
         this.dateDebutCreation.set(dateJour);
         this.dateFinCreation.set(dateJour);

@@ -20,32 +20,41 @@
             <div class="header-nav-row">
                 @if(!hideNavYearBtn())
                 {
-                    <button mat-icon-button (click)="AnneePrecedente()">
+                    <button mat-icon-button (click)="AnneePrecedente()" [attr.aria-label]="trad().ariaAnneePrecedente">
                         <mat-icon>keyboard_double_arrow_left</mat-icon>
                     </button>
                 }
 
-                <button mat-icon-button (click)="Precedent()">
+                <button mat-icon-button (click)="Precedent()" [attr.aria-label]="trad().ariaPrecedent">
                     <mat-icon>chevron_left</mat-icon>
                 </button>
                 
                 <div class="title-selector">
-                    <span class="month-title" [matMenuTriggerFor]="menuMois">
+                    <span class="month-title" 
+                            role="button" 
+                            tabindex="0"
+                            [matMenuTriggerFor]="menuMois" 
+                            [attr.aria-label]="trad().ariaMenuMois">
                         {{ nomMois() }}
                     </span>
 
-                    <span class="year-title" [matMenuTriggerFor]="menuAnnee" (menuOpened)="ScrollVersAnneeActive()"> 
+                    <span class="year-title" 
+                            role="button" 
+                            tabindex="0"
+                            [matMenuTriggerFor]="menuAnnee" 
+                            (menuOpened)="ScrollVersAnneeActive()" 
+                            [attr.aria-label]="trad().ariaMenuAnnee"> 
                         {{ annee() }}
                     </span>
                 </div>
 
-                <button mat-icon-button (click)="Suivant()">
+                <button mat-icon-button (click)="Suivant()" [attr.aria-label]="trad().ariaSuivant">
                     <mat-icon>chevron_right</mat-icon>
                 </button>
 
                 @if(!hideNavYearBtn())
                 {
-                    <button mat-icon-button (click)="AnneeSuivante()">
+                    <button mat-icon-button (click)="AnneeSuivante()" [attr.aria-label]="trad().ariaAnneeSuivante">
                         <mat-icon>keyboard_double_arrow_right</mat-icon>
                     </button>
                 }
@@ -55,7 +64,7 @@
                 <button matButton="filled"
                     class="today-btn" 
                     (click)="AllerAujourdhui()">
-                    {{ texteBtnAujourdhui() }}
+                    {{ trad().aujourdhui }}
                 </button>
 
                 @if(showBtnAdd())
@@ -63,7 +72,7 @@
                     <button matButton="filled"
                         class="today-btn" 
                         (click)="BtnAjouterClicker()">
-                        {{ texteBtnCreation() }}
+                        {{ trad().ajouter }}
                     </button>
                 }
             </div>
@@ -85,7 +94,7 @@
 
         @if (loading()) 
         {
-            <div class="loading-overlay">
+            <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
                 <mat-spinner diameter="48"></mat-spinner>
             </div>
         }
@@ -98,6 +107,10 @@
                     @for (element of semaine.jours; track $index) 
                     {
                         <div class="day-cell" 
+                            role="button"
+                            tabindex="0"
+                            [attr.aria-label]="trad().ariaCreer + ' ' + (element.date | date:'fullDate')"
+                            (keydown.enter)="OnMouseDownCreation($event, element.date, element.estBloquer)"
                             matRipple
                             cdkDropList
                             cdkDropListSortingDisabled
@@ -137,7 +150,7 @@
                                         
                                         @if (!estPetitEcran()) 
                                         {
-                                            {{ texteEventPlus() }}...
+                                            {{ trad().plus }}...
                                         }
                                     </div>
                                 }
@@ -152,6 +165,11 @@
                         @if (pos.ligne < maxLignesVisibles())
                         {
                             <div class="event-item absolute-event" 
+                                role="button"
+                                tabindex="0"
+                                [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre + ' ' + (pos.event.startDate | date:'longDate')"
+                                (keydown.enter)="$event.stopPropagation(); ClickEvent(pos.event)"
+                                (keydown.space)="$event.stopPropagation(); ClickEvent(pos.event)"
                                 cdkDrag
                                 [cdkDragData]="pos.event"
                                 [cdkDragDisabled]="readonly() || pos.event.readonly"
