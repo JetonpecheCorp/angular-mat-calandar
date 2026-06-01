@@ -6,3 +6,4 @@ export * from './lib/weekCalandar/mat-week-calandar';
 export * from './models/EventCalandar';
 export * from './models/DateCalandar';
 export * from './models/DateSpecialEvent';
+export * from './models/DateCalandarDisabled';
