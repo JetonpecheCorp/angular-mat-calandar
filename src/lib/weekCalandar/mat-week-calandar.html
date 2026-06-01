@@ -22,31 +22,37 @@
 
                     @if(!hideNavYearBtn())
                     {
-                        <button mat-icon-button (click)="MoisPrecedent()">
+                        <button mat-icon-button (click)="MoisPrecedent()" [attr.aria-label]="trad().ariaMoisPrecedent">
                             <mat-icon>keyboard_double_arrow_left</mat-icon>
                         </button>
                     }
 
-                    <button mat-icon-button (click)="Precedent()">
+                    <button mat-icon-button (click)="Precedent()" [attr.aria-label]="trad().ariaPrecedent">
                         <mat-icon>chevron_left</mat-icon>
                     </button>
 
-                    <span class="period-title" [matMenuTriggerFor]="menuSemaine">{{ titrePeriode() }}</span>
+                    <span class="period-title" 
+                            role="button" 
+                            tabindex="0" 
+                            [attr.aria-label]="trad().ariaMenu"
+                             [matMenuTriggerFor]="menuSemaine">
+                        {{ titrePeriode() }}
+                    </span>
                     
-                    <button mat-icon-button (click)="Suivant()">
+                    <button mat-icon-button (click)="Suivant()" [attr.aria-label]="trad().ariaSuivant">
                         <mat-icon>chevron_right</mat-icon>
                     </button>
 
                     @if(!hideNavYearBtn())
                     {
-                        <button mat-icon-button (click)="MoisSuivant()">
+                        <button mat-icon-button (click)="MoisSuivant()" [attr.aria-label]="trad().ariaMoisSuivant">
                             <mat-icon>keyboard_double_arrow_right</mat-icon>
                         </button>
                     }
                 </div>
                 <div>
                     <button matButton="filled" class="today-btn-flat" (click)="AllerAujourdhui()">
-                        {{ texteBtnAujourdhui() }}
+                        {{ trad().aujourdhui }}
                     </button>
 
                     @if(showBtnAdd())
@@ -54,7 +60,7 @@
                         <button matButton="filled"
                             class="today-btn-flat"
                             (click)="BtnAjouterClicker()">
-                            {{ texteBtnCreation() }}
+                            {{ trad().ajouter }}
                         </button>
                     }
                 </div>
@@ -63,7 +69,7 @@
 
         <div class="days-header-sticky">
             <div class="time-gutter">
-                <span class="week-number-label">{{ prefixSemaine() }}{{ numeroSemaine() }}</span>
+                <span class="week-number-label">{{ trad().semaine }}{{ numeroSemaine() }}</span>
             </div> 
             <div class="days-labels-grid" [style.grid-template-columns]="'repeat(' + listeNomSemaine().length + ', 1fr)'">
                 @for (element of listeNomSemaine(); track element.date) 
@@ -91,7 +97,7 @@
         <div class="calendar-body">
             @if (loading()) 
             {
-                <div class="loading-overlay">
+                <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
                     <mat-spinner diameter="48"></mat-spinner>
                 </div>
             }
@@ -126,11 +132,16 @@
                             }
 
                             <div class="event-block"
+                                role="button"
+                                tabindex="0"
+                                [attr.aria-label]="trad().ariaEvenement + ' ' +  ev.titre + ' ' + ev.formatHeure"
                                 cdkDrag
                                 [cdkDragDisabled]="readonly() || ev.readonly"
                                 (cdkDragStarted)="OnEventDragStarted(ev)" 
                                 (cdkDragMoved)="OnEventDragMoved($event, ev)"
                                 (cdkDragEnded)="OnEventDragEnded($event, ev)"
+                                (keydown.enter)="ClickEvent(ev)" 
+                                (keydown.space)="ClickEvent(ev)"
                                 [ngStyle]="CalculerStyleEvent(ev, jour.date)"
                                 [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
                                 [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'">
@@ -171,10 +182,11 @@
                             </div>
                         }
 
-                        @if (styleApercuCreation(jour.date); as styleApercu) {
+                        @if (styleApercuCreation(jour.date); as styleApercu) 
+                        {
                             <div class="creation-preview-block" [ngStyle]="styleApercu">
                                 <div class="event-content">
-                                    <span class="event-title">({{ texteEventDragNouveau() }})</span>
+                                    <span class="event-title">({{ trad().nouveau }})</span>
                                     <span class="event-time">{{ formatHeureCreation() }}</span>
                                 </div>
                             </div>
@@ -184,6 +196,11 @@
                         {
                             <div matRipple [matRippleDisabled]="matRippleDisabled()" 
                                     class="hour-slot" 
+                                    role="button"
+                                    tabindex="0"
+                                    [attr.aria-label]="trad().ariaCreer + ' ' + (jour.date | date:'longDate') + ' ' + h"
+                                    (keydown.enter)="ClickTimeSlot(jour.date, h)"
+                                    (keydown.space)="ClickTimeSlot(jour.date, h)"
                                     (mousedown)="OnMouseDownHoraire(jour.date, $event)"
                                     (touchstart)="OnMouseDownHoraire(jour.date, $event)"></div>
                         }
@@ -201,7 +218,7 @@
         {
             <button mat-menu-item (click)="ChoisirSemaine(w.date)">
                 <div class="week-row" [class.current-week-tag]="w.numero == numeroSemaine()">
-                    <span class="week-label">{{ prefixSemaine() }}{{ w.numero }} —</span>
+                    <span class="week-label">{{ trad().semaine }}{{ w.numero }} —</span>
                     <span>{{ w.labelDebut }} au {{ w.labelFin }}</span>
                 </div>
             </button>

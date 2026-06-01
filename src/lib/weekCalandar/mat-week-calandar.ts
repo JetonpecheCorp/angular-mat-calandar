@@ -59,12 +59,15 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     eventCreated = output<DateInterval>();
     btnAddClicked = output();
 
-    protected texteBtnAujourdhui = signal<string>("Today");
-    protected texteEventDragNouveau = signal<string>("new");
-    protected texteBtnCreation = signal<string>("Add new");
-    protected prefixSemaine = signal<string>("W");
     protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
+    protected trad = signal({
+        aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new",
+        ariaPrecedent: "Previous", ariaSuivant: "Next", 
+        ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month",
+        ariaMenu: "Change view", ariaEvenement: "Event:", ariaCreer: "Create event on",
+        chargement: "Loading" 
+    });
 
     private el = inject(ElementRef);
     private readonly langueNavigateur = navigator.language || "en-US";
@@ -281,53 +284,16 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         const LANGUE = this.langueNavigateur.split('-')[0];
 
-        const DICT_TRADUCTION_BTN: Record<string, string> = 
-        {
-            'fr': "Aujourd'hui",
-            'it': "Oggi",
-            'de': "Heute",
-            'es': "Hoy",
-            'pt': "Hoje",
-            'en': "Today"
+       const DICT_TRADUCTION: Record<string, any> = {
+            'fr': { aujourdhui: "Aujourd'hui", semaine: "S", nouveau: "nouveau", ajouter: "Ajouter", ariaPrecedent: "Précédent", ariaSuivant: "Suivant", ariaMenu: "Changer la vue", ariaEvenement: "Événement :", ariaCreer: "Créer un événement le", ariaMoisPrecedent: "Mois précédent", ariaMoisSuivant: "Mois suivant", chargement: "Chargement en cours" },
+            'it': { aujourdhui: "Oggi", semaine: "S", nouveau: "nuovo", ajouter: "Aggiungi", ariaPrecedent: "Precedente", ariaSuivant: "Successivo", ariaMenu: "Cambia vista", ariaEvenement: "Evento:", ariaCreer: "Crea evento il", ariaMoisPrecedent: "Mese precedente", ariaMoisSuivant: "Mese successivo", chargement: "Caricamento" },
+            'es': { aujourdhui: "Hoy", semaine: "S", nouveau: "nuevo", ajouter: "Añadir", ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", ariaMenu: "Cambiar vista", ariaEvenement: "Evento:", ariaCreer: "Crear evento el", ariaMoisPrecedent: "Mes anterior", ariaMoisSuivant: "Mes siguiente", chargement: "Cargando" },
+            'pt': { aujourdhui: "Hoje", semaine: "S", nouveau: "novo", ajouter: "Adicionar", ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", ariaMenu: "Mudar vista", ariaEvenement: "Evento:", ariaCreer: "Criar evento em", ariaMoisPrecedent: "Mês anterior", ariaMoisSuivant: "Mês seguinte", chargement: "Carregando" },
+            'de': { aujourdhui: "Heute", semaine: "W", nouveau: "neu", ajouter: "Hinzufügen", ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", ariaMenu: "Ansicht ändern", ariaEvenement: "Ereignis:", ariaCreer: "Ereignis erstellen am", ariaMoisPrecedent: "Vorheriger Monat", ariaMoisSuivant: "Nächster Monat", chargement: "Wird geladen" },
+            'en': { aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new", ariaPrecedent: "Previous", ariaSuivant: "Next", ariaMenu: "Change view", ariaEvenement: "Event:", ariaCreer: "Create event on", ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month", chargement: "Loading" }
         };
 
-        this.texteBtnAujourdhui.set(DICT_TRADUCTION_BTN[LANGUE] || DICT_TRADUCTION_BTN['en']);
-
-        const DICT_TRADUCTION_SEMAINE: Record<string, string> = 
-        {
-            'fr': "S",
-            'it': "S",
-            'es': "S",
-            'pt': "S",
-            'en': "W",
-            'de': "W"
-        };
-
-        this.prefixSemaine.set(DICT_TRADUCTION_SEMAINE[LANGUE] || DICT_TRADUCTION_SEMAINE['en']);
-
-        const DICT_TRADUCTION_NOUVEAU: Record<string, string> = 
-        {
-            "fr": "nouveau",
-            "it": "nuovo",
-            "de": "neu",
-            "es": "nuevo",
-            "pt": "novo",
-            "en": "new"
-        };
-
-        this.texteEventDragNouveau.set(DICT_TRADUCTION_NOUVEAU[LANGUE] || DICT_TRADUCTION_BTN['en']);
-
-        const DICT_TRADUCTION_BTN_AJOTUER: Record<string, string> = 
-        {
-            'fr': "Ajouter",
-            'it': "Aggiungi",
-            'de': "Hinzufügen",
-            'es': "Añadir",
-            'pt': "Adicionar",
-            'en': "Add new"
-        };
-
-        this.texteBtnCreation.set(DICT_TRADUCTION_BTN_AJOTUER[LANGUE] || DICT_TRADUCTION_BTN_AJOTUER['en']);
+        this.trad.set(DICT_TRADUCTION[LANGUE] || DICT_TRADUCTION['en']);
     }
 
     ngOnDestroy(): void 
@@ -668,7 +634,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             _date.getFullYear() == DATE.getFullYear();
     }
     
-    protected OnMouseDownHoraire(dateJour: Date, event: MouseEvent | TouchEvent): void 
+    protected OnMouseDownHoraire(dateJour: Date, event: MouseEvent | TouchEvent | Event): void 
     {
         if (this.readonly()) 
             return;
@@ -693,8 +659,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             return;
 
         const initialRect = column.getBoundingClientRect();
-        const clientYDebut = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
-        const clientXDebut = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
+        const clientYDebut = event instanceof MouseEvent ? event.clientY : (event as TouchEvent).touches[0].clientY;
+        const clientXDebut = event instanceof MouseEvent ? event.clientX : (event as TouchEvent).touches[0].clientX;
         
         let yActuel = clientYDebut - initialRect.top;
         if (yActuel < 0) yActuel = 0; // Sécurité
