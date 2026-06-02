@@ -34,6 +34,21 @@ Traduction automatique celons la **langue du navigateur.**
 - `eventUpdated`: Event drag and drop ou resize d'un event
 - `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
 
+## Navigation via clavier
+- `TAB`: parcourir le composant
+- `ALT + FLECHE BAS`: parcourir les events d'un jour
+- `CTRL + FLECHE HAUT`: Revenir sur le jour
+
+### Creation
+- `SHIFT + fleches clavier` puis `Entrer` pour valider
+
+### Modifier date interval
+- `CTRL + FLECHE DROITE`: modifier date fin
+- `CTRL + SHIFT + FLECHE GAUCHE`: modifier date de début
+
+### Déplacer l'event
+- `SHIFT + FLECHE DROITE ou GAUCHE`: deplacer l'event
+
 ## Exemple
 ```html
 <script>
