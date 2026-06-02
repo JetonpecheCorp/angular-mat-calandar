@@ -510,17 +510,6 @@ export class MatMonthCalandar implements OnInit
         if (this.readonly() || estBloquer) 
             return;
 
-        // Si événement clavier
-        if (event instanceof KeyboardEvent) 
-        {
-            let dateCalendrier = this.listeDate().find(x => x.date.getTime() == dateJour.getTime());
-            
-            if (dateCalendrier)
-                this.eventClickJour.emit(dateCalendrier);
-            
-            return;
-        }
-
         // Anti-Ghost Click Mobile
         if (event.type == 'touchstart') 
             this.dernierTouchTime = Date.now();
@@ -743,6 +732,119 @@ export class MatMonthCalandar implements OnInit
         window.addEventListener('mouseup', onMouseUp);
         window.addEventListener('touchmove', onMouseMove, { passive: false });
         window.addEventListener('touchend', onMouseUp);
+    }
+
+    protected OnDayCellKeydown(event: KeyboardEvent, dateJour: Date, estBloquer: boolean): void 
+    {
+        if (event.key == 'Escape') 
+        {
+            if (this.dragCreationEnCours()) 
+            {
+                this.AnnulerCreationClavier();
+                event.preventDefault();
+            }
+
+            return;
+        }
+
+        if (event.key == 'Enter' || event.key == ' ') 
+        {
+            event.preventDefault();
+
+            if (this.readonly()) 
+                return;
+
+            if (this.dragCreationEnCours()) 
+            {
+                const debut = this.dateDebutCreation();
+                const fin = this.dateFinCreation();
+                
+                if (debut && fin) 
+                {   
+                    this.eventCreated.emit({ 
+                        start: new Date(Math.min(debut.getTime(), fin.getTime())), 
+                        end: new Date(Math.max(debut.getTime(), fin.getTime()))
+                    });
+                }
+                this.AnnulerCreationClavier();
+            } 
+            else 
+            {
+                if (estBloquer) 
+                    return; 
+
+                let dateCalendrier = this.listeDate().find(x => x.date.getTime() == dateJour.getTime());
+
+                if (dateCalendrier) 
+                    this.eventClickJour.emit(dateCalendrier);
+            }
+
+            return;
+        }
+
+        // creation
+        if (event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) 
+        {
+            event.preventDefault();
+            if (this.readonly()) 
+                return;
+
+            if (estBloquer && !this.dragCreationEnCours()) 
+                return;
+
+            if (!this.dragCreationEnCours()) 
+            {
+                this.dragCreationEnCours.set(true);
+                this.dateDebutCreation.set(dateJour);
+                this.dateFinCreation.set(dateJour);
+            }
+
+            let decalage = 0;
+            if (event.key == 'ArrowRight') 
+                decalage = 1;
+
+            else if (event.key == 'ArrowLeft') 
+                decalage = -1;
+
+            else if (event.key == 'ArrowDown') 
+                decalage = 7;
+
+            else if (event.key == 'ArrowUp') 
+                decalage = -7;
+
+            const dateActuelle = this.dateFinCreation() || dateJour;
+            const nouvelleDateFin = new Date(dateActuelle);
+            nouvelleDateFin.setDate(nouvelleDateFin.getDate() + decalage);
+
+            this.dateFinCreation.set(nouvelleDateFin);
+
+            const nouveauMois = nouvelleDateFin.getMonth() + 1;
+            const nouvelleAnnee = nouvelleDateFin.getFullYear();
+
+            const moisAChange = (nouveauMois != this.mois() || nouvelleAnnee != this.annee());
+
+            if (moisAChange) 
+            {
+                this.mois.set(nouveauMois);
+                this.annee.set(nouvelleAnnee);
+            }
+
+            setTimeout(() => 
+            {
+                const targetCell = this.el.nativeElement.querySelector(`.day-cell[data-date="${nouvelleDateFin.getTime()}"]`) as HTMLElement;
+
+                if (targetCell)
+                    targetCell.focus();
+                
+            }, moisAChange ? 120 : 30);
+        }
+    }
+
+    private AnnulerCreationClavier(): void 
+    {
+        this.dragCreationEnCours.set(false);
+        this.dateDebutCreation.set(null);
+        this.dateFinCreation.set(null);
     }
 
     private DeclencherNavigation(direction: 'left' | 'right'): void 
