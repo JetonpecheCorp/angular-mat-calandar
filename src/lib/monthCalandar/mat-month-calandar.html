@@ -109,8 +109,8 @@
                         <div class="day-cell" 
                                 role="button"
                                 tabindex="0"
-                                [attr.aria-label]="trad().ariaCreer + ' ' + (element.date | date:'fullDate') + (!dragCreationEnCours() ? ' Majuscule plus flèches pour étendre' : ' Entrée pour valider')"
-                                (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer)"
+                                [attr.aria-label]="trad().ariaCreer + ' ' + (element.date | date:'fullDate') + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (element.listeEvent.length > 0 ? trad().aideDescendre : '')"                      
+                                (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer, element.listeEvent)"
                                 matRipple
                                 cdkDropList
                                 [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
@@ -167,9 +167,9 @@
                                 [id]="'event-' + pos.event.id"
                                 role="button"
                                 tabindex="0"
-                                [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre + ' ' + (pos.event.startDate | date:'longDate') + (!readonly() && !pos.event.readonly ? '. Utilisez Majuscule plus les flèches pour déplacer.' : '')"
-                                (keydown.enter)="$event.stopPropagation(); ClickEvent(pos.event)"
-                                (keydown.space)="$event.stopPropagation(); ClickEvent(pos.event)"
+                                [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre + ' ' + (pos.event.startDate | date:'longDate') + (previewResize()?.eventId === pos.event.id ? trad().aideEventModif : (!readonly() && !pos.event.readonly ? trad().aideEventNormal : ''))"
+                                (keydown)="OnEventKeydown($event, pos.event)"
+                                (blur)="OnEventBlur(pos.event)"
                                 cdkDrag
                                 [cdkDragData]="pos.event"
                                 [cdkDragDisabled]="readonly() || pos.event.readonly"

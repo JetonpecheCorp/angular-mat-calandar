@@ -68,6 +68,7 @@ export class MatMonthCalandar implements OnInit
     protected estPetitEcran = signal(false);
     protected overrideRipple = signal(false);
     protected hoveredEvent = signal<EventCalandar | null>(null);
+    protected dateRetourFocus = signal<number | null>(null);
     protected trad = signal({
         plus: "more", 
         aujourdhui: "Today", 
@@ -80,7 +81,12 @@ export class MatMonthCalandar implements OnInit
         ariaMenuAnnee: "Change year menu",
         ariaEvenement: "Event:", 
         ariaCreer: "Create event on",
-        chargement: "Loading"
+        chargement: "Loading",
+        aideCreerEtendre: " (Shift plus arrows to extend)",
+        aideCreerValider: " (Enter to validate)",
+        aideDescendre: ". Alt plus down arrow to select an event",
+        aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
+        aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)"
     });
 
     private readonly langueNavigateur = navigator.language || "en-US";
@@ -284,39 +290,12 @@ export class MatMonthCalandar implements OnInit
                 ariaAnneePrecedente: "Année précédente", ariaAnneeSuivante: "Année suivante", 
                 ariaMenuMois: "Menu changer le mois", ariaMenuAnnee: "Menu changer l'année", 
                 ariaEvenement: "Événement :", ariaCreer: "Créer un événement le",
-                chargement: "Chargement en cours" 
-            },
-            'it': { 
-                plus: "in più", aujourdhui: "Oggi", ajouter: "Aggiungi", 
-                ariaPrecedent: "Precedente", ariaSuivant: "Successivo", 
-                ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo", 
-                ariaMenuMois: "Menu cambia mese", ariaMenuAnnee: "Menu cambia anno", 
-                ariaEvenement: "Evento:", ariaCreer: "Crea evento il",
-                chargement: "Caricamento" 
-            },
-            'de': { 
-                plus: "mehr", aujourdhui: "Heute", ajouter: "Hinzufügen", 
-                ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", 
-                ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr", 
-                ariaMenuMois: "Menü Monat ändern", ariaMenuAnnee: "Menü Jahr ändern", 
-                ariaEvenement: "Ereignis:", ariaCreer: "Ereignis erstellen am",
-                chargement: "Wird geladen" 
-            },
-            'es': { 
-                plus: "más", aujourdhui: "Hoy", ajouter: "Añadir", 
-                ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", 
-                ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente", 
-                ariaMenuMois: "Menú cambiar mes", ariaMenuAnnee: "Menú cambiar año", 
-                ariaEvenement: "Evento:", ariaCreer: "Crear evento el",
-                chargement: "Cargando" 
-            },
-            'pt': { 
-                plus: "mais", aujourdhui: "Hoje", ajouter: "Adicionar", 
-                ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", 
-                ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte", 
-                ariaMenuMois: "Menu mudar mês", ariaMenuAnnee: "Menu mudar ano", 
-                ariaEvenement: "Evento:", ariaCreer: "Criar evento em",
-                chargement: "Carregando" 
+                chargement: "Chargement en cours",
+                aideCreerEtendre: " (Majuscule plus flèches pour étendre)",
+                aideCreerValider: " (Entrée pour valider)",
+                aideDescendre: ". Alt plus flèche bas pour sélectionner un événement",
+                aideEventModif: " (Modification en cours. Entrée pour valider, Échap pour annuler)",
+                aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au jour)"
             },
             'en': { 
                 plus: "more", aujourdhui: "Today", ajouter: "Add new", 
@@ -324,7 +303,64 @@ export class MatMonthCalandar implements OnInit
                 ariaAnneePrecedente: "Previous year", ariaAnneeSuivante: "Next year", 
                 ariaMenuMois: "Change month menu", ariaMenuAnnee: "Change year menu", 
                 ariaEvenement: "Event:", ariaCreer: "Create event on",
-                chargement: "Loading" 
+                chargement: "Loading",
+                aideCreerEtendre: " (Shift plus arrows to extend)",
+                aideCreerValider: " (Enter to validate)",
+                aideDescendre: ". Alt plus down arrow to select an event",
+                aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
+                aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)"
+            },
+            'es': { 
+                plus: "más", aujourdhui: "Hoy", ajouter: "Añadir", 
+                ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", 
+                ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente", 
+                ariaMenuMois: "Menú cambiar mes", ariaMenuAnnee: "Menú cambiar año", 
+                ariaEvenement: "Evento:", ariaCreer: "Crear evento el",
+                chargement: "Cargando",
+                aideCreerEtendre: " (Mayús más flechas para extender)",
+                aideCreerValider: " (Intro para validar)",
+                aideDescendre: ". Alt más flecha abajo para seleccionar un evento",
+                aideEventModif: " (Modificación en curso. Intro para validar, Escape para cancelar)",
+                aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para cambiar el final. Ctrl más Mayús más flechas para cambiar el inicio. Alt más flecha arriba para volver al día)"
+            },
+            'it': { 
+                plus: "in più", aujourdhui: "Oggi", ajouter: "Aggiungi", 
+                ariaPrecedent: "Precedente", ariaSuivant: "Successivo", 
+                ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo", 
+                ariaMenuMois: "Menu cambia mese", ariaMenuAnnee: "Menu cambia anno", 
+                ariaEvenement: "Evento:", ariaCreer: "Crea evento il",
+                chargement: "Caricamento",
+                aideCreerEtendre: " (Maiusc più frecce per estendere)",
+                aideCreerValider: " (Invio per confermare)",
+                aideDescendre: ". Alt più freccia giù per selezionare un evento",
+                aideEventModif: " (Modifica in corso. Invio per confermare, Esc per annullare)",
+                aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per ridimensionare la fine. Ctrl più Maiusc più frecce per ridimensionare l'inizio. Alt più freccia su per tornare al giorno)"
+            },
+            'de': { 
+                plus: "mehr", aujourdhui: "Heute", ajouter: "Hinzufügen", 
+                ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", 
+                ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr", 
+                ariaMenuMois: "Menü Monat ändern", ariaMenuAnnee: "Menü Jahr ändern", 
+                ariaEvenement: "Ereignis:", ariaCreer: "Ereignis erstellen am",
+                chargement: "Wird geladen",
+                aideCreerEtendre: " (Umschalt plus Pfeiltasten zum Erweitern)",
+                aideCreerValider: " (Eingabe zum Bestätigen)",
+                aideDescendre: ". Alt plus Pfeiltaste nach unten, um ein Ereignis auszuwählen",
+                aideEventModif: " (Bearbeitung läuft. Eingabe zum Bestätigen, Esc zum Abbrechen)",
+                aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten zum Ändern des Endes. Ctrl plus Umschalt plus Pfeiltasten zum Ändern des Starts. Alt plus Pfeiltaste nach oben, um zum Tag zurückzukehren)"
+            },
+            'pt': { 
+                plus: "mais", aujourdhui: "Hoje", ajouter: "Adicionar", 
+                ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", 
+                ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte", 
+                ariaMenuMois: "Menu mudar mês", ariaMenuAnnee: "Menu mudar ano", 
+                ariaEvenement: "Evento:", ariaCreer: "Criar evento em",
+                chargement: "Carregando",
+                aideCreerEtendre: " (Shift mais setas para estender)",
+                aideCreerValider: " (Enter para validar)",
+                aideDescendre: ". Alt mais seta para baixo para selecionar um evento",
+                aideEventModif: " (Modificação em curso. Enter para validar, Esc para cancelar)",
+                aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para redimensionar o fim. Ctrl mais Shift mais setas para redimensionar o início. Alt mais seta para cima para voltar ao dia)"
             }
         };
 
@@ -734,7 +770,7 @@ export class MatMonthCalandar implements OnInit
         window.addEventListener('touchend', onMouseUp);
     }
 
-    protected OnDayCellKeydown(event: KeyboardEvent, dateJour: Date, estBloquer: boolean): void 
+    protected OnDayCellKeydown(event: KeyboardEvent, dateJour: Date, estBloquer: boolean, eventsDuJour: EventCalandar[] = []): void 
     {
         if (event.key == 'Escape') 
         {
@@ -836,6 +872,204 @@ export class MatMonthCalandar implements OnInit
                 if (targetCell)
                     targetCell.focus();
                 
+            }, moisAChange ? 120 : 30);
+        }
+
+        if (event.altKey && event.key == 'ArrowDown') 
+        {
+            event.preventDefault();
+            if (eventsDuJour && eventsDuJour.length > 0) 
+            {
+                this.dateRetourFocus.set(dateJour.getTime());
+
+                // On va chercher le premier événement de ce jour et on lui donne le focus
+                const eventElement = this.el.nativeElement.querySelector(`#event-${eventsDuJour[0].id}`) as HTMLElement;
+
+                if (eventElement)
+                    eventElement.focus();
+            }
+
+            return;
+        }
+    }
+
+    protected OnEventBlur(eventObj: EventCalandar): void 
+    {
+        // Si on perd le focus (on clique ailleurs) pendant une modification, on annule
+        const preview = this.previewResize();
+        if (preview && preview.eventId === eventObj.id) 
+        {
+            this.previewResize.set(null);
+        }
+    }
+
+    protected OnEventKeydown(event: KeyboardEvent, eventObj: EventCalandar): void 
+    {
+        if (event.key == 'Escape') 
+        {
+            if (this.previewResize()) 
+            {
+                this.previewResize.set(null);
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            return;
+        }
+
+        if (event.key == 'Enter' || event.key == ' ') 
+        {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const apercu = this.previewResize();
+            if (apercu && apercu.eventId === eventObj.id) 
+            {
+                this.eventUpdated.emit({
+                    ...eventObj,
+                    startDate: apercu.startDate,
+                    endDate: apercu.endDate
+                });
+
+                this.previewResize.set(null);
+            }
+            else 
+                this.ClickEvent(eventObj);
+
+            return;
+        }
+
+        // 3. Remonter sur la case d'origine (Alt + Flèche Haut)
+        if (event.altKey && event.key === 'ArrowUp') 
+        {
+            event.preventDefault();
+            
+            // On utilise notre marque-page, ou par défaut le début de l'événement
+            const timestamp = this.dateRetourFocus() || new Date(eventObj.startDate.getFullYear(), eventObj.startDate.getMonth(), eventObj.startDate.getDate()).getTime();
+            const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${timestamp}"]`) as HTMLElement;
+            
+            if (caseJour) 
+                caseJour.focus();
+
+            return;
+        }
+
+        if (event.key === 'Tab')
+        {
+            const cible = event.target as HTMLElement;
+            const coucheEvenements = cible.closest('.events-foreground-layer');
+            
+            if (coucheEvenements) 
+            {
+                const tousLesEvenements = Array.from(coucheEvenements.querySelectorAll('.absolute-event')) as HTMLElement[];
+                const indexActuel = tousLesEvenements.indexOf(cible);
+                
+                // A. Si on est sur le dernier événement de la semaine
+                if (!event.shiftKey && indexActuel == tousLesEvenements.length - 1) 
+                {
+                    event.preventDefault(); 
+                    
+                    // Retour automatique au jour d'origine !
+                    const timestamp = this.dateRetourFocus() || new Date(eventObj.startDate.getFullYear(), eventObj.startDate.getMonth(), eventObj.startDate.getDate()).getTime();
+                    const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${timestamp}"]`) as HTMLElement;
+                    if (caseJour) caseJour.focus();
+                }
+
+                // B. Si on est sur le premier événement et on recule
+                else if (event.shiftKey && indexActuel == 0) 
+                {
+                    event.preventDefault();
+                    
+                    // Retour automatique au jour d'origine !
+                    const timestamp = this.dateRetourFocus() || new Date(eventObj.startDate.getFullYear(), eventObj.startDate.getMonth(), eventObj.startDate.getDate()).getTime();
+                    const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${timestamp}"]`) as HTMLElement;
+
+                    if (caseJour) 
+                        caseJour.focus();
+                }
+            }
+
+            return;
+        }
+
+        // 5. Déplacement et Redimensionnement
+        let estEnDeplacement = event.shiftKey && !event.ctrlKey && !event.metaKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
+        let estRedimensionnementFin = (event.ctrlKey || event.metaKey) && !event.shiftKey && ['ArrowLeft', 'ArrowRight'].includes(event.key);
+        let estRedimensionnementDebut = (event.ctrlKey || event.metaKey) && event.shiftKey && ['ArrowLeft', 'ArrowRight'].includes(event.key);
+
+        if (estEnDeplacement || estRedimensionnementFin || estRedimensionnementDebut) 
+        {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (this.readonly() || eventObj.readonly) return;
+
+            const apercuActuel = this.previewResize();
+            const debutDeBase = (apercuActuel && apercuActuel.eventId === eventObj.id) ? apercuActuel.startDate : eventObj.startDate;
+            const finDeBase = (apercuActuel && apercuActuel.eventId === eventObj.id) ? apercuActuel.endDate : eventObj.endDate;
+
+            let nouveauDebut = new Date(debutDeBase);
+            let nouvelleFin = new Date(finDeBase);
+
+            if (estEnDeplacement) 
+            {
+                let decalage = 0;
+                if (event.key === 'ArrowRight') 
+                    decalage = 1;
+
+                else if (event.key === 'ArrowLeft') 
+                    decalage = -1;
+
+                else if (event.key === 'ArrowDown') 
+                    decalage = 7;
+
+                else if (event.key === 'ArrowUp') 
+                    decalage = -7;
+
+                nouveauDebut.setDate(nouveauDebut.getDate() + decalage);
+                nouvelleFin.setDate(nouvelleFin.getDate() + decalage);
+            } 
+            else if (estRedimensionnementFin) 
+            {
+                let decalage = event.key === 'ArrowRight' ? 1 : -1;
+                let testFin = new Date(nouvelleFin);
+                testFin.setDate(testFin.getDate() + decalage);
+
+                if (testFin.getTime() > nouveauDebut.getTime())
+                    nouvelleFin = testFin;
+            }
+            else if (estRedimensionnementDebut) 
+            {
+                let decalage = event.key === 'ArrowRight' ? 1 : -1;
+                let testDebut = new Date(nouveauDebut);
+                testDebut.setDate(testDebut.getDate() + decalage);
+
+                if (testDebut.getTime() < nouvelleFin.getTime())
+                    nouveauDebut = testDebut;
+            }
+
+            this.previewResize.set({
+                eventId: eventObj.id,
+                startDate: nouveauDebut,
+                endDate: nouvelleFin
+            });
+
+            const dateCible = estRedimensionnementDebut ? nouveauDebut : nouvelleFin;
+            const nouveauMois = dateCible.getMonth() + 1;
+            const nouvelleAnnee = dateCible.getFullYear();
+            const moisAChange = (nouveauMois !== this.mois() || nouvelleAnnee !== this.annee());
+
+            if (moisAChange) 
+            {
+                this.mois.set(nouveauMois);
+                this.annee.set(nouvelleAnnee);
+            }
+
+            setTimeout(() => 
+            {
+                const elementEvenement = this.el.nativeElement.querySelector(`#event-${eventObj.id}`) as HTMLElement;
+                if (elementEvenement)
+                    elementEvenement.focus();
+
             }, moisAChange ? 120 : 30);
         }
     }
