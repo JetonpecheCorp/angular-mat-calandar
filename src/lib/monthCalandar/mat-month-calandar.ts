@@ -86,7 +86,8 @@ export class MatMonthCalandar implements OnInit
         aideCreerValider: " (Enter to validate)",
         aideDescendre: ". Alt plus down arrow to select an event",
         aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
-        aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)"
+        aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)",
+        aideNavMois: ". PageUp or PageDown to change month. Ctrl plus Page to change year"
     });
 
     private readonly langueNavigateur = navigator.language || "en-US";
@@ -295,7 +296,8 @@ export class MatMonthCalandar implements OnInit
                 aideCreerValider: " (Entrée pour valider)",
                 aideDescendre: ". Alt plus flèche bas pour sélectionner un événement",
                 aideEventModif: " (Modification en cours. Entrée pour valider, Échap pour annuler)",
-                aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au jour)"
+                aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au jour)",
+                aideNavMois: ". Page haut ou Page bas pour changer de mois. Ctrl plus Page haut ou bas pour changer d'année"
             },
             'en': { 
                 plus: "more", aujourdhui: "Today", ajouter: "Add new", 
@@ -308,7 +310,8 @@ export class MatMonthCalandar implements OnInit
                 aideCreerValider: " (Enter to validate)",
                 aideDescendre: ". Alt plus down arrow to select an event",
                 aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
-                aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)"
+                aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)",
+                aideNavMois: ". PageUp or PageDown to change month. Ctrl plus Page to change year"
             },
             'es': { 
                 plus: "más", aujourdhui: "Hoy", ajouter: "Añadir", 
@@ -321,7 +324,8 @@ export class MatMonthCalandar implements OnInit
                 aideCreerValider: " (Intro para validar)",
                 aideDescendre: ". Alt más flecha abajo para seleccionar un evento",
                 aideEventModif: " (Modificación en curso. Intro para validar, Escape para cancelar)",
-                aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para cambiar el final. Ctrl más Mayús más flechas para cambiar el inicio. Alt más flecha arriba para volver al día)"
+                aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para cambiar el final. Ctrl más Mayús más flechas para cambiar el inicio. Alt más flecha arriba para volver al día)",
+                aideNavMois: ". Avanzar página o Retroceder página para cambiar de mes. Ctrl más Página para cambiar de año"
             },
             'it': { 
                 plus: "in più", aujourdhui: "Oggi", ajouter: "Aggiungi", 
@@ -334,7 +338,8 @@ export class MatMonthCalandar implements OnInit
                 aideCreerValider: " (Invio per confermare)",
                 aideDescendre: ". Alt più freccia giù per selezionare un evento",
                 aideEventModif: " (Modifica in corso. Invio per confermare, Esc per annullare)",
-                aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per ridimensionare la fine. Ctrl più Maiusc più frecce per ridimensionare l'inizio. Alt più freccia su per tornare al giorno)"
+                aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per ridimensionare la fine. Ctrl più Maiusc più frecce per ridimensionare l'inizio. Alt più freccia su per tornare al giorno)",
+                aideNavMois: ". Pagina Su o Pagina Giù per cambiare mese. Ctrl più Pagina per cambiare anno"
             },
             'de': { 
                 plus: "mehr", aujourdhui: "Heute", ajouter: "Hinzufügen", 
@@ -347,7 +352,8 @@ export class MatMonthCalandar implements OnInit
                 aideCreerValider: " (Eingabe zum Bestätigen)",
                 aideDescendre: ". Alt plus Pfeiltaste nach unten, um ein Ereignis auszuwählen",
                 aideEventModif: " (Bearbeitung läuft. Eingabe zum Bestätigen, Esc zum Abbrechen)",
-                aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten zum Ändern des Endes. Ctrl plus Umschalt plus Pfeiltasten zum Ändern des Starts. Alt plus Pfeiltaste nach oben, um zum Tag zurückzukehren)"
+                aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten zum Ändern des Endes. Ctrl plus Umschalt plus Pfeiltasten zum Ändern des Starts. Alt plus Pfeiltaste nach oben, um zum Tag zurückzukehren)",
+                aideNavMois: ". Bild auf oder Bild ab, um den Monat zu ändern. Strg plus Bild, um das Jahr zu ändern"
             },
             'pt': { 
                 plus: "mais", aujourdhui: "Hoje", ajouter: "Adicionar", 
@@ -360,7 +366,8 @@ export class MatMonthCalandar implements OnInit
                 aideCreerValider: " (Enter para validar)",
                 aideDescendre: ". Alt mais seta para baixo para selecionar um evento",
                 aideEventModif: " (Modificação em curso. Enter para validar, Esc para cancelar)",
-                aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para redimensionar o fim. Ctrl mais Shift mais setas para redimensionar o início. Alt mais seta para cima para voltar ao dia)"
+                aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para redimensionar o fim. Ctrl mais Shift mais setas para redimensionar o início. Alt mais seta para cima para voltar ao dia)",
+                aideNavMois: ". PageUp ou PageDown para mudar de mês. Ctrl mais Page para mudar de ano"
             }
         };
 
@@ -783,6 +790,40 @@ export class MatMonthCalandar implements OnInit
             return;
         }
 
+        if (['PageUp', 'PageDown'].includes(event.key)) 
+        {
+            event.preventDefault();
+
+            let nouvelleDate = new Date(dateJour);
+
+            // Avec Majuscule = Année / Sans Majuscule = Mois
+            if (event.shiftKey || event.ctrlKey || event.metaKey)
+                nouvelleDate.setFullYear(nouvelleDate.getFullYear() + (event.key === 'PageUp' ? -1 : 1));
+
+            else 
+            {
+                const moisCible = nouvelleDate.getMonth() + (event.key === 'PageUp' ? -1 : 1);
+                nouvelleDate.setMonth(moisCible);
+                
+                // Sécurité : si on passe du 31 Janvier au mois de Février, le JS saute en Mars par défaut. 
+                // Cette ligne le force à s'arrêter au 28 (ou 29) Février :
+                if (nouvelleDate.getMonth() !== ((moisCible % 12 + 12) % 12))
+                    nouvelleDate.setDate(0); 
+            }
+
+            // On met à jour le calendrier
+            this.mois.set(nouvelleDate.getMonth() + 1);
+            this.annee.set(nouvelleDate.getFullYear());
+
+            // On remet instantanément le curseur sur le même jour dans le nouveau mois affiché !
+            setTimeout(() => {
+                const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${nouvelleDate.getTime()}"]`) as HTMLElement;
+                if (caseJour) caseJour.focus();
+            }, 120);
+
+            return;
+        }
+
         if (event.key == 'Enter' || event.key == ' ') 
         {
             event.preventDefault();
@@ -913,6 +954,38 @@ export class MatMonthCalandar implements OnInit
                 event.preventDefault();
                 event.stopPropagation();
             }
+            return;
+        }
+
+        if (['PageUp', 'PageDown'].includes(event.key))
+        {
+            event.preventDefault();
+            event.stopPropagation();
+
+            let nouvelleDate = new Date(eventObj.startDate);
+
+            if (event.shiftKey || event.ctrlKey || event.metaKey)
+                nouvelleDate.setFullYear(nouvelleDate.getFullYear() + (event.key === 'PageUp' ? -1 : 1));
+            else
+            {
+                const moisCible = nouvelleDate.getMonth() + (event.key === 'PageUp' ? -1 : 1);
+                nouvelleDate.setMonth(moisCible);
+
+                if (nouvelleDate.getMonth() !== ((moisCible % 12 + 12) % 12))
+                    nouvelleDate.setDate(0);
+            }
+
+            this.mois.set(nouvelleDate.getMonth() + 1);
+            this.annee.set(nouvelleDate.getFullYear());
+
+            // On libère le focus de l'événement et on le pose sur la case du jour du nouveau mois
+            setTimeout(() => {
+                const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${nouvelleDate.getTime()}"]`) as HTMLElement;
+
+                if (caseJour) 
+                    caseJour.focus();
+            }, 120);
+
             return;
         }
 
@@ -1074,6 +1147,23 @@ export class MatMonthCalandar implements OnInit
         }
     }
 
+    protected FormatDateAria(date: Date): string 
+    {
+        if (!date) 
+            return '';
+        
+        // Utilise la langue détectée de ton composant (ou 'fr-FR' par défaut)
+        const langue = this.langueNavigateur || 'fr-FR'; 
+
+        // Renvoie par exemple "jeudi 15 mai 2026"
+        return date.toLocaleDateString(langue, {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    }
+
     private AnnulerCreationClavier(): void 
     {
         this.dragCreationEnCours.set(false);
@@ -1181,7 +1271,7 @@ export class MatMonthCalandar implements OnInit
             // --- LOGIQUE DE BLOCAGE DES JOURS ---
             
             // 1. Vérification des dates précises
-            let estBloquerDatePrecise = this.daysDisabled()?.some(x => this.DateSontEgaux(x, date)) ?? false;
+            let estBloquerDatePrecise = this.daysDisabled()?.some(x => this.EstMemeJour(x, date)) ?? false;
 
             // 2. Vérification de tes intervalles (récurrents ou ponctuels)
             let estBloquerIntervalle = this.intervalsDisabled().some(inter => {
@@ -1271,21 +1361,9 @@ export class MatMonthCalandar implements OnInit
         return DATE >= DEBUT && DATE <= FIN;
     }
 
-    private DateSontEgaux(_date1: Date, _date2: Date): boolean
-    {
-        const DATE1 = new Date(_date1.getFullYear(), _date1.getMonth(), _date1.getDate());
-        const DATE2 = new Date(_date2.getFullYear(), _date2.getMonth(), _date2.getDate());
-
-        return DATE1.getTime() == DATE2.getTime();
-    }
-
     private EstDateJour(_date: Date): boolean
     {
-        const DATE_JOUR = new Date();
-
-        return _date.getDate() === DATE_JOUR.getDate() &&
-            _date.getMonth() === DATE_JOUR.getMonth() &&
-            _date.getFullYear() === DATE_JOUR.getFullYear();
+        return this.EstMemeJour(_date, new Date());
     }
 
     @HostListener('window:resize')
