@@ -38,6 +38,8 @@ Traduction automatique celons la **langue du navigateur.**
 - `TAB`: parcourir le composant
 - `ALT + FLECHE BAS`: parcourir les events d'un jour
 - `CTRL + FLECHE HAUT`: Revenir sur le jour
+- `PageUp / PageDown`: Avancer ou reculer d'un mois
+- `CTRL + PageUp / PageDown`: Avancer ou reculer d'un an
 
 ### Creation
 - `SHIFT + fleches clavier` puis `Entrer` pour valider
