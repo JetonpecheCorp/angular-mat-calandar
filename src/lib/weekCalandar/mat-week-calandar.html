@@ -116,7 +116,7 @@
                 {
                     <div class="day-column" [attr.data-date]="jour.date.getTime()">
 
-                        @for (ev of getPositionedEvents(jour.date); track $index) 
+                        @for (ev of getPositionedEvents(jour.date); track ev.id) 
                         {
                             @if (eventEnCoursDeDrag()?.id == ev.id) 
                             {
