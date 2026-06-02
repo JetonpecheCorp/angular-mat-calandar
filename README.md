@@ -7,10 +7,11 @@ Traduction automatique celons la **langue du navigateur.**
 
 - Compatible Angular 21
 - Compatible et conçu pour Angular material
+- Accessible via aria, naviguation et actions par le clavier
 
 # Par mois
 
-## Attribut
+## Attributs
 - `month`: mois à afficher (REQUIS) (1 - 12)
 - `year`: Année du mois à afficher (REQUIS)
 - `matRippleDisabled`: désactiver l'effet ripple sur les cellules des jours
@@ -27,7 +28,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'une année
 - `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
 
-## events
+## Events
 - `eventClickJour`: Event click sur le jour
 - `eventClickEvent`: Event click sur un évènement
 - `eventCreated`: Event drag pour créer un event
@@ -62,7 +63,7 @@ Traduction automatique celons la **langue du navigateur.**
 
 # Par semaine
 
-## Attribut
+## Attributs
 - `dateReference`: Affiche la semaine entière a partir de cette date (REQUIS)
 - `events`: Liste des evenements à mettre sur le calandrier
 - `specialEvents`: Liste des evenements spécials (vacances, noel, jour de l'an...)
@@ -78,13 +79,29 @@ Traduction automatique celons la **langue du navigateur.**
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'un mois
 - `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
 
-## events
+## Events
 - `timeSlotClicked`: Event click sur une heure du calendrier
 - `eventClicked`: Event click sur un évènement
 - `dayClicked`: Event click sur un jour, liste les events inclus dans le jour
 - `eventUpdated`: Event drag and drop ou resize d'un event
 - `eventCreated`: Event drag pour créer un event
 - `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
+
+## Navigation via clavier
+- `TAB`: parcourir le composant
+- `FLECHES`: Parcourir les heures et jours du composant 
+- `PageUp / PageDown`: Avancer ou reculer d'une semaine
+- `CTRL + PageUp / PageDown`: Avancer ou reculer d'un mois
+
+### Creation
+- `SHIFT + FLECHES` puis `Entrer` pour valider
+
+### Modifier date interval
+- `CTRL + FLECHE DROITE`: modifier date fin
+- `CTRL + SHIFT + FLECHE GAUCHE`: modifier date de début
+
+### Déplacer l'event
+- `SHIFT + FLECHES`: déplacer l'event
 
 ## Exemple
 ```html
