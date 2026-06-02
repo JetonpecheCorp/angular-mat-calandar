@@ -134,14 +134,16 @@
                             <div class="event-block"
                                 role="button"
                                 tabindex="0"
-                                [attr.aria-label]="trad().ariaEvenement + ' ' +  ev.titre + ' ' + ev.formatHeure"
+                                [id]="'event-' + ev.id"
+                                [attr.aria-label]="trad().ariaEvenement + ' ' +  ev.titre + ' ' + FormatDateAria(ev.startDate) + ' ' + ev.formatHeure + 
+                                    (previewResize()?.eventId === ev.id ? trad().aideEventModif : (!readonly() && !ev.readonly ? trad().aideEventNormal : '')) + trad().aideNavMois"
                                 cdkDrag
                                 [cdkDragDisabled]="readonly() || ev.readonly"
                                 (cdkDragStarted)="OnEventDragStarted(ev)" 
                                 (cdkDragMoved)="OnEventDragMoved($event, ev)"
                                 (cdkDragEnded)="OnEventDragEnded($event, ev)"
-                                (keydown.enter)="ClickEvent(ev)" 
-                                (keydown.space)="ClickEvent(ev)"
+                                (keydown)="OnEventKeydown($event, ev)"
+                                (blur)="OnEventBlur(ev)"
                                 [ngStyle]="CalculerStyleEvent(ev, jour.date)"
                                 [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
                                 [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'">
@@ -194,13 +196,16 @@
 
                         @for (h of heures(); track h) 
                         {
-                            <div matRipple [matRippleDisabled]="matRippleDisabled()" 
-                                    class="hour-slot" 
+                            <div class="hour-slot" 
+                                    [id]="'slot-' + jour.date.getTime() + '-' + h.replace(' ', '')"
                                     role="button"
                                     tabindex="0"
-                                    [attr.aria-label]="trad().ariaCreer + ' ' + (jour.date | date:'longDate') + ' ' + h"
-                                    (keydown.enter)="ClickTimeSlot(jour.date, h)"
-                                    (keydown.space)="ClickTimeSlot(jour.date, h)"
+                                    [attr.aria-label]="trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + 
+                                        (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + 
+                                        (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois"
+                                    (keydown)="OnTimeSlotKeydown($event, jour.date, h, getPositionedEvents(jour.date))"
+                                    matRipple 
+                                    [matRippleDisabled]="matRippleDisabled()" 
                                     (mousedown)="OnMouseDownHoraire(jour.date, $event)"
                                     (touchstart)="OnMouseDownHoraire(jour.date, $event)"></div>
                         }

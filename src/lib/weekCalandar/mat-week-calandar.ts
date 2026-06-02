@@ -61,12 +61,18 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
-    protected trad = signal({
+protected trad = signal({
         aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new",
         ariaPrecedent: "Previous", ariaSuivant: "Next", 
         ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month",
         ariaMenu: "Change view", ariaEvenement: "Event:", ariaCreer: "Create event on",
-        chargement: "Loading" 
+        chargement: "Loading",
+        aideCreerEtendre: " (Arrow keys to navigate. Shift plus arrows to extend a creation)",        
+        aideCreerValider: " (Enter to validate)",
+        aideDescendre: ". Alt plus down arrow to select an event",
+        aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
+        aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to time slot)",
+        aideNavMois: ". PageUp/PageDown to change week. Ctrl plus Page to change month"
     });
 
     private el = inject(ElementRef);
@@ -87,6 +93,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected dateFinCreation = signal<Date | null>(null);
     protected zoneNavigationActive = signal<'left' | 'right' | null>(null);
     protected bulleSurvolee = signal<'left' | 'right' | null>(null);
+    protected slotRetourFocus = signal<string | null>(null);
 
     protected displayEvents = computed(() => 
     {
@@ -284,13 +291,79 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         const LANGUE = this.langueNavigateur.split('-')[0];
 
-       const DICT_TRADUCTION: Record<string, any> = {
-            'fr': { aujourdhui: "Aujourd'hui", semaine: "S", nouveau: "nouveau", ajouter: "Ajouter", ariaPrecedent: "Précédent", ariaSuivant: "Suivant", ariaMenu: "Changer la vue", ariaEvenement: "Événement :", ariaCreer: "Créer un événement le", ariaMoisPrecedent: "Mois précédent", ariaMoisSuivant: "Mois suivant", chargement: "Chargement en cours" },
-            'it': { aujourdhui: "Oggi", semaine: "S", nouveau: "nuovo", ajouter: "Aggiungi", ariaPrecedent: "Precedente", ariaSuivant: "Successivo", ariaMenu: "Cambia vista", ariaEvenement: "Evento:", ariaCreer: "Crea evento il", ariaMoisPrecedent: "Mese precedente", ariaMoisSuivant: "Mese successivo", chargement: "Caricamento" },
-            'es': { aujourdhui: "Hoy", semaine: "S", nouveau: "nuevo", ajouter: "Añadir", ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", ariaMenu: "Cambiar vista", ariaEvenement: "Evento:", ariaCreer: "Crear evento el", ariaMoisPrecedent: "Mes anterior", ariaMoisSuivant: "Mes siguiente", chargement: "Cargando" },
-            'pt': { aujourdhui: "Hoje", semaine: "S", nouveau: "novo", ajouter: "Adicionar", ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", ariaMenu: "Mudar vista", ariaEvenement: "Evento:", ariaCreer: "Criar evento em", ariaMoisPrecedent: "Mês anterior", ariaMoisSuivant: "Mês seguinte", chargement: "Carregando" },
-            'de': { aujourdhui: "Heute", semaine: "W", nouveau: "neu", ajouter: "Hinzufügen", ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", ariaMenu: "Ansicht ändern", ariaEvenement: "Ereignis:", ariaCreer: "Ereignis erstellen am", ariaMoisPrecedent: "Vorheriger Monat", ariaMoisSuivant: "Nächster Monat", chargement: "Wird geladen" },
-            'en': { aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new", ariaPrecedent: "Previous", ariaSuivant: "Next", ariaMenu: "Change view", ariaEvenement: "Event:", ariaCreer: "Create event on", ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month", chargement: "Loading" }
+        const DICT_TRADUCTION: Record<string, any> = {
+            'fr': { 
+                aujourdhui: "Aujourd'hui", semaine: "S", nouveau: "nouveau", ajouter: "Ajouter", 
+                ariaPrecedent: "Précédent", ariaSuivant: "Suivant", ariaMenu: "Changer la vue", 
+                ariaEvenement: "Événement :", ariaCreer: "Créer un événement le", 
+                ariaMoisPrecedent: "Mois précédent", ariaMoisSuivant: "Mois suivant", chargement: "Chargement en cours",
+                aideCreerEtendre: " (Flèches simples pour naviguer. Majuscule plus flèches pour étendre une création)",
+                aideCreerValider: " (Entrée pour valider)",
+                aideDescendre: ". Alt plus flèche bas pour sélectionner un événement",
+                aideEventModif: " (Modification en cours. Entrée pour valider, Échap pour annuler)",
+                aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au créneau horaire)",
+                aideNavMois: ". Page haut ou Page bas pour changer de semaine. Ctrl plus Page pour changer de mois"
+            },
+            'en': { 
+                aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new", 
+                ariaPrecedent: "Previous", ariaSuivant: "Next", ariaMenu: "Change view", 
+                ariaEvenement: "Event:", ariaCreer: "Create event on", 
+                ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month", chargement: "Loading",
+                aideCreerEtendre: " (Arrow keys to navigate. Shift plus arrows to extend a creation)",
+                aideCreerValider: " (Enter to validate)",
+                aideDescendre: ". Alt plus down arrow to select an event",
+                aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
+                aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to time slot)",
+                aideNavMois: ". PageUp or PageDown to change week. Ctrl plus Page to change month"
+            },
+            'es': { 
+                aujourdhui: "Hoy", semaine: "S", nouveau: "nuevo", ajouter: "Añadir", 
+                ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", ariaMenu: "Cambiar vista", 
+                ariaEvenement: "Evento:", ariaCreer: "Crear evento el", 
+                ariaMoisPrecedent: "Mes anterior", ariaMoisSuivant: "Mes siguiente", chargement: "Cargando",
+                aideCreerEtendre: " (Flechas para navegar. Mayús más flechas para extender una creación)",
+                aideCreerValider: " (Intro para validar)",
+                aideDescendre: ". Alt más flecha abajo para seleccionar un evento",
+                aideEventModif: " (Modificación en curso. Intro para validar, Escape para cancelar)",
+                aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para cambiar el final. Ctrl más Mayús más flechas para cambiar el inicio. Alt más flecha arriba para volver al tramo horario)",
+                aideNavMois: ". Avanzar página o Retroceder página para cambiar de semana. Ctrl más Página para cambiar de mes"
+            },
+            'it': { 
+                aujourdhui: "Oggi", semaine: "S", nouveau: "nuovo", ajouter: "Aggiungi", 
+                ariaPrecedent: "Precedente", ariaSuivant: "Successivo", ariaMenu: "Cambia vista", 
+                ariaEvenement: "Evento:", ariaCreer: "Crea evento il", 
+                ariaMoisPrecedent: "Mese precedente", ariaMoisSuivant: "Mese successivo", chargement: "Caricamento",
+                aideCreerEtendre: " (Frecce per navigare. Maiusc più frecce per estendere una creazione)",                
+                aideCreerValider: " (Invio per confermare)",
+                aideDescendre: ". Alt più freccia giù per selezionare un evento",
+                aideEventModif: " (Modifica in corso. Invio per confermare, Esc per annullare)",
+                aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per ridimensionare la fine. Ctrl più Maiusc più frecce per ridimensionare l'inizio. Alt più freccia su per tornare alla fascia oraria)",
+                aideNavMois: ". Pagina Su o Pagina Giù per cambiare settimana. Ctrl più Pagina per cambiare mese"
+            },
+            'de': { 
+                aujourdhui: "Heute", semaine: "W", nouveau: "neu", ajouter: "Hinzufügen", 
+                ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", ariaMenu: "Ansicht ändern", 
+                ariaEvenement: "Ereignis:", ariaCreer: "Ereignis erstellen am", 
+                ariaMoisPrecedent: "Vorheriger Monat", ariaMoisSuivant: "Nächster Monat", chargement: "Wird geladen",
+                aideCreerEtendre: " (Pfeiltasten zum Navigieren. Umschalt plus Pfeiltasten zum Erweitern einer Erstellung)",
+                aideCreerValider: " (Eingabe zum Bestätigen)",
+                aideDescendre: ". Alt plus Pfeiltaste nach unten, um ein Ereignis auszuwählen",
+                aideEventModif: " (Bearbeitung läuft. Eingabe zum Bestätigen, Esc zum Abbrechen)",
+                aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten zum Ändern des Endes. Ctrl plus Umschalt plus Pfeiltasten zum Ändern des Starts. Alt plus Pfeiltaste nach oben, um zum Zeitfenster zurückzukehren)",
+                aideNavMois: ". Bild auf oder Bild ab, um die Woche zu ändern. Strg plus Bild, um den Monat zu ändern"
+            },
+            'pt': { 
+                aujourdhui: "Hoje", semaine: "S", nouveau: "novo", ajouter: "Adicionar", 
+                ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", ariaMenu: "Mudar vista", 
+                ariaEvenement: "Evento:", ariaCreer: "Criar evento em", 
+                ariaMoisPrecedent: "Mês anterior", ariaMoisSuivant: "Mês seguinte", chargement: "Carregando",
+                aideCreerEtendre: " (Setas para navegar. Shift mais setas para estender uma criação)",
+                aideCreerValider: " (Enter para validar)",
+                aideDescendre: ". Alt mais seta para baixo para selecionar um evento",
+                aideEventModif: " (Modificação em curso. Enter para validar, Esc para cancelar)",
+                aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para redimensionar o fim. Ctrl mais Shift mais setas para redimensionar o início. Alt mais seta para cima para voltar ao horário)",
+                aideNavMois: ". PageUp ou PageDown para mudar de semana. Ctrl mais Page para mudar de mês"
+            }
         };
 
         this.trad.set(DICT_TRADUCTION[LANGUE] || DICT_TRADUCTION['en']);
@@ -462,7 +535,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const GRID_ELEMENT = _dragEvent.source.element.nativeElement.closest('.days-grid');
         const LARGEUR_COLONNE = GRID_ELEMENT ? GRID_ELEMENT.clientWidth / this.listeNomSemaine().length : 1;
 
-        // 👇 MAGIE : On ajoute au décalage les semaines qui ont été sautées pendant le drag !
+        // On ajoute au décalage les semaines qui ont été sautées pendant le drag
         const joursDecalage = Math.round(distance.x / LARGEUR_COLONNE) + (this.semainesDecaleesPendantDrag * 7);
         const minutesDecalage = Math.round(distance.y / 15) * 15;
 
@@ -811,6 +884,374 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         window.addEventListener('touchend', onMouseUp);
     }
 
+    protected OnTimeSlotKeydown(event: KeyboardEvent, dateJour: Date, heureLabel: string, eventsDuJour: PositionedEvent[] = []): void 
+    {
+        const idSlot = dateJour.getTime() + '-' + heureLabel.replace(/\s+/g, '');
+
+        if (event.key === 'Escape') 
+        {
+            if (this.dragCreationEnCours()) {
+                this.AnnulerCreationClavier();
+                event.preventDefault();
+            }
+            return;
+        }
+
+        // 1. Navigation Rapide (Semaine / Mois)
+        if (['PageUp', 'PageDown'].includes(event.key)) 
+        {
+            event.preventDefault();
+            
+            if (event.ctrlKey || event.metaKey || event.shiftKey) 
+            {
+                if (event.key === 'PageUp') 
+                    this.MoisPrecedent();
+                else 
+                    this.MoisSuivant();
+            } 
+            else 
+            {
+                if (event.key === 'PageUp') 
+                    this.Precedent();
+                else 
+                    this.Suivant();
+            }
+
+            setTimeout(() => {
+                const caseSlot = this.el.nativeElement.querySelector(`#slot-${idSlot}`) as HTMLElement;
+                if (caseSlot) caseSlot.focus();
+            }, 120);
+
+            return;
+        }
+
+        // naviguer dans les événements (Alt + Bas)
+        if (event.altKey && event.key === 'ArrowDown') 
+        {
+            event.preventDefault();
+            if (eventsDuJour && eventsDuJour.length > 0) 
+            {
+                this.slotRetourFocus.set(idSlot);
+                const eventElement = this.el.nativeElement.querySelector(`#event-${eventsDuJour[0].id}`) as HTMLElement;
+
+                if (eventElement) 
+                    eventElement.focus();
+            }
+
+            return;
+        }
+
+        // 3. Valider ou Ouvrir
+        if (event.key === 'Enter' || event.key === ' ') 
+        {
+            event.preventDefault();
+            if (this.readonly()) 
+                return;
+
+            if (this.dragCreationEnCours()) 
+            {
+                const debut = this.dateDebutCreation();
+                const fin = this.dateFinCreation();
+
+                if (debut && fin) 
+                {   
+                    this.eventCreated.emit({ 
+                        start: new Date(Math.min(debut.getTime(), fin.getTime())), 
+                        end: new Date(Math.max(debut.getTime(), fin.getTime()))
+                    });
+                }
+
+                this.AnnulerCreationClavier();
+            } 
+            else 
+                this.ClickTimeSlot(dateJour, heureLabel);
+
+            return;
+        }
+
+        if (!event.shiftKey && !event.ctrlKey && !event.altKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) 
+        {
+            event.preventDefault();
+            
+            let nouvelleDate = new Date(dateJour);
+            let heureActuelleIndex = this.heures().indexOf(heureLabel);
+            let nouvelleHeureLabel = heureLabel;
+
+            if (event.key == 'ArrowRight')
+                nouvelleDate.setDate(nouvelleDate.getDate() + 1);
+            
+            else if (event.key == 'ArrowLeft') 
+                nouvelleDate.setDate(nouvelleDate.getDate() - 1);
+            
+            else if (event.key == 'ArrowDown') 
+            {
+                if (heureActuelleIndex < this.heures().length - 1) 
+                    nouvelleHeureLabel = this.heures()[heureActuelleIndex + 1];
+            } 
+            else if (event.key == 'ArrowUp') 
+            {
+                if (heureActuelleIndex > 0) 
+                    nouvelleHeureLabel = this.heures()[heureActuelleIndex - 1];
+            }
+
+            // Gérer le changement de page si on sort de la semaine affichée
+            const tNouvelleDate = nouvelleDate.getTime();
+            const listeSemaine = this.listeNomSemaine();
+            
+            // On prend les dates de début et fin de semaine (à minuit)
+            const tDebutSemaine = new Date(listeSemaine[0].date.getFullYear(), listeSemaine[0].date.getMonth(), listeSemaine[0].date.getDate()).getTime();
+            const tFinSemaine = new Date(listeSemaine[listeSemaine.length - 1].date.getFullYear(), listeSemaine[listeSemaine.length - 1].date.getMonth(), listeSemaine[listeSemaine.length - 1].date.getDate()).getTime();
+
+            let aTournePage = false;
+            if (tNouvelleDate < tDebutSemaine) 
+            {
+                this.Precedent();
+                aTournePage = true;
+            } 
+            else if (tNouvelleDate > tFinSemaine) 
+            {
+                this.Suivant();
+                aTournePage = true;
+            }
+
+            // On met le focus sur la nouvelle case cible !
+            setTimeout(() => {
+                const idCible = nouvelleDate.getTime() + '-' + nouvelleHeureLabel.replace(/\s+/g, '');
+                const caseSlot = this.el.nativeElement.querySelector(`#slot-${idCible}`) as HTMLElement;
+                if (caseSlot) caseSlot.focus();
+            }, aTournePage ? 120 : 10);
+
+            return;
+        }
+
+        // 4. Création au clavier (Shift + Flèches)
+        if (event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) 
+        {
+            event.preventDefault();
+            if (this.readonly()) return;
+
+            if (!this.dragCreationEnCours()) 
+            {
+                // Transformation du label heure en vraie Date
+                let heures = parseInt(heureLabel, 10);
+                if (this.useAmPm()) 
+                {
+                    const estPM = heureLabel.toLowerCase().includes('pm');
+                    if (estPM && heures < 12) 
+                        heures += 12;
+                    if (!estPM && heures === 12) 
+                        heures = 0;
+                }
+                
+                let dateDebut = new Date(dateJour);
+                dateDebut.setHours(heures, 0, 0, 0);
+                
+                let dateFin = new Date(dateDebut.getTime() + 15 * 60000); // +15 min
+
+                this.dragCreationEnCours.set(true);
+                this.dateDebutCreation.set(dateDebut);
+                this.dateFinCreation.set(dateFin);
+            }
+
+            let decMinutes = 0;
+            let decJours = 0;
+            if (event.key === 'ArrowRight') 
+                decJours = 1;
+
+            else if (event.key === 'ArrowLeft') 
+                decJours = -1;
+
+            else if (event.key === 'ArrowDown') 
+                decMinutes = 15;
+            
+            else if (event.key === 'ArrowUp') 
+                decMinutes = -15;
+
+            const dateActuelleFin = this.dateFinCreation()!;
+            const nouvelleDateFin = new Date(dateActuelleFin);
+            nouvelleDateFin.setDate(nouvelleDateFin.getDate() + decJours);
+            nouvelleDateFin.setMinutes(nouvelleDateFin.getMinutes() + decMinutes);
+
+            this.dateFinCreation.set(nouvelleDateFin);
+
+            // Gérer le changement de semaine si on déborde
+            const semaineModifiee = (nouvelleDateFin.getTime() < this.listeNomSemaine()[0].date.getTime() || 
+                                     nouvelleDateFin.getTime() > this.listeNomSemaine()[this.listeNomSemaine().length - 1].date.getTime() + 86400000);
+            
+            if (semaineModifiee) 
+            {
+                if (decJours > 0) 
+                    this.Suivant();
+                else 
+                    this.Precedent();
+            }
+        }
+    }
+
+    protected OnEventBlur(ev: PositionedEvent): void 
+    {
+        const preview = this.previewResize();
+        if (preview && preview.eventId === ev.id) 
+            this.previewResize.set(null);
+    }
+
+    protected OnEventKeydown(event: KeyboardEvent, ev: PositionedEvent): void 
+    {
+        if (event.key == 'Escape') 
+        {
+            if (this.previewResize()) 
+            {
+                this.previewResize.set(null);
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            return;
+        }
+
+        // Navigation Rapide
+        if (['PageUp', 'PageDown'].includes(event.key)) 
+        {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (event.ctrlKey || event.metaKey || event.shiftKey) 
+            {
+                if (event.key == 'PageUp') 
+                    this.MoisPrecedent();
+                else 
+                    this.MoisSuivant();
+            } 
+            else 
+            {
+                if (event.key === 'PageUp') 
+                    this.Precedent();
+                else 
+                    this.Suivant();
+            }
+
+            setTimeout(() => {
+                const e = this.el.nativeElement.querySelector(`#event-${ev.id}`) as HTMLElement;
+                if (e) 
+                    e.focus();
+            }, 120);
+
+            return;
+        }
+
+        // Valider / Ouvrir
+        if (event.key === 'Enter' || event.key === ' ') 
+        {
+            event.preventDefault();
+            event.stopPropagation();
+            const apercu = this.previewResize();
+            
+            if (apercu && apercu.eventId === ev.id) 
+            {
+                this.eventUpdated.emit({ ...ev, startDate: apercu.startDate, endDate: apercu.endDate });
+                this.previewResize.set(null);
+            }
+            else { this.ClickEvent(ev); }
+            return;
+        }
+
+        // Remonter (Alt + Flèche Haut)
+        if (event.altKey && event.key === 'ArrowUp') 
+        {
+            event.preventDefault();
+            // On cherche le marque-page, ou on retombe sur le premier slot de sa journée
+            const idTarget = this.slotRetourFocus() || (new Date(ev.startDate.getFullYear(), ev.startDate.getMonth(), ev.startDate.getDate()).getTime() + '-' + this.heures()[0].replace(/\s+/g, ''));
+            const slotEl = this.el.nativeElement.querySelector(`#slot-${idTarget}`) as HTMLElement;
+            if (slotEl) slotEl.focus();
+            return;
+        }
+        
+        // Navigation TAB intelligente
+        if (event.key === 'Tab') 
+        {
+            const cible = event.target as HTMLElement;
+            const column = cible.closest('.day-column');
+            if (column) 
+            {
+                const tousEvents = Array.from(column.querySelectorAll('.event-block')) as HTMLElement[];
+                const idx = tousEvents.indexOf(cible);
+                
+                if (!event.shiftKey && idx === tousEvents.length - 1) 
+                {
+                    event.preventDefault(); 
+                    const idTarget = this.slotRetourFocus() || (new Date(ev.startDate.getFullYear(), ev.startDate.getMonth(), ev.startDate.getDate()).getTime() + '-' + this.heures()[0].replace(/\s+/g, ''));
+                    const slotEl = this.el.nativeElement.querySelector(`#slot-${idTarget}`) as HTMLElement;
+                    if (slotEl) slotEl.focus();
+                }
+                else if (event.shiftKey && idx === 0) 
+                {
+                    event.preventDefault();
+                    const idTarget = this.slotRetourFocus() || (new Date(ev.startDate.getFullYear(), ev.startDate.getMonth(), ev.startDate.getDate()).getTime() + '-' + this.heures()[0].replace(/\s+/g, ''));
+                    const slotEl = this.el.nativeElement.querySelector(`#slot-${idTarget}`) as HTMLElement;
+                    if (slotEl) slotEl.focus();
+                }
+            }
+            return;
+        }
+
+        // Déplacement et Redimensionnement
+        let estEnDeplacement = event.shiftKey && !event.ctrlKey && !event.metaKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
+        let estResizingFin = (event.ctrlKey || event.metaKey) && !event.shiftKey && ['ArrowUp', 'ArrowDown'].includes(event.key);
+        let estResizingDebut = (event.ctrlKey || event.metaKey) && event.shiftKey && ['ArrowUp', 'ArrowDown'].includes(event.key);
+
+        if (estEnDeplacement || estResizingFin || estResizingDebut) 
+        {
+            event.preventDefault();
+            event.stopPropagation();
+            if (this.readonly() || ev.readonly) return;
+
+            const apercu = this.previewResize();
+            let newStart = new Date(apercu && apercu.eventId === ev.id ? apercu.startDate : ev.startDate);
+            let newEnd = new Date(apercu && apercu.eventId === ev.id ? apercu.endDate : ev.endDate);
+
+            let decMinutes = 0;
+            let decJours = 0;
+            if (event.key === 'ArrowRight') decJours = 1;
+            else if (event.key === 'ArrowLeft') decJours = -1;
+            else if (event.key === 'ArrowDown') decMinutes = 15;
+            else if (event.key === 'ArrowUp') decMinutes = -15;
+
+            if (estEnDeplacement) 
+            {
+                newStart.setDate(newStart.getDate() + decJours);
+                newStart.setMinutes(newStart.getMinutes() + decMinutes);
+                newEnd.setDate(newEnd.getDate() + decJours);
+                newEnd.setMinutes(newEnd.getMinutes() + decMinutes);
+            } 
+            else if (estResizingFin) 
+            {
+                let testEnd = new Date(newEnd);
+                testEnd.setMinutes(testEnd.getMinutes() + decMinutes);
+                if (testEnd.getTime() > newStart.getTime()) newEnd = testEnd;
+            }
+            else if (estResizingDebut) 
+            {
+                let testStart = new Date(newStart);
+                testStart.setMinutes(testStart.getMinutes() + decMinutes);
+                if (testStart.getTime() < newEnd.getTime()) newStart = testStart;
+            }
+
+            this.previewResize.set({ eventId: ev.id, startDate: newStart, endDate: newEnd });
+
+            // Changement de page si on sort de la vue
+            const referenceDate = estResizingDebut ? newStart : newEnd;
+            let aTournePage = false;
+            
+            if (referenceDate.getTime() < this.listeNomSemaine()[0].date.getTime()) { this.Precedent(); aTournePage = true; }
+            else if (referenceDate.getTime() > this.listeNomSemaine()[this.listeNomSemaine().length - 1].date.getTime() + 86400000) { this.Suivant(); aTournePage = true; }
+
+            setTimeout(() => {
+                const elementEvenement = this.el.nativeElement.querySelector(`#event-${ev.id}`) as HTMLElement;
+                if (elementEvenement) elementEvenement.focus();
+            }, aTournePage ? 120 : 30);
+        }
+    }
+
     protected styleApercuCreation(colDate: Date): any 
     {
         if (!this.dragCreationEnCours()) return null;
@@ -854,6 +1295,22 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return _date1.getFullYear() == _date2.getFullYear() &&
             _date1.getMonth() == _date2.getMonth() &&
             _date1.getDate() == _date2.getDate();
+    }
+
+    protected FormatDateAria(date: Date): string 
+    {
+        if (!date) 
+            return '';
+
+        const langue = this.langueNavigateur || 'fr-FR'; 
+        return date.toLocaleDateString(langue, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    private AnnulerCreationClavier(): void 
+    {
+        this.dragCreationEnCours.set(false);
+        this.dateDebutCreation.set(null);
+        this.dateFinCreation.set(null);
     }
 
     private DeclencherNavigation(direction: 'left' | 'right', isCdkDrag: boolean): void 
