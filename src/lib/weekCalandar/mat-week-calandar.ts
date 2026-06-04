@@ -4,13 +4,14 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
-import { EventCalandar } from '../../public-api';
+import { EventCalandar, EventGroup } from '../../public-api';
 import {MatMenuModule} from '@angular/material/menu';
 import { DateInterval } from '../../models/DateInterval';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { DateSpecialEvent } from '../../models/DateSpecialEvent';
 import {MatRippleModule} from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ThemeConfigCalandar } from '../../models/ThemeConfigCalandar';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -34,6 +35,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     dateReference = model.required<Date>();
     events = input<EventCalandar[]>([]);
     specialEvents = input<DateSpecialEvent[]>([]);
+    groups = input<EventGroup[]>([]);
     mondayFirst = input(false, { transform: booleanAttribute });
 
     /** 0 min */
@@ -44,6 +46,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
+
+    themeConfig = input<ThemeConfigCalandar>();
+
     weekendDisabled = input(false, { transform: booleanAttribute });
     useAmPm = input(false, { transform: booleanAttribute });
     matRippleDisabled = input(false, { transform: booleanAttribute });
@@ -61,7 +66,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
-protected trad = signal({
+    protected isDarkModeActive = signal(false);
+    protected trad = signal({
         aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new",
         ariaPrecedent: "Previous", ariaSuivant: "Next", 
         ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month",
@@ -75,6 +81,7 @@ protected trad = signal({
         aideNavMois: ". PageUp/PageDown to change week. Ctrl plus Page to change month"
     });
 
+    private themeObserver: MutationObserver | null = null;
     private el = inject(ElementRef);
     private readonly langueNavigateur = navigator.language || "en-US";
     private timerInterval: any;
@@ -289,6 +296,14 @@ protected trad = signal({
             this.heureActuelle.set(new Date());
         }, 60_000);
 
+        this.VerifierTheme();
+
+        // surveille la balise <html> et <body> en cas de changement
+        this.themeObserver = new MutationObserver(() => this.VerifierTheme());
+
+        this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
         const LANGUE = this.langueNavigateur.split('-')[0];
 
         const DICT_TRADUCTION: Record<string, any> = {
@@ -373,6 +388,9 @@ protected trad = signal({
     {
         if (this.timerInterval) 
             clearInterval(this.timerInterval);
+
+        if (this.themeObserver) 
+            this.themeObserver.disconnect();
     }
 
     private EstDansIntervalle(_dateAChecker: Date, _debut: Date, _fin: Date): boolean
@@ -470,12 +488,32 @@ protected trad = signal({
         let endTotal = ((hFin - minH) * 60) + mFin;
         const maxGrid = (maxH - minH + 1) * 60;
 
-        return {
+        let styles: any = {
             'top.px': Math.max(0, top),
             'height.px': Math.min(maxGrid, endTotal) - Math.max(0, top),
             'min-height.px': 15,
             'display': 'flex'
         };
+
+        if (event.groupEventId) 
+        {
+            const group = this.groups().find(g => g.id == event.groupEventId);
+            if (group) 
+            {
+                if (this.isDarkModeActive()) 
+                {
+                    styles['--event-bg'] = group.bgColorDark || group.bgColorLight;
+                    styles['--event-text'] = group.textColorDark || group.textColorLight;
+                }
+                else 
+                {
+                    styles['--event-bg'] = group.bgColorLight;
+                    styles['--event-text'] = group.textColorLight;
+                }
+            }
+        }
+
+        return styles;
     }
 
     protected AllerAujourdhui(): void
@@ -553,6 +591,8 @@ protected trad = signal({
             id: ev.id,
             titre: ev.titre,
             description: ev.description,
+            groupEventId: ev.groupEventId,
+            readonly: ev.readonly,
             startDate: nouvelleDateDebut,
             endDate: nouvelleDateFin
         });
@@ -689,7 +729,15 @@ protected trad = signal({
 
             if (newStart.getTime() !== ev.startDate.getTime() || newEnd.getTime() !== ev.endDate.getTime()) 
             {
-                this.eventUpdated.emit({ ...ev, startDate: newStart, endDate: newEnd });
+                this.eventUpdated.emit({ 
+                    id: ev.id,
+                    titre: ev.titre,
+                    description: ev.description,
+                    groupEventId: ev.groupEventId,
+                    readonly: ev.readonly,
+                    startDate: newStart,
+                    endDate: newEnd
+                });
             }
         };
 
@@ -1140,15 +1188,23 @@ protected trad = signal({
         }
 
         // Valider / Ouvrir
-        if (event.key === 'Enter' || event.key === ' ') 
+        if (event.key == 'Enter' || event.key == ' ') 
         {
             event.preventDefault();
             event.stopPropagation();
             const apercu = this.previewResize();
             
-            if (apercu && apercu.eventId === ev.id) 
+            if (apercu && apercu.eventId == ev.id) 
             {
-                this.eventUpdated.emit({ ...ev, startDate: apercu.startDate, endDate: apercu.endDate });
+                this.eventUpdated.emit({
+                    id: ev.id,
+                    titre: ev.titre,
+                    description: ev.description,
+                    groupEventId: ev.groupEventId,
+                    readonly: ev.readonly,
+                    startDate: apercu.startDate,
+                    endDate: apercu.endDate
+                });
                 this.previewResize.set(null);
             }
             else { this.ClickEvent(ev); }
@@ -1304,6 +1360,33 @@ protected trad = signal({
 
         const langue = this.langueNavigateur || 'fr-FR'; 
         return date.toLocaleDateString(langue, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    private VerifierTheme(): void 
+    {
+        const config = this.themeConfig();
+        const classDark = config?.darkModeClass || '';
+        const classLight = config?.lightModeClass || '';
+        const themeDefaut = config?.defaultTheme || 'light';
+        
+        // cherche si la classe dark mode
+        const aClasseSombre = classDark ? 
+            (document.body.classList.contains(classDark) || document.documentElement.classList.contains(classDark)) 
+            : false;
+
+        // cherche si la classe light mode
+        const aClasseClaire = classLight ? 
+            (document.body.classList.contains(classLight) || document.documentElement.classList.contains(classLight)) 
+            : false;
+
+        if (aClasseSombre)
+            this.isDarkModeActive.set(true);
+
+        else if (aClasseClaire)
+            this.isDarkModeActive.set(false);
+
+        else
+            this.isDarkModeActive.set(themeDefaut == 'dark');
     }
 
     private AnnulerCreationClavier(): void 

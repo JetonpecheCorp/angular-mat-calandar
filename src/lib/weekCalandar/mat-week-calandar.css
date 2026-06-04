@@ -31,7 +31,6 @@
     pointer-events: auto; 
 }
 
-/* C'est ce calque caché derrière le spinner qui gère la transparence */
 .loading-overlay::before {
     content: '';
     position: absolute;
@@ -58,7 +57,7 @@
     width: 10%;
     min-width: 60px;
     z-index: 150;
-    pointer-events: none; /* Laisse passer les clics au travers */
+    pointer-events: none;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -102,11 +101,9 @@
     100% { transform: scale(1); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 }
 
-.nav-bubble.is-hovered 
-{
+.nav-bubble.is-hovered {
     background-color: var(--mat-sys-primary);
     color: var(--mat-sys-on-primary);
-    
     animation: pulse-nav-bubble 0.8s infinite ease-in-out;
 }
 
@@ -116,15 +113,13 @@
 }
 
 .week-calendar-container.nav-hover-left .nav-edge-indicator.left,
-.week-calendar-container.nav-hover-right .nav-edge-indicator.right 
-{
+.week-calendar-container.nav-hover-right .nav-edge-indicator.right {
     opacity: 1;
 }
 
 .week-calendar-container.nav-hover-left .nav-edge-indicator.left .nav-bubble,
-.week-calendar-container.nav-hover-right .nav-edge-indicator.right .nav-bubble 
-{
-    transform: scale(1); /* Fait "popper" la bulle légèrement */
+.week-calendar-container.nav-hover-right .nav-edge-indicator.right .nav-bubble {
+    transform: scale(1);
 }
 
 /* --- APERÇU DU GLISSER POUR CRÉER --- */
@@ -150,8 +145,7 @@
     overflow-y: auto;
 }
 
-.week-label
-{
+.week-label {
     font-weight: bold;
 }
 
@@ -165,18 +159,15 @@
     transition: all 0.2s ease;
 }
 
-.current-week-tag 
-{
+.current-week-tag {
     background-color: var(--mat-sys-primary-container);
     color: var(--mat-sys-on-primary-container);
     border-radius: 20px;
     font-weight: 700;
 }
-/* FIN MENU SEMAINE */
 
 /* --- ÉVÉNEMENTS SPÉCIAUX (VACANCES / FÉRIÉS) --- */
-.special-events-container 
-{
+.special-events-container {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -184,20 +175,17 @@
     margin-top: 4px;
 }
 
-.special-event-badge 
-{
+.special-event-badge {
     font-size: 0.8rem;
     padding: 3px 6px;
     border-radius: 4px;
     text-align: center;
-    
     display: block;
     width: 100%;
     box-sizing: border-box;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    
     font-weight: 500;
     background-color: var(--mat-sys-tertiary-container, #e8def8); 
     color: var(--mat-sys-on-tertiary-container, #1d192b);
@@ -213,8 +201,7 @@
 }
 
 /* --- HEADER PRINCIPAL --- */
-.calendar-header 
-{
+.calendar-header {
     position: sticky;
     top: 0;
     left: 0;
@@ -242,8 +229,7 @@
     gap: 12px;
 }
 
-.header-nav-row button
-{
+.header-nav-row button {
     color: var(--mat-sys-on-primary);
 }
 
@@ -273,8 +259,7 @@
 }
 
 /* --- COLONNE DES HEURES FIXE (LEFT STICKY) --- */
-.time-gutter, .time-column 
-{
+.time-gutter, .time-column {
     width: var(--time-column-width);
     flex-shrink: 0;
     position: sticky;
@@ -326,15 +311,11 @@
 .day-label.today { color: var(--mat-sys-primary); }
 .day-label.today .number { font-weight: 600; }
 
-/* --- ÉVÉNEMENTS --- */
-.event-block 
-{
+/* --- ÉVÉNEMENTS (Avec intégration des variables dynamiques) --- */
+.event-block {
     position: absolute;
     box-sizing: border-box;
     border: 1px solid var(--mat-sys-surface); 
-    border-left: 4px solid var(--mat-sys-primary);
-    background-color: var(--mat-sys-primary-container);
-    color: var(--mat-sys-on-primary-container);
     border-radius: 4px;
     padding: 2px 4px;
     font-size: 0.7rem;
@@ -343,31 +324,33 @@
     transition: width 0.2s ease, left 0.2s ease;
     cursor: grab;
     touch-action: none;
+
+    /* Application des variables gérées par le TS */
+    background-color: var(--event-bg, var(--mat-sys-primary-container));
+    color: var(--event-text, var(--mat-sys-on-primary-container));
+    border-left: 4px solid var(--event-text, var(--mat-sys-primary));
 }
 
-.event-block:active 
-{
+.event-block:active {
     cursor: grabbing;
 }
 
 .event-block.event-phantom {
     opacity: 0.4; 
-    border: 1px dashed var(--mat-sys-primary);
-    background-color: var(--mat-sys-surface-variant);
+    border: 1px dashed var(--event-text, var(--mat-sys-primary));
+    background-color: var(--event-bg, var(--mat-sys-surface-variant));
     pointer-events: none;
     z-index: 2;
 }
 
-.event-content 
-{
+.event-content {
     display: flex;
     flex-direction: column;
     height: 100%;
     position: relative;
 }
 
-.event-title 
-{
+.event-title {
     font-size: 0.8rem;
     white-space: normal; 
     overflow-wrap: anywhere; 
@@ -379,8 +362,7 @@
     padding: 0 2px;
 }
 
-.resize-handle 
-{
+.resize-handle {
     position: absolute;
     left: 0;
     width: 100%;
@@ -391,14 +373,12 @@
     background: transparent;
 }
 
-.resize-handle.top 
-{
+.resize-handle.top {
     top: 0;
     align-items: flex-start;
 }
 
-.resize-handle.bottom 
-{
+.resize-handle.bottom {
     bottom: 0;
     align-items: flex-end;
 }
@@ -406,14 +386,13 @@
 .resize-line {
     width: 100%;
     height: 4px;
-    background-color: var(--mat-sys-primary);
+    background-color: var(--event-text, var(--mat-sys-primary));
     opacity: 0;
     transition: opacity 0.2s ease;
 }
 
 /* ICON ÉVÉNEMENT CONTINUE */
-.continue-icon 
-{
+.continue-icon {
     font-size: 16px;
     height: 16px;
     width: 16px;
@@ -429,8 +408,7 @@
     margin-bottom: -4px;
 }
 
-.continue-icon.bottom 
-{
+.continue-icon.bottom {
     margin-top: auto;
     margin-bottom: -2px;
 }
@@ -470,20 +448,17 @@
     padding: 0 4px;
 }
 
-.hour-slot 
-{
+.hour-slot {
     height: var(--hour-height) !important;
     border-bottom: 1px solid var(--mat-sys-outline-variant);
     box-sizing: border-box;
 }
 
-.hour-slot:hover 
-{
+.hour-slot:hover {
     background-color: var(--mat-sys-surface-container-high);
 }
 
-.cdk-drag-preview 
-{
+.cdk-drag-preview {
     box-sizing: border-box;
     border-radius: 4px;
     box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.4);
@@ -491,8 +466,7 @@
     z-index: 1000 !important; 
 }
 
-.cdk-drag-preview .resize-handle 
-{
+.cdk-drag-preview .resize-handle {
     display: none;
 }
 
@@ -540,8 +514,7 @@
     .name.short { display: block; text-transform: capitalize; }
 }
 
-@media (max-width: 600px) 
-{
+@media (max-width: 600px) {
     :host { 
         --header-height: 80px;
         --time-column-width: 45px; 
@@ -567,8 +540,7 @@
         border-radius: 50%;
     }
 
-    .days-labels-grid, .days-grid 
-    {
+    .days-labels-grid, .days-grid {
         min-width: 600px;
     }
 
