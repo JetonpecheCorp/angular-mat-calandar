@@ -1,216 +1,291 @@
-<div class="calendar-wrapper mat-elevation-z2" 
-      [class.is-resizing-calendar]="previewResize() !== null || dragCreationEnCours()"
-      [class.nav-hover-left]="zoneNavigationActive() === 'left'"
-      [class.nav-hover-right]="zoneNavigationActive() === 'right'">
+<mat-sidenav-container class="month-calendar-root mat-elevation-z2" [hasBackdrop]="estPetitEcran()">
 
-    <div class="nav-edge-indicator left">
-        <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'left'">
-            <mat-icon>keyboard_double_arrow_left</mat-icon>
+    <mat-sidenav #sidenav 
+                 class="side-panel" 
+                 [mode]="estPetitEcran() ? 'over' : 'side'" 
+                 [opened]="panneauOuvert()" 
+                 (openedChange)="panneauOuvert.set($event)">
+                 
+        <div class="side-panel-header">
+            <h3>{{ sidebarConfig()?.title || trad().titreGroupes }}</h3>
+            <button mat-icon-button (click)="sidenav.close()" [attr.aria-label]="trad().ariaFermerMenu">
+                <mat-icon>chevron_left</mat-icon>
+            </button>
         </div>
-    </div>
-    <div class="nav-edge-indicator right">
-        <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'right'">
-            <mat-icon>keyboard_double_arrow_right</mat-icon>
-        </div>
-    </div>
-
-    <mat-toolbar class="calendar-header">
-        <div class="header-main-container">
-            
-            <div class="header-nav-row">
-                @if(!hideNavYearBtn())
-                {
-                    <button mat-icon-button (click)="AnneePrecedente()" [attr.aria-label]="trad().ariaAnneePrecedente">
-                        <mat-icon>keyboard_double_arrow_left</mat-icon>
-                    </button>
-                }
-
-                <button mat-icon-button (click)="Precedent()" [attr.aria-label]="trad().ariaPrecedent">
-                    <mat-icon>chevron_left</mat-icon>
-                </button>
+        
+        <div class="side-panel-content">
+            <mat-accordion class="side-panel-accordion" [multi]="sidebarConfig()?.multi ?? true">
                 
-                <div class="title-selector">
-                    <span class="month-title" 
-                            role="button" 
-                            tabindex="0"
-                            [matMenuTriggerFor]="menuMois" 
-                            [attr.aria-label]="trad().ariaMenuMois">
-                        {{ nomMois() }}
-                    </span>
+                @for (item of listeEvenementGroupe(); track item.group?.id || 'sans-groupe') 
+                {
+                    <mat-expansion-panel class="group-expansion-panel" [hideToggle]="sidebarConfig()?.hideToggle ?? false">
+                        
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                <mat-checkbox 
+                                    (click)="$event.stopPropagation()"
+                                    [checked]="!EstGroupeMasque(item.group?.id || null)"
+                                    (change)="BasculerVisibiliteGroupe(item.group?.id || null)"
+                                    [attr.aria-label]="(EstGroupeMasque(item.group?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.group ? item.group.id : trad().sansGroupe)">
+                                    
+                                    <div class="group-title" 
+                                         [ngStyle]="{'--g-color': item.group ? (darkModeActif() ? (item.group.bgColorDark || item.group.bgColorLight) : item.group.bgColorLight) : 'var(--mat-sys-primary)'}">
+                                        <div class="group-color-indicator" aria-hidden="true"></div>
+                                        <span class="group-name">{{ item.group ? item.group.id : (trad().sansGroupe || 'Autres') }}</span>
+                                    </div>
 
-                    <span class="year-title" 
-                            role="button" 
-                            tabindex="0"
-                            [matMenuTriggerFor]="menuAnnee" 
-                            (menuOpened)="ScrollVersAnneeActive()" 
-                            [attr.aria-label]="trad().ariaMenuAnnee"> 
-                        {{ annee() }}
-                    </span>
+                                </mat-checkbox>
+                            </mat-panel-title>
+                        </mat-expansion-panel-header>
+
+                        <div class="group-events-list">
+                            @for (ev of item.events; track ev.id) 
+                            {
+                                <button class="side-event-card-clean" 
+                                     (click)="ClickEvent(ev); estPetitEcran() ? sidenav.close() : null"
+                                     matRipple
+                                     [attr.aria-label]="trad().ariaOuvrirEvent + ' ' + ev.titre + ' le ' + FormaterDateCourte(ev.startDate)">
+                                    
+                                    <span class="side-event-date">{{ FormaterDateCourte(ev.startDate) }}</span>
+                                    <span class="side-event-title">{{ ev.titre }}</span>
+                                    
+                                </button>
+                            }
+                        </div>
+
+                    </mat-expansion-panel>
+                }
+            </mat-accordion>
+
+        </div>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+        <div class="calendar-wrapper" 
+              [class.is-resizing-calendar]="previewResize() !== null || dragCreationEnCours()"
+              [class.nav-hover-left]="zoneNavigationActive() === 'left'"
+              [class.nav-hover-right]="zoneNavigationActive() === 'right'">
+
+            <div class="nav-edge-indicator left">
+                <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'left'">
+                    <mat-icon>keyboard_double_arrow_left</mat-icon>
                 </div>
+            </div>
+            <div class="nav-edge-indicator right">
+                <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'right'">
+                    <mat-icon>keyboard_double_arrow_right</mat-icon>
+                </div>
+            </div>
 
-                <button mat-icon-button (click)="Suivant()" [attr.aria-label]="trad().ariaSuivant">
-                    <mat-icon>chevron_right</mat-icon>
+            <mat-toolbar class="calendar-header">
+                <button mat-icon-button 
+                            class="burger-menu-btn" 
+                            [class.is-hidden]="panneauOuvert()" 
+                            [attr.aria-label]="trad().ariaOuvrirMenu"
+                            [attr.aria-expanded]="panneauOuvert()"
+                            [tabindex]="panneauOuvert() ? -1 : 0"
+                            (click)="sidenav.open()">
+                    <mat-icon>menu</mat-icon>
                 </button>
 
-                @if(!hideNavYearBtn())
+                <div class="header-main-container">
+                    <div class="header-nav-row">
+
+                        @if(!hideNavYearBtn())
+                        {
+                            <button mat-icon-button (click)="AnneePrecedente()" [attr.aria-label]="trad().ariaAnneePrecedente">
+                                <mat-icon>keyboard_double_arrow_left</mat-icon>
+                            </button>
+                        }
+
+                        <button mat-icon-button (click)="Precedent()" [attr.aria-label]="trad().ariaPrecedent">
+                            <mat-icon>chevron_left</mat-icon>
+                        </button>
+                        
+                        <div class="title-selector">
+                            <span class="month-title" 
+                                    role="button" 
+                                    tabindex="0"
+                                    [matMenuTriggerFor]="menuMois" 
+                                    [attr.aria-label]="trad().ariaMenuMois">
+                                {{ nomMois() }}
+                            </span>
+
+                            <span class="year-title" 
+                                    role="button" 
+                                    tabindex="0"
+                                    [matMenuTriggerFor]="menuAnnee" 
+                                    (menuOpened)="ScrollVersAnneeActive()" 
+                                    [attr.aria-label]="trad().ariaMenuAnnee"> 
+                                {{ annee() }}
+                            </span>
+                        </div>
+
+                        <button mat-icon-button (click)="Suivant()" [attr.aria-label]="trad().ariaSuivant">
+                            <mat-icon>chevron_right</mat-icon>
+                        </button>
+
+                        @if(!hideNavYearBtn())
+                        {
+                            <button mat-icon-button (click)="AnneeSuivante()" [attr.aria-label]="trad().ariaAnneeSuivante">
+                                <mat-icon>keyboard_double_arrow_right</mat-icon>
+                            </button>
+                        }
+                    </div>
+
+                    <div class="header-action-row">
+                        <button matButton="filled"
+                            class="today-btn" 
+                            (click)="AllerAujourdhui()">
+                            {{ trad().aujourdhui }}
+                        </button>
+
+                        @if(showBtnAdd())
+                        {
+                            <button matButton="filled"
+                                class="today-btn" 
+                                (click)="BtnAjouterClicker()">
+                                {{ trad().ajouter }}
+                            </button>
+                        }
+                    </div>
+
+                </div>
+            </mat-toolbar>
+
+            <div class="weekdays-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'" aria-hidden="true">
+                @for (element of listeNomSemaine(); track element.index) 
                 {
-                    <button mat-icon-button (click)="AnneeSuivante()" [attr.aria-label]="trad().ariaAnneeSuivante">
-                        <mat-icon>keyboard_double_arrow_right</mat-icon>
-                    </button>
+                    <div class="weekday">
+                        <span class="day-short">{{ element.reduit }}</span>
+                        <span class="day-long">{{ element.normal }}</span>
+                    </div>
                 }
             </div>
 
-            <div class="header-action-row">
-                <button matButton="filled"
-                    class="today-btn" 
-                    (click)="AllerAujourdhui()">
-                    {{ trad().aujourdhui }}
-                </button>
+            <div cdkDropListGroup class="calendar-body">
 
-                @if(showBtnAdd())
+                @if (loading()) 
                 {
-                    <button matButton="filled"
-                        class="today-btn" 
-                        (click)="BtnAjouterClicker()">
-                        {{ trad().ajouter }}
-                    </button>
+                    <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
+                        <mat-spinner diameter="48"></mat-spinner>
+                    </div>
                 }
-            </div>
 
-        </div>
-    </mat-toolbar>
-
-    <div class="weekdays-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
-        @for (element of listeNomSemaine(); track element.index) 
-        {
-            <div class="weekday">
-                <span class="day-short">{{ element.reduit }}</span>
-                <span class="day-long">{{ element.normal }}</span>
-            </div>
-        }
-    </div>
-
-    <div cdkDropListGroup class="calendar-body">
-
-        @if (loading()) 
-        {
-            <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
-                <mat-spinner diameter="48"></mat-spinner>
-            </div>
-        }
-
-        @for (semaine of listeSemaines(); track $index) 
-        {
-            <div class="week-row">
-                
-                <div class="days-background-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
-                    @for (element of semaine.jours; track $index) 
-                    {
-                        <div class="day-cell" 
-                                role="button"
-                                tabindex="0"
-                                [attr.aria-label]="trad().ariaCreer + ' ' + FormatDateAria(element.date) + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (element.listeEvent.length > 0 ? trad().aideDescendre : '') + trad().aideNavMois"
-                                (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer, element.listeEvent)"
-                                matRipple
-                                cdkDropList
-                                [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
-                                [cdkDropListData]="element"
-                                (cdkDropListDropped)="OnEventDropped($event)"
-                                (mousedown)="OnMouseDownCreation($event, element.date, element.estBloquer)"
-                                (touchstart)="OnMouseDownCreation($event, element.date, element.estBloquer)"
-                                [attr.data-date]="element.date.getTime()"
-                                [class.last-column]="($index + 1) % nbColonnes() == 0"
-                                [class.day-disabled]="(element.estWeekend && weekendDisabled()) || element.estBloquer"
-                                [class.today]="element.estAujourdhui"
-                                [class.different-month]="!element.estMoisCourant"
-                                [class.is-creating]="EstEnCreation(element.date)">
-                            
-                            <div class="day-cell-header">
-                                <span class="day-number">{{ element.date.getDate() }}</span>
-                                
-                                @if (element.listeEventSpecial && element.listeEventSpecial.length > 0) 
-                                {
-                                    <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
-                                        @for (sp of element.listeEventSpecial; track $index) 
+                @for (semaine of listeSemaines(); track $index) 
+                {
+                    <div class="week-row">
+                        
+                        <div class="days-background-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
+                            @for (element of semaine.jours; track $index) 
+                            {
+                                <div class="day-cell" 
+                                        role="button"
+                                        tabindex="0"
+                                        [attr.aria-label]="trad().ariaCreer + ' ' + FormatDateAria(element.date) + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (element.listeEvent.length > 0 ? trad().aideDescendre : '') + trad().aideNavMois"
+                                        (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer, element.listeEvent)"
+                                        matRipple
+                                        cdkDropList
+                                        [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
+                                        [cdkDropListData]="element"
+                                        (cdkDropListDropped)="OnEventDropped($event)"
+                                        (mousedown)="OnMouseDownCreation($event, element.date, element.estBloquer)"
+                                        (touchstart)="OnMouseDownCreation($event, element.date, element.estBloquer)"
+                                        [attr.data-date]="element.date.getTime()"
+                                        [class.last-column]="($index + 1) % nbColonnes() == 0"
+                                        [class.day-disabled]="(element.estWeekend && weekendDisabled()) || element.estBloquer"
+                                        [class.today]="element.estAujourdhui"
+                                        [class.different-month]="!element.estMoisCourant"
+                                        [class.is-creating]="EstEnCreation(element.date)">
+                                    
+                                    <div class="day-cell-header">
+                                        <span class="day-number">{{ element.date.getDate() }}</span>
+                                        
+                                        @if (element.listeEventSpecial && element.listeEventSpecial.length > 0) 
                                         {
-                                            <div class="special-badge" [title]="sp.title">
-                                                <span class="special-text">{{ sp.title }}</span>
+                                            <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
+                                                @for (sp of element.listeEventSpecial; track $index) 
+                                                {
+                                                    <div class="special-badge" [title]="sp.title">
+                                                        <span class="special-text">{{ sp.title }}</span>
+                                                    </div>
+                                                }
                                             </div>
                                         }
                                     </div>
-                                }
-                            </div>
 
-                            <div class="day-cell-footer">
-                                @if (element.listeEvent.length > maxLignesVisibles()) 
-                                {
-                                    <div class="more-indicator">
-                                        +{{ element.listeEvent.length - maxLignesVisibles() }} 
-                                        
-                                        @if (!estPetitEcran()) 
+                                    <div class="day-cell-footer">
+                                        @if (element.listeEvent.length > maxLignesVisibles()) 
                                         {
-                                            {{ trad().plus }}...
+                                            <div class="more-indicator">
+                                                +{{ element.listeEvent.length - maxLignesVisibles() }} 
+                                                
+                                                @if (!estPetitEcran()) 
+                                                {
+                                                    {{ trad().plus }}...
+                                                }
+                                            </div>
                                         }
                                     </div>
-                                }
-                            </div>
+                                </div>
+                            }
                         </div>
-                    }
-                </div>
 
-                <div cdkDropList cdkDropListSortingDisabled class="events-foreground-layer">
-                    @for (pos of semaine.eventsPositionnes; track pos.event.id) 
-                    {
-                        @if (pos.ligne < maxLignesVisibles())
-                        {
-                            <div class="event-item absolute-event" 
-                                [id]="'event-' + pos.event.id"
-                                role="button"
-                                tabindex="0"
-                                [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre + ' ' + FormatDateAria(pos.event.startDate) + (previewResize()?.eventId === pos.event.id ? trad().aideEventModif : (!readonly() && !pos.event.readonly ? trad().aideEventNormal : '')) + trad().aideNavMois"
-                                (keydown)="OnEventKeydown($event, pos.event)"
-                                (blur)="OnEventBlur(pos.event)"
-                                cdkDrag
-                                [cdkDragData]="pos.event"
-                                [cdkDragDisabled]="readonly() || pos.event.readonly"
-                                [style.--pos-start]="pos.jourDebutIndex"
-                                [style.--pos-duree]="pos.dureeJours"
-                                [style.--pos-ligne]="pos.ligne"
-                                [style.--nb-cols]="nbColonnes()"
-                                
-                                (cdkDragStarted)="OnDragStarted()" 
-                                (cdkDragEnded)="OnDragEnded()"
-                                (cdkDragMoved)="OnEventDragMoved($event)"
-                                [title]="pos.event.description || pos.event.titre" 
-                                [class.is-hovered]="hoveredEvent() == pos.event"
-                                [ngStyle]="GetEventStyle(pos.event)"
-                                (mouseenter)="overrideRipple.set(true); hoveredEvent.set(pos.event)" 
-                                (mouseleave)="overrideRipple.set(false); hoveredEvent.set(null)"
-                                (touchstart)="overrideRipple.set(true); hoveredEvent.set(pos.event)"
-                                (touchend)="overrideRipple.set(false); hoveredEvent.set(null)"
-                                (click)="$event.stopPropagation(); ClickEvent(pos.event)">
-                                
-                                <div class="resize-handle left" 
-                                    (mousedown)="OnResizeStart($event, pos.event, 'left')" 
-                                    (touchstart)="OnResizeStart($event, pos.event, 'left')">
-                                </div>
+                        <div cdkDropList cdkDropListSortingDisabled class="events-foreground-layer">
+                            @for (pos of semaine.eventsPositionnes; track pos.event.id) 
+                            {
+                                @if (pos.ligne < maxLignesVisibles())
+                                {
+                                    <div class="event-item absolute-event" 
+                                        [id]="'event-' + pos.event.id"
+                                        role="button"
+                                        tabindex="0"
+                                        [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre + ' ' + FormatDateAria(pos.event.startDate) + (previewResize()?.eventId === pos.event.id ? trad().aideEventModif : (!readonly() && !pos.event.readonly ? trad().aideEventNormal : '')) + trad().aideNavMois"
+                                        (keydown)="OnEventKeydown($event, pos.event)"
+                                        (blur)="OnEventBlur(pos.event)"
+                                        cdkDrag
+                                        [cdkDragData]="pos.event"
+                                        [cdkDragDisabled]="readonly() || pos.event.readonly"
+                                        [style.--pos-start]="pos.jourDebutIndex"
+                                        [style.--pos-duree]="pos.dureeJours"
+                                        [style.--pos-ligne]="pos.ligne"
+                                        [style.--nb-cols]="nbColonnes()"
+                                        
+                                        (cdkDragStarted)="OnDragStarted()" 
+                                        (cdkDragEnded)="OnDragEnded()"
+                                        (cdkDragMoved)="OnEventDragMoved($event)"
+                                        [title]="pos.event.description || pos.event.titre" 
+                                        [class.is-hovered]="hoveredEvent() == pos.event"
+                                        [ngStyle]="GetEventStyle(pos.event)"
+                                        (mouseenter)="overrideRipple.set(true); hoveredEvent.set(pos.event)" 
+                                        (mouseleave)="overrideRipple.set(false); hoveredEvent.set(null)"
+                                        (touchstart)="overrideRipple.set(true); hoveredEvent.set(pos.event)"
+                                        (touchend)="overrideRipple.set(false); hoveredEvent.set(null)"
+                                        (click)="$event.stopPropagation(); ClickEvent(pos.event)">
+                                        
+                                        <div class="resize-handle left" aria-hidden="true"
+                                            (mousedown)="OnResizeStart($event, pos.event, 'left')" 
+                                            (touchstart)="OnResizeStart($event, pos.event, 'left')">
+                                        </div>
 
-                                <span class="event-time">{{ pos.event.startDate | date:(useAmPm() ? 'h:mm a' : 'HH:mm') }}</span>
-                                <span class="event-title">{{ pos.event.titre }}</span>
+                                        <span class="event-time">{{ pos.event.startDate | date:(useAmPm() ? 'h:mm a' : 'HH:mm') }}</span>
+                                        <span class="event-title">{{ pos.event.titre }}</span>
 
-                                <div class="resize-handle right" 
-                                    (mousedown)="OnResizeStart($event, pos.event, 'right')" 
-                                    (touchstart)="OnResizeStart($event, pos.event, 'right')">
-                                </div>
-                            </div>
-                        }
-                    }
-                </div>
-                
+                                        <div class="resize-handle right" aria-hidden="true"
+                                            (mousedown)="OnResizeStart($event, pos.event, 'right')" 
+                                            (touchstart)="OnResizeStart($event, pos.event, 'right')">
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        
+                    </div>
+                }
             </div>
-        }
-    </div>
-</div>
+        </div>
+    </mat-sidenav-content>
+</mat-sidenav-container>
 
 <mat-menu #menuMois="matMenu">
     @for (element of listeMoisTraduit(); track element.id) 

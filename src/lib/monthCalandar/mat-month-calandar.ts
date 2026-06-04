@@ -13,6 +13,10 @@ import { DateInterval } from '../../models/DateInterval';
 import { DateCalandarDisabled } from '../../models/DateCalandarDisabled';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EventGroup } from '../../models/EventGroup';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { SidebarConfigCalandar } from '../../models/SidebarConfigCalandar';
 
 interface EventPositionne {
     event: EventCalandar;
@@ -28,7 +32,7 @@ interface SemaineCalendrier {
 
 @Component({
   selector: 'jp-mat-month-calandar',
-  imports: [MatProgressSpinnerModule, DragDropModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],
+  imports: [MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, DragDropModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],
   templateUrl: './mat-month-calandar.html',
   styleUrl: './mat-month-calandar.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -61,6 +65,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     /** Disabled interval date */
     intervalsDisabled = input<DateCalandarDisabled[]>([]);
     themeConfig = input<ThemeConfigCalandar>();
+    sidebarConfig = input<SidebarConfigCalandar>();
     eventClickJour = output<DateCalendrier>({ alias: "dayClicked" });
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
     eventUpdated = output<EventCalandar>();
@@ -89,8 +94,18 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         aideDescendre: ". Alt plus down arrow to select an event",
         aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
         aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)",
-        aideNavMois: ". PageUp or PageDown to change month. Ctrl plus Page to change year"
+        aideNavMois: ". PageUp or PageDown to change month. Ctrl plus Page to change year",
+        titreGroupes: "Themes", 
+        sansGroupe: "Other events",
+        ariaMasquerGroupe: "Hide",
+        ariaAfficherGroupe: "Show",
+        ariaOuvrirEvent: "Open event",
+        ariaOuvrirMenu: "Open themes menu",
+        ariaFermerMenu: "Close themes menu"
     });
+
+    protected panneauOuvert = signal(this.sidebarConfig()?.defaultOpen ?? false);
+    protected groupesMasques = signal<Set<string | number>>(new Set());
 
     private readonly langueNavigateur = navigator.language || "en-US";
     
@@ -108,17 +123,46 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     private el = inject(ElementRef);
     private navigationInterval: any = null;
 
+    protected listeEvenementGroupe = computed(() => 
+    {
+        const tousLesEvents = this.events() || [];
+        const tousLesGroupes = this.groups() || [];
+        const resultat: { group: any | null, events: EventCalandar[] }[] = [];
+
+        // 1. Événements avec groupe
+        tousLesGroupes.forEach(g => {
+            const evs = tousLesEvents.filter(e => (e as any).groupEventId === g.id);
+            if (evs.length > 0) {
+                resultat.push({ group: g, events: evs });
+            }
+        });
+
+        // 2. Événements sans groupe
+        const sansGroupe = tousLesEvents.filter(e => !e.groupEventId);
+
+        if (sansGroupe.length > 0)
+            resultat.push({ group: null, events: sansGroupe });
+
+        return resultat;
+    });
+
     protected displayEvents = computed(() => 
     {
-        const preview = this.previewResize();
+        const apercu = this.previewResize();
         const baseEvents = this.events() ?? [];
+        const masques = this.groupesMasques();
 
-        if (!preview)
-            return baseEvents;
+        // 1. On filtre les événements dont le groupe est masqué
+        const eventsFiltres = baseEvents.filter(ev => {
+            const idGroupe = ev.groupEventId || 'sans-groupe';
+            return !masques.has(idGroupe);
+        });
 
-        // Si on est en train de redimensionner, on remplace temporairement les dates de l'événement concerné
-        return baseEvents.map(ev => 
-            ev.id == preview.eventId ? { ...ev, startDate: preview.startDate, endDate: preview.endDate } : ev
+        if (!apercu)
+            return eventsFiltres;
+
+        return eventsFiltres.map(ev => 
+            ev.id == apercu.eventId ? { ...ev, startDate: apercu.startDate, endDate: apercu.endDate } : ev
         );
     });
 
@@ -313,27 +357,20 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 aideDescendre: ". Alt plus flèche bas pour sélectionner un événement",
                 aideEventModif: " (Modification en cours. Entrée pour valider, Échap pour annuler)",
                 aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au jour)",
-                aideNavMois: ". Page haut ou Page bas pour changer de mois. Ctrl plus Page haut ou bas pour changer d'année"
-            },
-            'en': { 
-                plus: "more", aujourdhui: "Today", ajouter: "Add new", 
-                ariaPrecedent: "Previous", ariaSuivant: "Next", 
-                ariaAnneePrecedente: "Previous year", ariaAnneeSuivante: "Next year", 
-                ariaMenuMois: "Change month menu", ariaMenuAnnee: "Change year menu", 
-                ariaEvenement: "Event:", ariaCreer: "Create event on",
-                chargement: "Loading",
-                aideCreerEtendre: " (Shift plus arrows to extend)",
-                aideCreerValider: " (Enter to validate)",
-                aideDescendre: ". Alt plus down arrow to select an event",
-                aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
-                aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)",
-                aideNavMois: ". PageUp or PageDown to change month. Ctrl plus Page to change year"
+                aideNavMois: ". Page haut ou Page bas pour changer de mois. Ctrl plus Page haut ou bas pour changer d'année",
+                titreGroupes: "Thèmes",
+                sansGroupe: "Autres événements",
+                ariaMasquerGroupe: "Masquer",
+                ariaAfficherGroupe: "Afficher",
+                ariaOuvrirEvent: "Ouvrir l'événement",
+                ariaOuvrirMenu: "Ouvrir le menu des thèmes",
+                ariaFermerMenu: "Fermer le menu des thèmes"
             },
             'es': { 
                 plus: "más", aujourdhui: "Hoy", ajouter: "Añadir", 
                 ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", 
                 ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente", 
-                ariaMenuMois: "Menú cambiar mes", ariaMenuAnnee: "Menú cambiar año", 
+                ariaMenuMois: "Menú changer mes", ariaMenuAnnee: "Menú changer año", 
                 ariaEvenement: "Evento:", ariaCreer: "Crear evento el",
                 chargement: "Cargando",
                 aideCreerEtendre: " (Mayús más flechas para extender)",
@@ -341,7 +378,14 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 aideDescendre: ". Alt más flecha abajo para seleccionar un evento",
                 aideEventModif: " (Modificación en curso. Intro para validar, Escape para cancelar)",
                 aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para cambiar el final. Ctrl más Mayús más flechas para cambiar el inicio. Alt más flecha arriba para volver al día)",
-                aideNavMois: ". Avanzar página o Retroceder página para cambiar de mes. Ctrl más Página para cambiar de año"
+                aideNavMois: ". Avanzar página o Retroceder página para cambiar de mes. Ctrl más Página para cambiar de año",
+                titreGroupes: "Temas",
+                sansGroupe: "Otros eventos",
+                ariaMasquerGroupe: "Ocultar",
+                ariaAfficherGroupe: "Mostrar",
+                ariaOuvrirEvent: "Abrir evento",
+                ariaOuvrirMenu: "Abrir el menú de temas",
+                ariaFermerMenu: "Cerrar el menú de temas"
             },
             'it': { 
                 plus: "in più", aujourdhui: "Oggi", ajouter: "Aggiungi", 
@@ -355,7 +399,14 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 aideDescendre: ". Alt più freccia giù per selezionare un evento",
                 aideEventModif: " (Modifica in corso. Invio per confermare, Esc per annullare)",
                 aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per ridimensionare la fine. Ctrl più Maiusc più frecce per ridimensionare l'inizio. Alt più freccia su per tornare al giorno)",
-                aideNavMois: ". Pagina Su o Pagina Giù per cambiare mese. Ctrl più Pagina per cambiare anno"
+                aideNavMois: ". Pagina Su o Pagina Giù per cambiare mese. Ctrl più Pagina per cambiare anno",
+                titreGroupes: "Temi",
+                sansGroupe: "Altri eventi",
+                ariaMasquerGroupe: "Nascondi",
+                ariaAfficherGroupe: "Mostra",
+                ariaOuvrirEvent: "Apri evento",
+                ariaOuvrirMenu: "Apri il menu dei temi",
+                ariaFermerMenu: "Chiudi il menu dei temi"
             },
             'de': { 
                 plus: "mehr", aujourdhui: "Heute", ajouter: "Hinzufügen", 
@@ -369,7 +420,14 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 aideDescendre: ". Alt plus Pfeiltaste nach unten, um ein Ereignis auszuwählen",
                 aideEventModif: " (Bearbeitung läuft. Eingabe zum Bestätigen, Esc zum Abbrechen)",
                 aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten zum Ändern des Endes. Ctrl plus Umschalt plus Pfeiltasten zum Ändern des Starts. Alt plus Pfeiltaste nach oben, um zum Tag zurückzukehren)",
-                aideNavMois: ". Bild auf oder Bild ab, um den Monat zu ändern. Strg plus Bild, um das Jahr zu ändern"
+                aideNavMois: ". Bild auf oder Bild ab, um den Monat zu ändern. Strg plus Bild, um das Jahr zu ändern",
+                titreGroupes: "Themen",
+                sansGroupe: "Andere Ereignisse",
+                ariaMasquerGroupe: "Ausblenden",
+                ariaAfficherGroupe: "Anzeigen",
+                ariaOuvrirEvent: "Ereignis öffnen",
+                ariaOuvrirMenu: "Themenmenü öffnen",
+                ariaFermerMenu: "Themenmenü schließen"
             },
             'pt': { 
                 plus: "mais", aujourdhui: "Hoje", ajouter: "Adicionar", 
@@ -383,11 +441,19 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 aideDescendre: ". Alt mais seta para baixo para selecionar um evento",
                 aideEventModif: " (Modificação em curso. Enter para validar, Esc para cancelar)",
                 aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para redimensionar o fim. Ctrl mais Shift mais setas para redimensionar o início. Alt mais seta para cima para voltar ao dia)",
-                aideNavMois: ". PageUp ou PageDown para mudar de mês. Ctrl mais Page para mudar de ano"
+                aideNavMois: ". PageUp ou PageDown para mudar de mês. Ctrl mais Page para mudar de ano",
+                titreGroupes: "Temas",
+                sansGroupe: "Outros eventos",
+                ariaMasquerGroupe: "Ocultar",
+                ariaAfficherGroupe: "Mostrar",
+                ariaOuvrirEvent: "Abrir evento",
+                ariaOuvrirMenu: "Abrir o menu de temas",
+                ariaFermerMenu: "Fechar o menu de temas"
             }
         };
 
-        this.trad.set(DICT_TRADUCTION[LANGUE] || DICT_TRADUCTION['en']);
+        if(DICT_TRADUCTION[LANGUE])
+            this.trad.set(DICT_TRADUCTION[LANGUE]);
     }
 
     ngOnDestroy(): void 
@@ -1225,6 +1291,35 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             month: 'long',
             year: 'numeric'
         });
+    }
+
+    protected FormaterDateCourte(_date: Date): string 
+    { 
+        if (!_date) 
+            return '';
+
+        return new Intl.DateTimeFormat(this.langueNavigateur, { day: '2-digit', month: 'short' }).format(_date);
+    }
+
+    protected BasculerVisibiliteGroupe(idGroupe: string | number | null): void 
+    {
+        const actuel = new Set(this.groupesMasques());
+        const idABasculer = idGroupe === null ? 'sans-groupe' : idGroupe;
+        
+        // afficher
+        if (actuel.has(idABasculer))
+            actuel.delete(idABasculer);
+
+        else
+            actuel.add(idABasculer);
+
+        this.groupesMasques.set(actuel);
+    }
+
+    protected EstGroupeMasque(idGroupe: string | number | null): boolean 
+    {
+        const idAVerifier = idGroupe === null ? 'sans-groupe' : idGroupe;
+        return this.groupesMasques().has(idAVerifier);
     }
 
     private VerifierTheme(): void 
