@@ -1,17 +1,18 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, input, model, OnInit, output, signal } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, input, model, OnDestroy, OnInit, output, signal } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { EventCalandar } from '../../models/EventCalandar';
 import { DateCalendrier } from '../../models/DateCalandar';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgStyle } from '@angular/common';
 import {MatRippleModule} from '@angular/material/core';
 import {MatMenuModule} from '@angular/material/menu';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
-import { DateSpecialEvent } from '../../public-api';
+import { DateSpecialEvent, ThemeConfigCalandar } from '../../public-api';
 import { DateInterval } from '../../models/DateInterval';
 import { DateCalandarDisabled } from '../../models/DateCalandarDisabled';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { EventGroup } from '../../models/EventGroup';
 
 interface EventPositionne {
     event: EventCalandar;
@@ -27,15 +28,16 @@ interface SemaineCalendrier {
 
 @Component({
   selector: 'jp-mat-month-calandar',
-  imports: [MatProgressSpinnerModule, DragDropModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule],
+  imports: [MatProgressSpinnerModule, DragDropModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],
   templateUrl: './mat-month-calandar.html',
   styleUrl: './mat-month-calandar.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MatMonthCalandar implements OnInit
+export class MatMonthCalandar implements OnInit, OnDestroy
 {
     events = input<EventCalandar[]>();
     specialEvents = input<DateSpecialEvent[]>([]);
+    groups = input<EventGroup[]>([]);
 
     /** 1 => January, 12 => december */
     mois = model.required<number>({ alias: "month" });
@@ -58,7 +60,7 @@ export class MatMonthCalandar implements OnInit
 
     /** Disabled interval date */
     intervalsDisabled = input<DateCalandarDisabled[]>([]);
-
+    themeConfig = input<ThemeConfigCalandar>();
     eventClickJour = output<DateCalendrier>({ alias: "dayClicked" });
     eventClickEvent = output<EventCalandar>({ alias: "eventClicked" });
     eventUpdated = output<EventCalandar>();
@@ -99,7 +101,10 @@ export class MatMonthCalandar implements OnInit
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
     protected zoneNavigationActive = signal<'left' | 'right' | null>(null);
     protected bulleSurvolee = signal<'left' | 'right' | null>(null);
+    protected estDarkMode = signal(false);
+    protected darkModeActif = signal(false);
 
+    private themeObserver: MutationObserver | null = null;
     private el = inject(ElementRef);
     private navigationInterval: any = null;
 
@@ -282,6 +287,17 @@ export class MatMonthCalandar implements OnInit
     ngOnInit(): void 
     {
         this.onResize();
+
+        this.VerifierTheme();
+
+        // surveille la balise <html> et <body>
+        this.themeObserver = new MutationObserver(() => {
+            this.VerifierTheme();
+        });
+
+        this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
         const LANGUE = this.langueNavigateur.split('-')[0];
         
         const DICT_TRADUCTION: Record<string, any> = {
@@ -372,6 +388,37 @@ export class MatMonthCalandar implements OnInit
         };
 
         this.trad.set(DICT_TRADUCTION[LANGUE] || DICT_TRADUCTION['en']);
+    }
+
+    ngOnDestroy(): void 
+    {
+        if (this.themeObserver)
+            this.themeObserver.disconnect();
+    }
+
+    protected GetEventStyle(eventObj: EventCalandar): any 
+    {
+        if (!eventObj.groupEventId) 
+            return {};
+
+        const group = this.groups().find(g => g.id === eventObj.groupEventId);
+        if (!group) 
+            return {};
+
+        if (this.darkModeActif()) 
+        {
+            return {
+                '--event-bg': group.bgColorDark || group.bgColorLight,
+                '--event-text': group.textColorDark || group.textColorLight
+            };
+        } 
+        else 
+        {
+            return {
+                '--event-bg': group.bgColorLight,
+                '--event-text': group.textColorLight
+            };
+        }
     }
 
     protected ScrollVersAnneeActive(): void 
@@ -524,6 +571,8 @@ export class MatMonthCalandar implements OnInit
             this.eventUpdated.emit({
                 id: eventObj.id,
                 titre: eventObj.titre,
+                groupEventId: eventObj.groupEventId,
+                readonly: eventObj.readonly,
                 description: eventObj.description,
                 startDate: nouvelleDateDebut,
                 endDate: nouvelleDateFin
@@ -764,7 +813,11 @@ export class MatMonthCalandar implements OnInit
             if (dateTrouvee && (finalStartDate.getTime() != _eventObj.startDate.getTime() || finalEndDate.getTime() != _eventObj.endDate.getTime())) 
             {
                 this.eventUpdated.emit({
-                    ..._eventObj,
+                    id: _eventObj.id,
+                    titre: _eventObj.titre,
+                    groupEventId: _eventObj.groupEventId,
+                    description: _eventObj.description,
+                    readonly: _eventObj.readonly,
                     startDate: finalStartDate,
                     endDate: finalEndDate
                 });
@@ -944,31 +997,31 @@ export class MatMonthCalandar implements OnInit
         }
     }
 
-    protected OnEventKeydown(event: KeyboardEvent, eventObj: EventCalandar): void 
+    protected OnEventKeydown(_event: KeyboardEvent, _eventObj: EventCalandar): void 
     {
-        if (event.key == 'Escape') 
+        if (_event.key == 'Escape') 
         {
             if (this.previewResize()) 
             {
                 this.previewResize.set(null);
-                event.preventDefault();
-                event.stopPropagation();
+                _event.preventDefault();
+                _event.stopPropagation();
             }
             return;
         }
 
-        if (['PageUp', 'PageDown'].includes(event.key))
+        if (['PageUp', 'PageDown'].includes(_event.key))
         {
-            event.preventDefault();
-            event.stopPropagation();
+            _event.preventDefault();
+            _event.stopPropagation();
 
-            let nouvelleDate = new Date(eventObj.startDate);
+            let nouvelleDate = new Date(_eventObj.startDate);
 
-            if (event.shiftKey || event.ctrlKey || event.metaKey)
-                nouvelleDate.setFullYear(nouvelleDate.getFullYear() + (event.key === 'PageUp' ? -1 : 1));
+            if (_event.shiftKey || _event.ctrlKey || _event.metaKey)
+                nouvelleDate.setFullYear(nouvelleDate.getFullYear() + (_event.key === 'PageUp' ? -1 : 1));
             else
             {
-                const moisCible = nouvelleDate.getMonth() + (event.key === 'PageUp' ? -1 : 1);
+                const moisCible = nouvelleDate.getMonth() + (_event.key === 'PageUp' ? -1 : 1);
                 nouvelleDate.setMonth(moisCible);
 
                 if (nouvelleDate.getMonth() !== ((moisCible % 12 + 12) % 12))
@@ -989,16 +1042,20 @@ export class MatMonthCalandar implements OnInit
             return;
         }
 
-        if (event.key == 'Enter' || event.key == ' ') 
+        if (_event.key == 'Enter' || _event.key == ' ') 
         {
-            event.preventDefault();
-            event.stopPropagation();
+            _event.preventDefault();
+            _event.stopPropagation();
 
             const apercu = this.previewResize();
-            if (apercu && apercu.eventId === eventObj.id) 
+            if (apercu && apercu.eventId === _eventObj.id) 
             {
                 this.eventUpdated.emit({
-                    ...eventObj,
+                    id: _eventObj.id,
+                    titre: _eventObj.titre,
+                    groupEventId: _eventObj.groupEventId,
+                    description: _eventObj.description,
+                    readonly: _eventObj.readonly,
                     startDate: apercu.startDate,
                     endDate: apercu.endDate
                 });
@@ -1006,18 +1063,18 @@ export class MatMonthCalandar implements OnInit
                 this.previewResize.set(null);
             }
             else 
-                this.ClickEvent(eventObj);
+                this.ClickEvent(_eventObj);
 
             return;
         }
 
         // 3. Remonter sur la case d'origine (Alt + Flèche Haut)
-        if (event.altKey && event.key === 'ArrowUp') 
+        if (_event.altKey && _event.key === 'ArrowUp') 
         {
-            event.preventDefault();
+            _event.preventDefault();
             
             // On utilise notre marque-page, ou par défaut le début de l'événement
-            const timestamp = this.dateRetourFocus() || new Date(eventObj.startDate.getFullYear(), eventObj.startDate.getMonth(), eventObj.startDate.getDate()).getTime();
+            const timestamp = this.dateRetourFocus() || new Date(_eventObj.startDate.getFullYear(), _eventObj.startDate.getMonth(), _eventObj.startDate.getDate()).getTime();
             const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${timestamp}"]`) as HTMLElement;
             
             if (caseJour) 
@@ -1026,9 +1083,9 @@ export class MatMonthCalandar implements OnInit
             return;
         }
 
-        if (event.key === 'Tab')
+        if (_event.key == 'Tab')
         {
-            const cible = event.target as HTMLElement;
+            const cible = _event.target as HTMLElement;
             const coucheEvenements = cible.closest('.events-foreground-layer');
             
             if (coucheEvenements) 
@@ -1037,23 +1094,29 @@ export class MatMonthCalandar implements OnInit
                 const indexActuel = tousLesEvenements.indexOf(cible);
                 
                 // A. Si on est sur le dernier événement de la semaine
-                if (!event.shiftKey && indexActuel == tousLesEvenements.length - 1) 
+                if (!_event.shiftKey && indexActuel == tousLesEvenements.length - 1) 
                 {
-                    event.preventDefault(); 
+                    _event.preventDefault(); 
                     
                     // Retour automatique au jour d'origine !
-                    const timestamp = this.dateRetourFocus() || new Date(eventObj.startDate.getFullYear(), eventObj.startDate.getMonth(), eventObj.startDate.getDate()).getTime();
+                    const timestamp = this.dateRetourFocus() || new Date(
+                        _eventObj.startDate.getFullYear(), 
+                        _eventObj.startDate.getMonth(),
+                        _eventObj.startDate.getDate()
+                    ).getTime();
+
                     const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${timestamp}"]`) as HTMLElement;
-                    if (caseJour) caseJour.focus();
+                    if (caseJour) 
+                        caseJour.focus();
                 }
 
                 // B. Si on est sur le premier événement et on recule
-                else if (event.shiftKey && indexActuel == 0) 
+                else if (_event.shiftKey && indexActuel == 0) 
                 {
-                    event.preventDefault();
+                    _event.preventDefault();
                     
                     // Retour automatique au jour d'origine !
-                    const timestamp = this.dateRetourFocus() || new Date(eventObj.startDate.getFullYear(), eventObj.startDate.getMonth(), eventObj.startDate.getDate()).getTime();
+                    const timestamp = this.dateRetourFocus() || new Date(_eventObj.startDate.getFullYear(), _eventObj.startDate.getMonth(), _eventObj.startDate.getDate()).getTime();
                     const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${timestamp}"]`) as HTMLElement;
 
                     if (caseJour) 
@@ -1065,20 +1128,20 @@ export class MatMonthCalandar implements OnInit
         }
 
         // 5. Déplacement et Redimensionnement
-        let estEnDeplacement = event.shiftKey && !event.ctrlKey && !event.metaKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
-        let estRedimensionnementFin = (event.ctrlKey || event.metaKey) && !event.shiftKey && ['ArrowLeft', 'ArrowRight'].includes(event.key);
-        let estRedimensionnementDebut = (event.ctrlKey || event.metaKey) && event.shiftKey && ['ArrowLeft', 'ArrowRight'].includes(event.key);
+        let estEnDeplacement = _event.shiftKey && !_event.ctrlKey && !_event.metaKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(_event.key);
+        let estRedimensionnementFin = (_event.ctrlKey || _event.metaKey) && !_event.shiftKey && ['ArrowLeft', 'ArrowRight'].includes(_event.key);
+        let estRedimensionnementDebut = (_event.ctrlKey || _event.metaKey) && _event.shiftKey && ['ArrowLeft', 'ArrowRight'].includes(_event.key);
 
         if (estEnDeplacement || estRedimensionnementFin || estRedimensionnementDebut) 
         {
-            event.preventDefault();
-            event.stopPropagation();
+            _event.preventDefault();
+            _event.stopPropagation();
 
-            if (this.readonly() || eventObj.readonly) return;
+            if (this.readonly() || _eventObj.readonly) return;
 
             const apercuActuel = this.previewResize();
-            const debutDeBase = (apercuActuel && apercuActuel.eventId === eventObj.id) ? apercuActuel.startDate : eventObj.startDate;
-            const finDeBase = (apercuActuel && apercuActuel.eventId === eventObj.id) ? apercuActuel.endDate : eventObj.endDate;
+            const debutDeBase = (apercuActuel && apercuActuel.eventId == _eventObj.id) ? apercuActuel.startDate : _eventObj.startDate;
+            const finDeBase = (apercuActuel && apercuActuel.eventId == _eventObj.id) ? apercuActuel.endDate : _eventObj.endDate;
 
             let nouveauDebut = new Date(debutDeBase);
             let nouvelleFin = new Date(finDeBase);
@@ -1086,16 +1149,16 @@ export class MatMonthCalandar implements OnInit
             if (estEnDeplacement) 
             {
                 let decalage = 0;
-                if (event.key === 'ArrowRight') 
+                if (_event.key == 'ArrowRight') 
                     decalage = 1;
 
-                else if (event.key === 'ArrowLeft') 
+                else if (_event.key == 'ArrowLeft') 
                     decalage = -1;
 
-                else if (event.key === 'ArrowDown') 
+                else if (_event.key == 'ArrowDown') 
                     decalage = 7;
 
-                else if (event.key === 'ArrowUp') 
+                else if (_event.key == 'ArrowUp') 
                     decalage = -7;
 
                 nouveauDebut.setDate(nouveauDebut.getDate() + decalage);
@@ -1103,7 +1166,7 @@ export class MatMonthCalandar implements OnInit
             } 
             else if (estRedimensionnementFin) 
             {
-                let decalage = event.key === 'ArrowRight' ? 1 : -1;
+                let decalage = _event.key === 'ArrowRight' ? 1 : -1;
                 let testFin = new Date(nouvelleFin);
                 testFin.setDate(testFin.getDate() + decalage);
 
@@ -1112,7 +1175,7 @@ export class MatMonthCalandar implements OnInit
             }
             else if (estRedimensionnementDebut) 
             {
-                let decalage = event.key === 'ArrowRight' ? 1 : -1;
+                let decalage = _event.key === 'ArrowRight' ? 1 : -1;
                 let testDebut = new Date(nouveauDebut);
                 testDebut.setDate(testDebut.getDate() + decalage);
 
@@ -1121,7 +1184,7 @@ export class MatMonthCalandar implements OnInit
             }
 
             this.previewResize.set({
-                eventId: eventObj.id,
+                eventId: _eventObj.id,
                 startDate: nouveauDebut,
                 endDate: nouvelleFin
             });
@@ -1139,7 +1202,7 @@ export class MatMonthCalandar implements OnInit
 
             setTimeout(() => 
             {
-                const elementEvenement = this.el.nativeElement.querySelector(`#event-${eventObj.id}`) as HTMLElement;
+                const elementEvenement = this.el.nativeElement.querySelector(`#event-${_eventObj.id}`) as HTMLElement;
                 if (elementEvenement)
                     elementEvenement.focus();
 
@@ -1162,6 +1225,29 @@ export class MatMonthCalandar implements OnInit
             month: 'long',
             year: 'numeric'
         });
+    }
+
+    private VerifierTheme(): void 
+    {
+        const config = this.themeConfig();
+        const classDark = config?.darkModeClass || '';
+        const classLight = config?.lightModeClass || '';
+        const themeDefaut = config?.defaultTheme || 'light';
+        
+        const aClasseSombre = classDark ? 
+            (document.body.classList.contains(classDark) || document.documentElement.classList.contains(classDark)) : false;
+
+        const aClasseClaire = classLight ? 
+            (document.body.classList.contains(classLight) || document.documentElement.classList.contains(classLight)) : false;
+
+        if (aClasseSombre)
+            this.estDarkMode.set(true);
+
+        else if (aClasseClaire)
+            this.darkModeActif.set(false);
+
+        else
+            this.darkModeActif.set(themeDefaut == 'dark');
     }
 
     private AnnulerCreationClavier(): void 

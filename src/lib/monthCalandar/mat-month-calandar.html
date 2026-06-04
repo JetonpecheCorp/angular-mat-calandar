@@ -183,6 +183,7 @@
                                 (cdkDragMoved)="OnEventDragMoved($event)"
                                 [title]="pos.event.description || pos.event.titre" 
                                 [class.is-hovered]="hoveredEvent() == pos.event"
+                                [ngStyle]="GetEventStyle(pos.event)"
                                 (mouseenter)="overrideRipple.set(true); hoveredEvent.set(pos.event)" 
                                 (mouseleave)="overrideRipple.set(false); hoveredEvent.set(null)"
                                 (touchstart)="overrideRipple.set(true); hoveredEvent.set(pos.event)"

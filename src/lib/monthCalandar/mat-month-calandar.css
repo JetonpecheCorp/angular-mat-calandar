@@ -339,8 +339,8 @@ display: grid;
     gap: 6px;
     padding: 2px 8px;
     
-    background-color: var(--mat-sys-primary); 
-    color: var(--mat-sys-on-primary);
+    background-color: var(--event-bg, var(--mat-sys-primary)); 
+    color: var(--event-text, var(--mat-sys-on-primary));
     border-radius: 4px;
     margin-left: 2px;
     
@@ -355,16 +355,31 @@ display: grid;
     touch-action: none;
 }
 
+.absolute-event::before 
+{
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: currentColor; /* Prend la couleur du texte (blanc ou noir) */
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.absolute-event.is-hovered::before {
+    opacity: 0.15; 
+}
+
 .absolute-event.is-hovered 
 {
     background-color: var(--mat-sys-primary-container, #eaddff);
     color: var(--mat-sys-on-primary-container);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     z-index: 11;
 }
 
 .absolute-event.is-hovered .event-time {
-    color: var(--mat-sys-on-primary-container);
+    opacity: 1;
 }
 
 .day-cell-footer {
@@ -484,7 +499,7 @@ display: grid;
 /* --- ÉVÉNEMENTS --- */
 .event-time {
     font-weight: 700;
-    color: var(--mat-sys-on-primary);
+    color: inherit;
 }
 
 .event-time:hover {
