@@ -16,9 +16,10 @@
         <div class="side-panel-content">
             <mat-accordion class="side-panel-accordion" [multi]="sidebarConfig()?.multi ?? true">
                 
-                @for (item of listeEvenementGroupe(); track item.group?.id || 'sans-groupe') 
+                @for (item of listeEvenementGroupe(); track item.group?.id || 'sans-groupe'; let index = $index) 
                 {
-                    <mat-expansion-panel class="group-expansion-panel" [hideToggle]="sidebarConfig()?.hideToggle ?? false">
+                    @let truc = sidebarConfig()?.accordeonMod == 'expandedFirst' && index == 0 ? true : (sidebarConfig()?.accordeonMod == 'expanded');
+                    <mat-expansion-panel class="group-expansion-panel" [expanded]="truc" [hideToggle]="sidebarConfig()?.hideToggle ?? false">
                         
                         <mat-expansion-panel-header>
                             <mat-panel-title>
@@ -66,12 +67,12 @@
               [class.nav-hover-left]="zoneNavigationActive() === 'left'"
               [class.nav-hover-right]="zoneNavigationActive() === 'right'">
 
-            <div class="nav-edge-indicator left">
+            <div class="nav-edge-indicator left" aria-hidden="true">
                 <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'left'">
                     <mat-icon>keyboard_double_arrow_left</mat-icon>
                 </div>
             </div>
-            <div class="nav-edge-indicator right">
+            <div class="nav-edge-indicator right" aria-hidden="true">
                 <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'right'">
                     <mat-icon>keyboard_double_arrow_right</mat-icon>
                 </div>

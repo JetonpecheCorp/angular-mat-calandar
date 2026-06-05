@@ -104,7 +104,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         ariaFermerMenu: "Close themes menu"
     });
 
-    protected panneauOuvert = signal(this.sidebarConfig()?.defaultOpen ?? false);
+    protected panneauOuvert = signal(false);
     protected groupesMasques = signal<Set<string | number>>(new Set());
 
     private readonly langueNavigateur = navigator.language || "en-US";
@@ -330,6 +330,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
     ngOnInit(): void 
     {
+        if(this.sidebarConfig()?.defaultOpen === true)
+            this.panneauOuvert.set(true);
+
         this.onResize();
 
         this.VerifierTheme();
