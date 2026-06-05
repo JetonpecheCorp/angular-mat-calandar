@@ -2,7 +2,7 @@ export type SidebarConfigCalandar =
 {
     title: string;
     defaultOpen: boolean,
-    accordeonMod: 'expanded' | 'expendedFirst';
+    accordeonMod: 'expanded' | 'expandedFirst';
     hideToggle: boolean,
     multi: boolean
 }
