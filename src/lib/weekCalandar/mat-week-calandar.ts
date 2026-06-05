@@ -1,4 +1,4 @@
-import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, numberAttribute, output, ChangeDetectionStrategy, inject, ElementRef } from '@angular/core';
+import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, HostListener, numberAttribute, output, ChangeDetectionStrategy, inject, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +12,10 @@ import { DateSpecialEvent } from '../../models/DateSpecialEvent';
 import {MatRippleModule} from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ThemeConfigCalandar } from '../../models/ThemeConfigCalandar';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { SidebarConfigCalandar } from '../../models/SidebarConfigCalandar';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -25,7 +29,7 @@ interface PositionedEvent extends EventCalandar
 @Component({
   selector: 'jp-mat-week-calandar',
   standalone: true,
-  imports: [MatProgressSpinnerModule, MatRippleModule, DragDropModule, MatMenuModule, CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
+  imports: [MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, MatRippleModule, DragDropModule, MatMenuModule, CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
   templateUrl: './mat-week-calandar.html',
   styleUrls: ['./mat-week-calandar.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -48,6 +52,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     daysOfWeekDisabled = input<number[]>([]);
 
     themeConfig = input<ThemeConfigCalandar>();
+    sidebarConfig = input<SidebarConfigCalandar>();
 
     weekendDisabled = input(false, { transform: booleanAttribute });
     useAmPm = input(false, { transform: booleanAttribute });
@@ -64,6 +69,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     eventCreated = output<DateInterval>();
     btnAddClicked = output();
 
+    protected panneauOuvert = signal(false);
+    protected groupesMasques = signal<Set<string | number>>(new Set());
+    protected estPetitEcran = signal(false);
+
     protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
     protected isDarkModeActive = signal(false);
@@ -78,7 +87,14 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         aideDescendre: ". Alt plus down arrow to select an event",
         aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
         aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to time slot)",
-        aideNavMois: ". PageUp/PageDown to change week. Ctrl plus Page to change month"
+        aideNavMois: ". PageUp/PageDown to change week. Ctrl plus Page to change month",
+        titreGroupes: "Themes", 
+        sansGroupe: "Other events",
+        ariaMasquerGroupe: "Hide",
+        ariaAfficherGroupe: "Show",
+        ariaOuvrirEvent: "Open event",
+        ariaOuvrirMenu: "Open themes menu",
+        ariaFermerMenu: "Close themes menu"
     });
 
     private themeObserver: MutationObserver | null = null;
@@ -102,15 +118,43 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected bulleSurvolee = signal<'left' | 'right' | null>(null);
     protected slotRetourFocus = signal<string | null>(null);
 
-    protected displayEvents = computed(() => 
+    protected listeEvenementGroupe = computed(() => 
+    {
+        const tousLesEvents = this.events() || [];
+        const tousLesGroupes = this.groups() || [];
+        const resultat: { groupe: any | null, events: EventCalandar[] }[] = [];
+
+        tousLesGroupes.forEach(g => 
+        {
+            const evs = tousLesEvents.filter(e => e.groupEventId == g.id);
+
+            if (evs.length > 0) 
+                resultat.push({ groupe: g, events: evs });
+        });
+
+        const sansGroupe = tousLesEvents.filter(e => !e.groupEventId);
+
+        if (sansGroupe.length > 0) 
+            resultat.push({ groupe: null, events: sansGroupe });
+
+        return resultat;
+    });
+
+protected displayEvents = computed(() => 
     {
         const preview = this.previewResize();
         const baseEvents = this.events() ?? [];
+        const masques = this.groupesMasques();
 
-        if (!preview) 
-            return baseEvents;
+        // filtre par rapport aux cases cochées
+        const eventsFiltres = baseEvents.filter(ev => {
+            const idGroupe = ev.groupEventId || 'sans-groupe';
+            return !masques.has(idGroupe);
+        });
 
-        return baseEvents.map(ev => 
+        if (!preview) return eventsFiltres;
+
+        return eventsFiltres.map(ev => 
             ev.id == preview.eventId ? { ...ev, startDate: preview.startDate, endDate: preview.endDate } : ev
         );
     });
@@ -291,6 +335,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     ngOnInit(): void
     {
+        if(this.sidebarConfig()?.defaultOpen === true)
+            this.panneauOuvert.set(true);
+
+        this.OnResize();
         this.timerInterval = setInterval(() => 
         {
             this.heureActuelle.set(new Date());
@@ -318,18 +366,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 aideEventModif: " (Modification en cours. Entrée pour valider, Échap pour annuler)",
                 aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au créneau horaire)",
                 aideNavMois: ". Page haut ou Page bas pour changer de semaine. Ctrl plus Page pour changer de mois"
-            },
-            'en': { 
-                aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new", 
-                ariaPrecedent: "Previous", ariaSuivant: "Next", ariaMenu: "Change view", 
-                ariaEvenement: "Event:", ariaCreer: "Create event on", 
-                ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month", chargement: "Loading",
-                aideCreerEtendre: " (Arrow keys to navigate. Shift plus arrows to extend a creation)",
-                aideCreerValider: " (Enter to validate)",
-                aideDescendre: ". Alt plus down arrow to select an event",
-                aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
-                aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to time slot)",
-                aideNavMois: ". PageUp or PageDown to change week. Ctrl plus Page to change month"
             },
             'es': { 
                 aujourdhui: "Hoy", semaine: "S", nouveau: "nuevo", ajouter: "Añadir", 
@@ -381,7 +417,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             }
         };
 
-        this.trad.set(DICT_TRADUCTION[LANGUE] || DICT_TRADUCTION['en']);
+        if(DICT_TRADUCTION[LANGUE])
+            this.trad.set(DICT_TRADUCTION[LANGUE]);
     }
 
     ngOnDestroy(): void 
@@ -391,6 +428,33 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         if (this.themeObserver) 
             this.themeObserver.disconnect();
+    }
+
+    protected BasculerVisibiliteGroupe(idGroupe: string | number | null): void 
+    {
+        const actuel = new Set(this.groupesMasques());
+        const idABasculer = idGroupe === null ? 'sans-groupe' : idGroupe;
+
+        if (actuel.has(idABasculer)) 
+            actuel.delete(idABasculer);
+        else 
+            actuel.add(idABasculer);
+
+        this.groupesMasques.set(actuel);
+    }
+
+    protected EstGroupeMasque(idGroupe: string | number | null): boolean 
+    {
+        const idAVerifier = idGroupe === null ? 'sans-groupe' : idGroupe;
+        return this.groupesMasques().has(idAVerifier);
+    }
+
+    protected FormaterDateCourte(date: Date): string 
+    { 
+        if (!date) 
+            return '';
+        
+        return new Intl.DateTimeFormat(this.langueNavigateur, { day: '2-digit', month: 'short' }).format(date);
     }
 
     private EstDansIntervalle(_dateAChecker: Date, _debut: Date, _fin: Date): boolean
@@ -1617,5 +1681,11 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         // 86_400_000 => nombre de millisecondes dans un jour
         const NUMERO_SEMAINE = Math.ceil((((date.getTime() - DATE_DEBUT_ANNEE.getTime()) / 86_400_000) + 1) / 7);
         return NUMERO_SEMAINE;
+    }
+
+    @HostListener('window:resize')
+    protected OnResize(): void 
+    {
+        this.estPetitEcran.set(window.innerWidth <= 1280);
     }
 }
