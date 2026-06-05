@@ -17,6 +17,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `matRippleDisabled`: désactiver l'effet ripple sur les cellules des jours
 - `events`: Liste des evenements à mettre sur le calandrier
 - `configTheme`: Configuration du theme par defaut pour actualiser les les couleurs des events defini dans le groupe
+- `sidebarConfig`: Configuration de la sidebar
 - `groups`: Liste des groupes d'event pour personnaliser la couleur et / ou les regrouper
 - `weekendDisabled`: Masquer le weekend (samedi et dimanche)
 - `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
@@ -71,6 +72,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `groups`: Liste des groupes d'event pour personnaliser la couleur et / ou les regrouper
 - `specialEvents`: Liste des evenements spécials (vacances, noel, jour de l'an...)
 - `configTheme`: Configuration du theme par defaut pour actualiser les les couleurs des events defini dans le groupe
+- `sidebarConfig`: Configuration de la sidebar
 - `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
 - `hourMin`: Heure début du calendrier (0 - 23)
 - `hourMax`: Heure de fin du calandrier (0 - 23)
