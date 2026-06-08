@@ -61,7 +61,7 @@
 .burger-menu-btn {
     margin-right: 8px; 
     margin-top: -4px; 
-    width: 48px; /* Largeur standard du bouton Material */
+    width: 48px;
     opacity: 1;
     overflow: hidden;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
@@ -132,18 +132,20 @@
 /* --- LISTE DES GROUPES ET CARTES --- */
 .group-section { display: flex; flex-direction: column; }
 
-.group-title {
+.group-title { 
     display: flex; 
     align-items: center; 
-    gap: 8px;
+    gap: 8px; 
     font-weight: 700; 
-    font-size: 0.8rem;
-    color: var(--mat-sys-on-surface);
+    font-size: 0.8rem; 
     text-transform: uppercase; 
-    letter-spacing: 0.5px;
-    user-select: none;
-    margin-top: 2px;
-    -webkit-user-select: none;
+    margin-top: 0;
+}
+
+.group-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .group-color-indicator {

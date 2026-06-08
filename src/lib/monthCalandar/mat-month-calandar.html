@@ -28,14 +28,14 @@
                                     [checked]="!EstGroupeMasque(item.group?.id || null)"
                                     (change)="BasculerVisibiliteGroupe(item.group?.id || null)"
                                     [attr.aria-label]="(EstGroupeMasque(item.group?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.group ? item.group.id : trad().sansGroupe)">
-                                    
+                                </mat-checkbox>
+
                                     <div class="group-title" 
                                          [ngStyle]="{'--g-color': item.group ? (darkModeActif() ? (item.group.bgColorDark || item.group.bgColorLight) : item.group.bgColorLight) : 'var(--mat-sys-primary)'}">
                                         <div class="group-color-indicator" aria-hidden="true"></div>
                                         <span class="group-name">{{ item.group ? item.group.id : (trad().sansGroupe || 'Autres') }}</span>
                                     </div>
 
-                                </mat-checkbox>
                             </mat-panel-title>
                         </mat-expansion-panel-header>
 
