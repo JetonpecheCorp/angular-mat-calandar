@@ -60,6 +60,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     hideNavYearBtn = input(false, { transform: booleanAttribute });
     showBtnAdd = input(false, { transform: booleanAttribute });
     readonly = input(false, { transform: booleanAttribute });
+    readonlyPast = input(false, { transform: booleanAttribute });
     loading = input(false, { transform: booleanAttribute });
 
     eventClicked = output<EventCalandar>();
@@ -140,19 +141,27 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return resultat;
     });
 
-protected displayEvents = computed(() => 
+    protected displayEvents = computed(() => 
     {
         const preview = this.previewResize();
         const baseEvents = this.events() ?? [];
         const masques = this.groupesMasques();
+        const bloquerPasse = this.readonlyPast();
+        const maintenant = this.heureActuelle().getTime();
 
-        // filtre par rapport aux cases cochées
         const eventsFiltres = baseEvents.filter(ev => {
             const idGroupe = ev.groupEventId || 'sans-groupe';
             return !masques.has(idGroupe);
+        }).map(ev => 
+        {
+            if (bloquerPasse && ev.startDate.getTime() < maintenant)
+                return { ...ev, readonly: true };
+            
+            return ev;
         });
 
-        if (!preview) return eventsFiltres;
+        if (!preview) 
+            return eventsFiltres;
 
         return eventsFiltres.map(ev => 
             ev.id == preview.eventId ? { ...ev, startDate: preview.startDate, endDate: preview.endDate } : ev
@@ -430,6 +439,24 @@ protected displayEvents = computed(() =>
             this.themeObserver.disconnect();
     }
 
+    protected EstJourPasse(jourDate: Date, heureLabel: string): boolean 
+    {
+        if (!this.readonlyPast()) 
+            return false;
+        
+        let heures = parseInt(heureLabel, 10);
+        if (this.useAmPm()) 
+        {
+            const estPM = heureLabel.toLowerCase().includes('pm');
+            if (estPM && heures < 12) heures += 12;
+            if (!estPM && heures == 12) heures = 0;
+        }
+        
+        // On considère la case passée si l'heure de FIN de ce créneau est dépassée
+        const finSlot = new Date(jourDate.getFullYear(), jourDate.getMonth(), jourDate.getDate(), heures + 1, 0, 0).getTime();
+        return finSlot <= this.heureActuelle().getTime();
+    }
+
     protected BasculerVisibiliteGroupe(idGroupe: string | number | null): void 
     {
         const actuel = new Set(this.groupesMasques());
@@ -651,6 +678,9 @@ protected displayEvents = computed(() =>
 
         _dragEvent.source._dragRef.reset();
 
+        if (this.readonlyPast() && nouvelleDateDebut.getTime() < this.heureActuelle().getTime()) 
+            return;
+
         this.eventUpdated.emit({
             id: ev.id,
             titre: ev.titre,
@@ -717,6 +747,9 @@ protected displayEvents = computed(() =>
 
     protected InitialiserResize(mouseEvent: MouseEvent | TouchEvent, ev: PositionedEvent, direction: 'top' | 'bottom'): void 
     {
+        if (this.readonly() || ev.readonly) 
+            return;
+
         mouseEvent.stopPropagation();
         mouseEvent.preventDefault();
 
@@ -760,6 +793,9 @@ protected displayEvents = computed(() =>
 
                 let hoveredDate = new Date(colTimestamp);
                 hoveredDate.setHours(h, m, 0, 0);
+
+                if (this.readonlyPast() && hoveredDate.getTime() < this.heureActuelle().getTime())
+                    hoveredDate = new Date(this.heureActuelle().getTime());
 
                 if (direction == 'top') 
                 {
@@ -848,7 +884,8 @@ protected displayEvents = computed(() =>
         const clientXDebut = event instanceof MouseEvent ? event.clientX : (event as TouchEvent).touches[0].clientX;
         
         let yActuel = clientYDebut - initialRect.top;
-        if (yActuel < 0) yActuel = 0; // Sécurité
+        if (yActuel < 0) 
+            yActuel = 0;
 
         // DATE D'ANCRAGE : On mémorise la case exacte où l'utilisateur a cliqué
         let minutesCliquees = Math.floor(yActuel / 15) * 15;
@@ -859,6 +896,9 @@ protected displayEvents = computed(() =>
         let dateComplete = new Date(dateJour);
         dateComplete.setHours(heure, minute, 0, 0);
         const timestampAncrage = dateComplete.getTime();
+
+        if (this.readonlyPast() && timestampAncrage < this.heureActuelle().getTime())
+            return;
 
         this.dragCreationEnCours.set(false);
         this.dateDebutCreation.set(dateComplete);
@@ -937,13 +977,19 @@ protected displayEvents = computed(() =>
 
                     let dateSurvolee = new Date(colTimestamp);
                     dateSurvolee.setHours(hSurvole, mSurvole, 0, 0);
-                    const timestampSurvole = dateSurvolee.getTime();
+                    let timestampSurvole = dateSurvolee.getTime();
+
+                    if (this.readonlyPast() && timestampSurvole < this.heureActuelle().getTime())
+                        timestampSurvole = this.heureActuelle().getTime();
 
                     // Compare la case survolée avec la toute première case cliquée (ancrage)
-                    if (timestampSurvole < timestampAncrage) {
+                    if (timestampSurvole < timestampAncrage) 
+                    {
                         this.dateDebutCreation.set(new Date(timestampSurvole));
                         this.dateFinCreation.set(new Date(timestampAncrage + 15 * 60 * 1000));
-                    } else {
+                    } 
+                    else 
+                    {
                         this.dateDebutCreation.set(new Date(timestampAncrage));
                         this.dateFinCreation.set(new Date(timestampSurvole + 15 * 60 * 1000));
                     }
@@ -1057,7 +1103,7 @@ protected displayEvents = computed(() =>
         if (event.key === 'Enter' || event.key === ' ') 
         {
             event.preventDefault();
-            if (this.readonly()) 
+            if (this.readonly() || this.EstJourPasse(dateJour, heureLabel))
                 return;
 
             if (this.dragCreationEnCours()) 
@@ -1144,6 +1190,9 @@ protected displayEvents = computed(() =>
 
             if (!this.dragCreationEnCours()) 
             {
+                if (this.EstJourPasse(dateJour, heureLabel)) 
+                    return;
+
                 // Transformation du label heure en vraie Date
                 let heures = parseInt(heureLabel, 10);
                 if (this.useAmPm()) 

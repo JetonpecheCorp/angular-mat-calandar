@@ -434,6 +434,10 @@ mat-sidenav-content {
     cursor: grabbing;
 }
 
+.event-block.cdk-drag-disabled {
+    cursor: pointer;
+}
+
 .event-block.event-phantom {
     opacity: 0.4; 
     border: 1px dashed var(--event-text, var(--mat-sys-primary));
@@ -555,6 +559,16 @@ mat-sidenav-content {
 
 .hour-slot:hover {
     background-color: var(--mat-sys-surface-container-high);
+}
+
+.hour-slot.slot-disabled {
+    background-color: var(--mat-sys-surface-container-low);
+    cursor: not-allowed;
+}
+
+.hour-slot.slot-disabled:hover 
+{
+    background-color: var(--mat-sys-surface-container-low);
 }
 
 .cdk-drag-preview {

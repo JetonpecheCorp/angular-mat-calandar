@@ -197,11 +197,12 @@
                                         (cdkDragEnded)="OnEventDragEnded($event, ev)"
                                         (keydown)="OnEventKeydown($event, ev)"
                                         (blur)="OnEventBlur(ev)"
+                                        (click)="$event.stopPropagation(); (readonly() || ev.readonly) ? ClickEvent(ev) : null"
                                         [ngStyle]="CalculerStyleEvent(ev, jour.date)"
                                         [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
                                         [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'">
 
-                                        @if (!ev.continueAvant) 
+                                        @if (!ev.continueAvant && !readonly() && !ev.readonly)
                                         {
                                             <div class="resize-handle top" 
                                                 aria-hidden="true"
@@ -220,7 +221,7 @@
                                             @if (ev.continueApres) { <mat-icon class="continue-icon bottom" aria-hidden="true">keyboard_arrow_down</mat-icon> }
                                         </div>
 
-                                        @if (!ev.continueApres) 
+                                        @if (!ev.continueApres && !readonly() && !ev.readonly)
                                         {
                                             <div class="resize-handle bottom" 
                                                 aria-hidden="true"
@@ -253,6 +254,7 @@
                                 {
                                     <div class="hour-slot" 
                                             [id]="'slot-' + jour.date.getTime() + '-' + h.replace(' ', '')"
+                                            [class.slot-disabled]="EstJourPasse(jour.date, h)"
                                             role="button"
                                             tabindex="0"
                                             [attr.aria-label]="trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + 
@@ -260,9 +262,9 @@
                                                 (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois"
                                             (keydown)="OnTimeSlotKeydown($event, jour.date, h, getPositionedEvents(jour.date))"
                                             matRipple 
-                                            [matRippleDisabled]="matRippleDisabled()" 
-                                            (mousedown)="OnMouseDownHoraire(jour.date, $event)"
-                                            (touchstart)="OnMouseDownHoraire(jour.date, $event)"></div>
+                                            [matRippleDisabled]="matRippleDisabled() || EstJourPasse(jour.date, h)" 
+                                            (mousedown)="!EstJourPasse(jour.date, h) && OnMouseDownHoraire(jour.date, $event)"
+                                            (touchstart)="!EstJourPasse(jour.date, h) && OnMouseDownHoraire(jour.date, $event)"></div>
                                 }
                                 </div>
                             }
