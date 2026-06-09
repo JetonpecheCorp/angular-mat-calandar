@@ -25,6 +25,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `daysDisabled`: Liste des jours à désactiver
 - `useAmPm`: Afficher les heures en AM / PM
 - `readonly`: Met le calandrier en lecture seul
+- `readonlyPast`: Met le calendrier en lecture seul sur le passé
 - `loading`: Affiche un spinner par dessus le corps du calendrier
 - `intervalDisabled`: Liste des intervals de jours a désactiver
 - `monthsDisabled`: Masquer des mois (1 => janvier 12 => decembre)
@@ -81,6 +82,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `useAmPm`: Afficher les heures en AM / PM
 - `loading`: Affiche un spinner par dessus le corps du calendrier
 - `readonly`: Met le calandrier en lecture seul
+- `readonlyPast`: Met le calendrier en lecture seul sur le passé
 - `matRippleDisabled`: Désactiver l'effet ripple
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'un mois
 - `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
