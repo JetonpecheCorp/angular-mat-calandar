@@ -264,18 +264,24 @@
                                         (touchend)="overrideRipple.set(false); hoveredEvent.set(null)"
                                         (click)="$event.stopPropagation(); ClickEvent(pos.event)">
                                         
-                                        <div class="resize-handle left" aria-hidden="true"
-                                            (mousedown)="OnResizeStart($event, pos.event, 'left')" 
-                                            (touchstart)="OnResizeStart($event, pos.event, 'left')">
-                                        </div>
+                                        @if (!readonly() && !pos.event.readonly) 
+                                        {
+                                            <div class="resize-handle left" aria-hidden="true"
+                                                (mousedown)="OnResizeStart($event, pos.event, 'left')" 
+                                                (touchstart)="OnResizeStart($event, pos.event, 'left')">
+                                            </div>
+                                        }
 
                                         <span class="event-time">{{ pos.event.startDate | date:(useAmPm() ? 'h:mm a' : 'HH:mm') }}</span>
                                         <span class="event-title">{{ pos.event.titre }}</span>
 
-                                        <div class="resize-handle right" aria-hidden="true"
-                                            (mousedown)="OnResizeStart($event, pos.event, 'right')" 
-                                            (touchstart)="OnResizeStart($event, pos.event, 'right')">
-                                        </div>
+                                        @if (!readonly() && !pos.event.readonly) 
+                                        {
+                                            <div class="resize-handle right" aria-hidden="true"
+                                                (mousedown)="OnResizeStart($event, pos.event, 'right')" 
+                                                (touchstart)="OnResizeStart($event, pos.event, 'right')">
+                                            </div>
+                                        }
                                     </div>
                                 }
                             }

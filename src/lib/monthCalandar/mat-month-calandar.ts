@@ -53,6 +53,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     hideNavYearBtn = input(false, { transform: booleanAttribute });
     showBtnAdd = input(false, { transform: booleanAttribute });
     readonly = input(false, { transform: booleanAttribute });
+    readonlyPast = input(false, { transform: booleanAttribute });
     loading = input(false, { transform: booleanAttribute });
 
     /** 0 => Sunday, 6 => Monday */
@@ -151,11 +152,18 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         const apercu = this.previewResize();
         const baseEvents = this.events() ?? [];
         const masques = this.groupesMasques();
+        const bloquerPasse = this.readonlyPast();
+        const minuitAujourdhui = new Date().setHours(0, 0, 0, 0);
 
-        // 1. On filtre les événements dont le groupe est masqué
         const eventsFiltres = baseEvents.filter(ev => {
             const idGroupe = ev.groupEventId || 'sans-groupe';
             return !masques.has(idGroupe);
+        }).map(ev => 
+        {
+            if (bloquerPasse && ev.startDate.getTime() < minuitAujourdhui) 
+                return { ...ev, readonly: true };
+
+            return ev;
         });
 
         if (!apercu)
@@ -625,6 +633,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         const eventObj = dropEvent.item.data as EventCalandar;
         const targetDay = dropEvent.container.data as DateCalendrier;
 
+        if (targetDay.estBloquer)
+            return;
+
         // On remet les heures à zéro pour comparer uniquement les jours purs (évite les bugs liés à l'heure d'été/hiver)
         const DATE_DEBUT_SANS_HEURE = new Date(eventObj.startDate.getFullYear(), eventObj.startDate.getMonth(), eventObj.startDate.getDate()).getTime();
         const DATE_CIBLE_SANS_HEURE = new Date(targetDay.date.getFullYear(), targetDay.date.getMonth(), targetDay.date.getDate()).getTime();
@@ -841,6 +852,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 {
                     let hoveredDate = new Date(timestamp);
                     dateTrouvee = true;
+
+                    if (this.readonlyPast() && hoveredDate.getTime() < new Date().setHours(0, 0, 0, 0))
+                        hoveredDate = new Date(new Date().setHours(0, 0, 0, 0));
 
                     if (_side == "left") 
                     {
@@ -1502,6 +1516,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             });
 
             let estBloquer = estBloquerDatePrecise || estBloquerIntervalle;
+
+            if (this.readonlyPast() && date.getTime() < new Date().setHours(0, 0, 0, 0))
+                estBloquer = true;
             
             // --- GESTION DES ÉVÉNEMENTS SPÉCIAUX (BADGES) ---
             const eventsSpeciauxDuJour = this.specialEvents().filter(sp => 
