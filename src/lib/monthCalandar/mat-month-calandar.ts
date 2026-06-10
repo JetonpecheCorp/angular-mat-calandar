@@ -102,7 +102,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         ariaAfficherGroupe: "Show",
         ariaOuvrirEvent: "Open event",
         ariaOuvrirMenu: "Open themes menu",
-        ariaFermerMenu: "Close themes menu"
+        ariaFermerMenu: "Close themes menu",
+        ariaBloque: "Unavailable",
+        ariaLectureSeule: "Read-only"
     });
 
     protected panneauOuvert = signal(false);
@@ -375,7 +377,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaAfficherGroupe: "Afficher",
                 ariaOuvrirEvent: "Ouvrir l'événement",
                 ariaOuvrirMenu: "Ouvrir le menu des thèmes",
-                ariaFermerMenu: "Fermer le menu des thèmes"
+                ariaFermerMenu: "Fermer le menu des thèmes",
+                ariaBloque: "Non disponible", 
+                ariaLectureSeule: "Lecture seule"
             },
             'es': { 
                 plus: "más", aujourdhui: "Hoy", ajouter: "Añadir", 
@@ -396,7 +400,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaAfficherGroupe: "Mostrar",
                 ariaOuvrirEvent: "Abrir evento",
                 ariaOuvrirMenu: "Abrir el menú de temas",
-                ariaFermerMenu: "Cerrar el menú de temas"
+                ariaFermerMenu: "Cerrar el menú de temas",
+                ariaBloque: "No disponible", ariaLectureSeule: "Solo lectura"
             },
             'it': { 
                 plus: "in più", aujourdhui: "Oggi", ajouter: "Aggiungi", 
@@ -417,7 +422,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaAfficherGroupe: "Mostra",
                 ariaOuvrirEvent: "Apri evento",
                 ariaOuvrirMenu: "Apri il menu dei temi",
-                ariaFermerMenu: "Chiudi il menu dei temi"
+                ariaFermerMenu: "Chiudi il menu dei temi",
+                ariaBloque: "Non disponibile", ariaLectureSeule: "Sola lettura"
             },
             'de': { 
                 plus: "mehr", aujourdhui: "Heute", ajouter: "Hinzufügen", 
@@ -438,7 +444,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaAfficherGroupe: "Anzeigen",
                 ariaOuvrirEvent: "Ereignis öffnen",
                 ariaOuvrirMenu: "Themenmenü öffnen",
-                ariaFermerMenu: "Themenmenü schließen"
+                ariaFermerMenu: "Themenmenü schließen",
+                ariaBloque: "Nicht verfügbar", ariaLectureSeule: "Schreibgeschützt"
             },
             'pt': { 
                 plus: "mais", aujourdhui: "Hoje", ajouter: "Adicionar", 
@@ -459,7 +466,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaAfficherGroupe: "Mostrar",
                 ariaOuvrirEvent: "Abrir evento",
                 ariaOuvrirMenu: "Abrir o menu de temas",
-                ariaFermerMenu: "Fechar o menu de temas"
+                ariaFermerMenu: "Fechar o menu de temas",
+                ariaBloque: "Indisponível", ariaLectureSeule: "Somente leitura"
             }
         };
 
@@ -771,7 +779,12 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                     let timestamp = parseInt(hoveredCell.dataset['date'], 10);
 
                     if (!isNaN(timestamp))
+                    {
+                        if (this.readonlyPast() && timestamp < new Date().setHours(0, 0, 0, 0))
+                            timestamp = new Date().setHours(0, 0, 0, 0);
+
                         this.dateFinCreation.set(new Date(timestamp));
+                    }
                 }
             }
         };
@@ -1028,6 +1041,10 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             const dateActuelle = this.dateFinCreation() || dateJour;
             const nouvelleDateFin = new Date(dateActuelle);
             nouvelleDateFin.setDate(nouvelleDateFin.getDate() + decalage);
+
+            // bloquer la creation vers le passé si readonlyPast
+            if (this.readonlyPast() && nouvelleDateFin.getTime() < new Date().setHours(0, 0, 0, 0))
+                nouvelleDateFin.setTime(new Date().setHours(0, 0, 0, 0));
 
             this.dateFinCreation.set(nouvelleDateFin);
 

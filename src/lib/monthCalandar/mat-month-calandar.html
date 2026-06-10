@@ -183,8 +183,10 @@
                                 <div class="day-cell" 
                                         role="button"
                                         tabindex="0"
-                                        [attr.aria-label]="trad().ariaCreer + ' ' + FormatDateAria(element.date) + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (element.listeEvent.length > 0 ? trad().aideDescendre : '') + trad().aideNavMois"
-                                        (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer, element.listeEvent)"
+                                        [attr.aria-disabled]="element.estBloquer"
+                                        [attr.aria-label]="element.estBloquer ? 
+                                            (FormatDateAria(element.date) + ', ' + trad().ariaBloque) : 
+                                            (trad().ariaCreer + ' ' + FormatDateAria(element.date) + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (element.listeEvent.length > 0 ? trad().aideDescendre : '') + trad().aideNavMois)"                                        (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer, element.listeEvent)"
                                         matRipple
                                         cdkDropList
                                         [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
@@ -241,8 +243,10 @@
                                         [id]="'event-' + pos.event.id"
                                         role="button"
                                         tabindex="0"
-                                        [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre + ' ' + FormatDateAria(pos.event.startDate) + (previewResize()?.eventId === pos.event.id ? trad().aideEventModif : (!readonly() && !pos.event.readonly ? trad().aideEventNormal : '')) + trad().aideNavMois"
-                                        (keydown)="OnEventKeydown($event, pos.event)"
+                                        [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre + ' ' + FormatDateAria(pos.event.startDate) + 
+                                            ((readonly() || pos.event.readonly) ? ', ' + trad().ariaLectureSeule : 
+                                            (previewResize()?.eventId === pos.event.id ? trad().aideEventModif : trad().aideEventNormal)) + 
+                                            trad().aideNavMois"                                        (keydown)="OnEventKeydown($event, pos.event)"
                                         (blur)="OnEventBlur(pos.event)"
                                         cdkDrag
                                         [cdkDragData]="pos.event"
