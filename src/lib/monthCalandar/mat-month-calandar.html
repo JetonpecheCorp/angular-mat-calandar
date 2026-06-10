@@ -266,7 +266,10 @@
                                         (mouseleave)="overrideRipple.set(false); hoveredEvent.set(null)"
                                         (touchstart)="overrideRipple.set(true); hoveredEvent.set(pos.event)"
                                         (touchend)="overrideRipple.set(false); hoveredEvent.set(null)"
-                                        (click)="$event.stopPropagation(); ClickEvent(pos.event)">
+                                        (click)="$event.stopPropagation(); ClickEvent(pos.event)"
+
+                                        [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
+                                        [matContextMenuTriggerData]="{ eventCal: pos.event }">
                                         
                                         @if (!readonly() && !pos.event.readonly) 
                                         {
@@ -326,4 +329,24 @@
             </button>
         }
     </div>
+</mat-menu>
+
+<mat-menu #defaultMenu="matMenu">
+    <ng-template matMenuContent let-ev="eventCal">
+        <button mat-menu-item 
+                    [disabled]="readonly() || ev?.readonly" 
+                    [attr.aria-label]="trad().modifier + ' ' + ev?.titre"
+                    (click)="OnContextMenuAction('edit', ev)">
+            <mat-icon aria-hidden="true">edit</mat-icon>
+            <span>{{ trad().modifier }}</span>
+        </button>
+
+        <button mat-menu-item 
+                    [disabled]="readonly() || ev?.readonly" 
+                    [attr.aria-label]="trad().supprimer + ' ' + ev?.titre"
+                    (click)="OnContextMenuAction('delete', ev)">
+            <mat-icon aria-hidden="true">delete</mat-icon>
+            <span>{{ trad().supprimer }}</span>
+        </button>
+    </ng-template>
 </mat-menu>

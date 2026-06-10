@@ -6,7 +6,7 @@ import { EventCalandar } from '../../models/EventCalandar';
 import { DateCalendrier } from '../../models/DateCalandar';
 import { DatePipe, NgStyle } from '@angular/common';
 import {MatRippleModule} from '@angular/material/core';
-import {MatMenuModule} from '@angular/material/menu';
+import {MatMenu, MatMenuModule } from '@angular/material/menu';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DateSpecialEvent, ThemeConfigCalandar } from '../../public-api';
 import { DateInterval } from '../../models/DateInterval';
@@ -42,6 +42,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     events = input<EventCalandar[]>();
     specialEvents = input<DateSpecialEvent[]>([]);
     groups = input<EventGroup[]>([]);
+    customMatMenu = input<MatMenu | null>(null);
 
     /** 1 => January, 12 => december */
     mois = model.required<number>({ alias: "month" });
@@ -73,6 +74,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     eventCreated = output<DateInterval>();
     btnAddClicked = output();
 
+    /** Event when one option in default context menu is clicked */
+    contextClicked = output<{ action: string, event: EventCalandar }>();
+
     protected estPetitEcran = signal(false);
     protected overrideRipple = signal(false);
     protected hoveredEvent = signal<EventCalandar | null>(null);
@@ -81,6 +85,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         plus: "more", 
         aujourdhui: "Today", 
         ajouter: "Add new",
+        modifier: "Edit",
+        supprimer: "Delete",
         ariaPrecedent: "Previous", 
         ariaSuivant: "Next", 
         ariaAnneePrecedente: "Previous year", 
@@ -360,6 +366,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         const DICT_TRADUCTION: Record<string, any> = {
             'fr': { 
                 plus: "de plus", aujourdhui: "Aujourd'hui", ajouter: "Ajouter", 
+                modifier: "Modifier", supprimer: "Supprimer",
                 ariaPrecedent: "Précédent", ariaSuivant: "Suivant", 
                 ariaAnneePrecedente: "Année précédente", ariaAnneeSuivante: "Année suivante", 
                 ariaMenuMois: "Menu changer le mois", ariaMenuAnnee: "Menu changer l'année", 
@@ -383,6 +390,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             },
             'es': { 
                 plus: "más", aujourdhui: "Hoy", ajouter: "Añadir", 
+                modifier: "Editar", supprimer: "Eliminar",
                 ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", 
                 ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente", 
                 ariaMenuMois: "Menú changer mes", ariaMenuAnnee: "Menú changer año", 
@@ -405,6 +413,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             },
             'it': { 
                 plus: "in più", aujourdhui: "Oggi", ajouter: "Aggiungi", 
+                modifier: "Modifica", supprimer: "Elimina",
                 ariaPrecedent: "Precedente", ariaSuivant: "Successivo", 
                 ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo", 
                 ariaMenuMois: "Menu cambia mese", ariaMenuAnnee: "Menu cambia anno", 
@@ -427,6 +436,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             },
             'de': { 
                 plus: "mehr", aujourdhui: "Heute", ajouter: "Hinzufügen", 
+                modifier: "Bearbeiten", supprimer: "Löschen",
                 ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", 
                 ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr", 
                 ariaMenuMois: "Menü Monat ändern", ariaMenuAnnee: "Menü Jahr ändern", 
@@ -449,6 +459,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             },
             'pt': { 
                 plus: "mais", aujourdhui: "Hoje", ajouter: "Adicionar", 
+                modifier: "Editar", supprimer: "Excluir",
                 ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", 
                 ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte", 
                 ariaMenuMois: "Menu mudar mês", ariaMenuAnnee: "Menu mudar ano", 
@@ -612,6 +623,14 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     protected ClickEvent(_event: EventCalandar): void
     {   
         this.eventClickEvent.emit(_event);
+    }
+
+    protected OnContextMenuAction(_action: string, _event: EventCalandar): void 
+    { 
+        this.contextClicked.emit({
+            action: _action,
+            event: _event
+        });
     }
 
     protected OnDragStarted(): void 
