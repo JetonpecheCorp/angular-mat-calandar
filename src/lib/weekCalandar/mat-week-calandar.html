@@ -257,9 +257,10 @@
                                             [class.slot-disabled]="EstJourPasse(jour.date, h)"
                                             role="button"
                                             tabindex="0"
-                                            [attr.aria-label]="trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + 
-                                                (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + 
-                                                (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois"
+                                            [attr.aria-disabled]="EstJourPasse(jour.date, h)"
+                                            [attr.aria-label]="EstJourPasse(jour.date, h) ? 
+                                                (FormatDateAria(jour.date) + ' ' + h + ', ' + trad().ariaBloque) : 
+                                                (trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois)"
                                             (keydown)="OnTimeSlotKeydown($event, jour.date, h, getPositionedEvents(jour.date))"
                                             matRipple 
                                             [matRippleDisabled]="matRippleDisabled() || EstJourPasse(jour.date, h)" 
