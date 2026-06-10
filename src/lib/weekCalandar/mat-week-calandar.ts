@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { EventCalandar, EventGroup } from '../../public-api';
-import {MatMenuModule} from '@angular/material/menu';
+import {MatMenuModule, MatMenu} from '@angular/material/menu';
 import { DateInterval } from '../../models/DateInterval';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { DateSpecialEvent } from '../../models/DateSpecialEvent';
@@ -40,6 +40,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     events = input<EventCalandar[]>([]);
     specialEvents = input<DateSpecialEvent[]>([]);
     groups = input<EventGroup[]>([]);
+    customMatMenu = input<MatMenu | null>(null);
     mondayFirst = input(false, { transform: booleanAttribute });
 
     /** 0 min */
@@ -70,6 +71,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     eventCreated = output<DateInterval>();
     btnAddClicked = output();
 
+    /** Event when one option in default context menu is clicked */
+    contextClicked = output<{ action: string, event: EventCalandar }>();
+
     protected panneauOuvert = signal(false);
     protected groupesMasques = signal<Set<string | number>>(new Set());
     protected estPetitEcran = signal(false);
@@ -79,6 +83,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected isDarkModeActive = signal(false);
     protected trad = signal({
         aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new",
+        modifier: "Edit", supprimer: "Delete",
         ariaPrecedent: "Previous", ariaSuivant: "Next", 
         ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month",
         ariaMenu: "Change view", ariaEvenement: "Event:", ariaCreer: "Create event on",
@@ -368,6 +373,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const DICT_TRADUCTION: Record<string, any> = {
             'fr': { 
                 aujourdhui: "Aujourd'hui", semaine: "S", nouveau: "nouveau", ajouter: "Ajouter", 
+                modifier: "Modifier", supprimer: "Supprimer",
                 ariaPrecedent: "Précédent", ariaSuivant: "Suivant", ariaMenu: "Changer la vue", 
                 ariaEvenement: "Événement :", ariaCreer: "Créer un événement le", 
                 ariaMoisPrecedent: "Mois précédent", ariaMoisSuivant: "Mois suivant", chargement: "Chargement en cours",
@@ -382,6 +388,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             },
             'es': { 
                 aujourdhui: "Hoy", semaine: "S", nouveau: "nuevo", ajouter: "Añadir", 
+                modifier: "Editar", supprimer: "Eliminar",
                 ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", ariaMenu: "Cambiar vista", 
                 ariaEvenement: "Evento:", ariaCreer: "Crear evento el", 
                 ariaMoisPrecedent: "Mes anterior", ariaMoisSuivant: "Mes siguiente", chargement: "Cargando",
@@ -395,6 +402,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             },
             'it': { 
                 aujourdhui: "Oggi", semaine: "S", nouveau: "nuovo", ajouter: "Aggiungi", 
+                modifier: "Modifica", supprimer: "Elimina",
                 ariaPrecedent: "Precedente", ariaSuivant: "Successivo", ariaMenu: "Cambia vista", 
                 ariaEvenement: "Evento:", ariaCreer: "Crea evento il", 
                 ariaMoisPrecedent: "Mese precedente", ariaMoisSuivant: "Mese successivo", chargement: "Caricamento",
@@ -408,6 +416,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             },
             'de': { 
                 aujourdhui: "Heute", semaine: "W", nouveau: "neu", ajouter: "Hinzufügen", 
+                modifier: "Bearbeiten", supprimer: "Löschen",
                 ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", ariaMenu: "Ansicht ändern", 
                 ariaEvenement: "Ereignis:", ariaCreer: "Ereignis erstellen am", 
                 ariaMoisPrecedent: "Vorheriger Monat", ariaMoisSuivant: "Nächster Monat", chargement: "Wird geladen",
@@ -421,6 +430,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             },
             'pt': { 
                 aujourdhui: "Hoje", semaine: "S", nouveau: "novo", ajouter: "Adicionar", 
+                modifier: "Editar", supprimer: "Excluir",
                 ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", ariaMenu: "Mudar vista", 
                 ariaEvenement: "Evento:", ariaCreer: "Criar evento em", 
                 ariaMoisPrecedent: "Mês anterior", ariaMoisSuivant: "Mês seguinte", chargement: "Carregando",
@@ -501,10 +511,27 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return DATE >= DEBUT && DATE <= FIN;
     }
 
+    protected OnContextMenuAction(_action: string, _event: EventCalandar): void 
+    { 
+        this.contextClicked.emit({
+            action: _action,
+            event: {
+            id: _event.id,
+            readonly: _event.readonly,
+            groupEventId: _event.groupEventId,
+            startDate: _event.startDate,
+            endDate: _event.endDate,
+            titre: _event.titre,
+            description: _event.description
+        }});
+    }
+
     protected ClickEvent(_event: EventCalandar): void
     {   
         this.eventClicked.emit({
             id: _event.id,
+            readonly: _event.readonly,
+            groupEventId: _event.groupEventId,
             startDate: _event.startDate,
             endDate: _event.endDate,
             titre: _event.titre,
