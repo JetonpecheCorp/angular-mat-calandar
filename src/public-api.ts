@@ -10,3 +10,4 @@ export * from './models/DateCalandarDisabled';
 export * from './models/EventGroup';
 export * from './models/ThemeConfigCalandar';
 export * from './models/SidebarConfigCalandar';
+export * from './directives/JpCalandarActionDirective';
