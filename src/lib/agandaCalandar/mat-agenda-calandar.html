@@ -1,0 +1,134 @@
+<mat-sidenav-container class="agenda-calendar-root mat-elevation-z2" [hasBackdrop]="estPetitEcran()">
+
+    <mat-sidenav #sidenav class="side-panel" [mode]="estPetitEcran() ? 'over' : 'side'" [opened]="panneauOuvert()">
+        <div class="side-panel-header">
+            <h3>{{ trad().titreGroupes }}</h3>
+            <button mat-icon-button (click)="sidenav.close()">
+                <mat-icon>chevron_left</mat-icon>
+            </button>
+        </div>
+        </mat-sidenav>
+
+    <mat-sidenav-content class="agenda-main-content">
+        <mat-toolbar class="calendar-header">
+            <button mat-icon-button 
+                    class="burger-menu-btn" 
+                    [class.is-hidden]="panneauOuvert()" 
+                    (click)="sidenav.open()"
+                    [attr.aria-expanded]="panneauOuvert()"
+                    [tabindex]="panneauOuvert() ? -1 : 0"
+                    [attr.aria-label]="trad().ariaOuvrirMenu">
+                <mat-icon>menu</mat-icon>
+            </button>
+
+            <div class="header-main-container">
+                <div class="header-nav-row" style="position: relative;">
+                    <button mat-icon-button (click)="Precedent()" [attr.aria-label]="trad().ariaPrecedent">
+                        <mat-icon>chevron_left</mat-icon>
+                    </button>
+
+                    <button matButton="filled"
+                            (click)="picker.open()" 
+                            [attr.aria-label]="trad().ariaMenuMois">
+                        {{ nomMois() }} {{ annee() }}
+                    </button>
+                    
+                    <input [matDatepicker]="picker" 
+                           [value]="datePickerValue()" 
+                           (dateChange)="OnDateSelected($event.value)" 
+                           class="hidden-datepicker-input"
+                           aria-hidden="true"
+                           tabindex="-1">
+                    
+                    <mat-datepicker #picker [touchUi]="estPetitEcran()"></mat-datepicker>
+
+                    <button mat-icon-button (click)="Suivant()" [attr.aria-label]="trad().ariaSuivant">
+                        <mat-icon>chevron_right</mat-icon>
+                    </button>
+                </div>
+
+                <div class="header-action-row">
+                    <button matButton="filled" class="today-btn" (click)="AllerAujourdhui()">{{ trad().aujourdhui }}</button>
+                    @if(showBtnAdd()) 
+                    {
+                        <button matButton="filled" class="today-btn" (click)="btnAddClicked.emit()">{{ trad().ajouter }}</button>
+                    }
+                </div>
+            </div>
+        </mat-toolbar>
+
+        <div class="agenda-scroll-viewport">
+            @if (loading()) {
+                <div class="loading-overlay"><mat-spinner diameter="48"></mat-spinner></div>
+            }
+
+            <div class="agenda-timeline-container">
+                @for (dayGroup of groupedAgendaEvents(); track dayGroup.dateObj.getTime()) 
+                {    
+                    <div class="agenda-day-group" [id]="'day-' + dayGroup.dateObj.getTime()">
+                        
+                        <div class="agenda-day-header">
+                            <div class="day-dot" aria-hidden="true"></div>
+                            <h2 class="day-title">{{ FormatDateAria(dayGroup.dateObj) }}</h2>
+                        </div>
+
+                        <div class="agenda-events-list">
+                            @for (ev of dayGroup.events; track ev.id) 
+                            {    
+                                <div class="agenda-event-card"
+                                     role="button" 
+                                     tabindex="0"
+                                     [attr.aria-label]="GetEventAriaLabel(ev, dayGroup.dateObj)"
+                                     (keydown)="OnEventKeydown($event, ev)"
+                                     [class.is-readonly]="readonly() || ev.readonly"
+                                     [ngStyle]="GetEventStyle(ev)"
+                                     (click)="eventClicked.emit(ev)"
+                                     [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
+                                     [matContextMenuTriggerData]="{ eventCal: ev }">
+                                    
+                                    <div class="event-time-col">
+                                        <span class="time-start">{{ GetStartDisplay(ev, dayGroup.dateObj) }}</span>
+                                        <span class="time-end">{{ GetEndDisplay(ev, dayGroup.dateObj) }}</span>
+                                    </div>
+
+                                    <div class="event-details-col">
+                                        <span class="event-title">{{ ev.titre }}</span>
+                                        <span class="event-desc">{{ ev.description }}</span>
+                                    </div>
+                                </div>
+                                
+                            }
+                        </div>
+                    </div>
+                }
+                
+                @empty {
+                    <div class="agenda-empty-state" role="status" aria-live="polite">
+                        <mat-icon aria-hidden="true">event_busy</mat-icon>
+                        <p>{{ trad().aucunEvent }}</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </mat-sidenav-content>
+</mat-sidenav-container>
+
+<mat-menu #defaultMenu="matMenu">
+    <ng-template matMenuContent let-ev="eventCal">
+        <button mat-menu-item 
+                    [disabled]="readonly() || ev?.readonly" 
+                    [attr.aria-label]="trad().modifier + ' ' + ev?.titre"
+                    (click)="OnContextMenuAction('edit', ev)">
+            <mat-icon aria-hidden="true">edit</mat-icon>
+            <span>{{ trad().modifier }}</span>
+        </button>
+
+        <button mat-menu-item 
+                    [disabled]="readonly() || ev?.readonly" 
+                    [attr.aria-label]="trad().supprimer + ' ' + ev?.titre"
+                    (click)="OnContextMenuAction('delete', ev)">
+            <mat-icon aria-hidden="true">delete</mat-icon>
+            <span>{{ trad().supprimer }}</span>
+        </button>
+    </ng-template>
+</mat-menu>
