@@ -5,32 +5,37 @@ Traduction automatique celons la **langue du navigateur.**
 
 # Information
 
-- Compatible Angular 21
+- Compatible Angular 22
 - Compatible et conçu pour Angular material
 - Accessible via aria, naviguation et actions par le clavier
+
+# Attributs en commun
+- `events`: Liste des evenements à mettre sur le calandrier
+- `specialEvents`: Liste des evenements spécials (vacances, noel, jour de l'an...)
+- `configTheme`: Configuration du theme par defaut pour actualiser les les couleurs des events defini dans le groupe
+- `sidebarConfig`: Configuration de la sidebar
+- `groups`: Liste des groupes d'event pour personnaliser la couleur et / ou les regrouper
+- `monthsDisabled`: Masquer des mois (1 => janvier 12 => decembre)
+- `intervalDisabled`: Liste des intervals de jours a désactiver
+- `daysDisabled`: Liste des jours à désactiver
+
+## Attributs boolean
+- `matRippleDisabled`: désactiver l'effet ripple
+- `weekendDisabled`: Masquer le weekend (samedi et dimanche)
+- `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
+- `daysOfWeekDisabled`: Désactiver des jours de la semaine (0 => dimanche, 6 => lundi)
+- `useAmPm`: Afficher les heures en AM / PM
+- `readonly`: Met le calandrier en lecture seul
+- `readonlyPast`: Met le calendrier en lecture seul sur le passé
+- `loading`: Affiche un spinner par dessus le corps du calendrier
+- `hideNavYearBtn`: Masquer les boutons pour naviguer d'une année
+- `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
 
 # Par mois
 
 ## Attributs
 - `month`: mois à afficher (REQUIS) (1 - 12)
 - `year`: Année du mois à afficher (REQUIS)
-- `matRippleDisabled`: désactiver l'effet ripple sur les cellules des jours
-- `events`: Liste des evenements à mettre sur le calandrier
-- `configTheme`: Configuration du theme par defaut pour actualiser les les couleurs des events defini dans le groupe
-- `sidebarConfig`: Configuration de la sidebar
-- `groups`: Liste des groupes d'event pour personnaliser la couleur et / ou les regrouper
-- `weekendDisabled`: Masquer le weekend (samedi et dimanche)
-- `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
-- `daysOfWeekDisabled`: Désactiver des jours de la semaine (0 => dimanche, 6 => lundi)
-- `daysDisabled`: Liste des jours à désactiver
-- `useAmPm`: Afficher les heures en AM / PM
-- `readonly`: Met le calandrier en lecture seul
-- `readonlyPast`: Met le calendrier en lecture seul sur le passé
-- `loading`: Affiche un spinner par dessus le corps du calendrier
-- `intervalDisabled`: Liste des intervals de jours a désactiver
-- `monthsDisabled`: Masquer des mois (1 => janvier 12 => decembre)
-- `hideNavYearBtn`: Masquer les boutons pour naviguer d'une année
-- `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
 
 ## Events
 - `eventClickJour`: Event click sur le jour
@@ -69,23 +74,8 @@ Traduction automatique celons la **langue du navigateur.**
 
 ## Attributs
 - `dateReference`: Affiche la semaine entière a partir de cette date (REQUIS)
-- `events`: Liste des evenements à mettre sur le calandrier
-- `groups`: Liste des groupes d'event pour personnaliser la couleur et / ou les regrouper
-- `specialEvents`: Liste des evenements spécials (vacances, noel, jour de l'an...)
-- `configTheme`: Configuration du theme par defaut pour actualiser les les couleurs des events defini dans le groupe
-- `sidebarConfig`: Configuration de la sidebar
-- `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
 - `hourMin`: Heure début du calendrier (0 - 23)
 - `hourMax`: Heure de fin du calandrier (0 - 23)
-- `daysOfWeekDisabled`: Jours de la semaine à masquer
-- `weekendDisabled`: Masquer le weekend
-- `useAmPm`: Afficher les heures en AM / PM
-- `loading`: Affiche un spinner par dessus le corps du calendrier
-- `readonly`: Met le calandrier en lecture seul
-- `readonlyPast`: Met le calendrier en lecture seul sur le passé
-- `matRippleDisabled`: Désactiver l'effet ripple
-- `hideNavYearBtn`: Masquer les boutons pour naviguer d'un mois
-- `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
 
 ## Events
 - `timeSlotClicked`: Event click sur une heure du calendrier
@@ -117,5 +107,30 @@ Traduction automatique celons la **langue du navigateur.**
     let date = new Date();
 </script>
 
-<jp-mat-week-calandar [dateReference]="date" useAmPm hourMin="9" />
+<jp-mat-week-calandar [dateReference]="date" 
+                      [customMatMenu]="userMenu"
+                      useAmPm
+                      hourMin="9" />
+
+<!-- let-ev="eventCal" => event sur lequel on a ouvert le menu contextuel -->
+<mat-menu #userMenu="matMenu">
+    <ng-template matMenuContent let-ev="eventCal">
+        <!-- HTML -->
+    </ng-template>
+</mat-menu>
+```
+
+# Menu contextuel
+
+`let-ev="eventCal"`: Permet d'avoir l'event sur lequel le menu s'ouvre.  
+Par defaut, il existe un menu avec les actions Modifier et Supprimer.  
+Ils s'activent selon le `readonly` ou `readonlyPast`.
+
+## Exemple
+```html
+<mat-menu #userMenu="matMenu">
+    <ng-template matMenuContent let-ev="eventCal">
+        <!-- HTML -->
+    </ng-template>
+</mat-menu>
 ```
