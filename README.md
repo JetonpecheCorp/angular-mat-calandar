@@ -18,6 +18,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `monthsDisabled`: Masquer des mois (1 => janvier 12 => decembre)
 - `intervalDisabled`: Liste des intervals de jours a désactiver
 - `daysDisabled`: Liste des jours à désactiver
+- `customMatMenu`: Permet d'utiliser un menu contextuel personnalisé
 
 ## Attributs boolean
 - `matRippleDisabled`: désactiver l'effet ripple
@@ -107,30 +108,39 @@ Traduction automatique celons la **langue du navigateur.**
     let date = new Date();
 </script>
 
-<jp-mat-week-calandar [dateReference]="date" 
-                      [customMatMenu]="userMenu"
-                      useAmPm
-                      hourMin="9" />
-
-<!-- let-ev="eventCal" => event sur lequel on a ouvert le menu contextuel -->
-<mat-menu #userMenu="matMenu">
-    <ng-template matMenuContent let-ev="eventCal">
-        <!-- HTML -->
-    </ng-template>
-</mat-menu>
+<jp-mat-week-calandar [dateReference]="date" useAmPm hourMin="9" />
 ```
 
-# Menu contextuel
+# Menu contextuel et directive
 
+## Directive
+- `[jpCalandarAction]`: Lier au calendrier conserné (REQUIS)
+- `[event]`: Event sur lequel le menu est ouvert (REQUIS)
+
+Permet de désactiver automatiquement un `<button>`, `<div>` ou `<a>` si  
+le composant est en `readonly`, `readonlyPast` ou l'event est en `readonly`
+
+**Note:** l'attribut `aria-disabled` est géré automatiquement.
+
+## Menu contextuel
 `let-ev="eventCal"`: Permet d'avoir l'event sur lequel le menu s'ouvre.  
 Par defaut, il existe un menu avec les actions Modifier et Supprimer.  
 Ils s'activent selon le `readonly` ou `readonlyPast`.
 
 ## Exemple
 ```html
+<jp-mat-week-calandar #calendrier
+                      [dateReference]="date" 
+                      [customMatMenu]="userMenu" />
+
 <mat-menu #userMenu="matMenu">
     <ng-template matMenuContent let-ev="eventCal">
-        <!-- HTML -->
+        
+        <button [jpCalandarAction]="calendrier" [event]="ev" (click)="click(ev)">...</button>
+
+        <a [jpCalandarAction]="calendrier" [event]="ev" (click)="click(ev)">...</a>
+
+        <div [jpCalandarAction]="calendrier" [event]="ev" (click)="click(ev)">...</div>
     </ng-template>
 </mat-menu>
 ```
