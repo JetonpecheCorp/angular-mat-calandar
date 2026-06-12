@@ -40,6 +40,10 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     groups = input<EventGroup[]>([]);
     customMatMenu = input<MatMenu | null>(null);
 
+    /** 0 => Sunday, 6 => Monday */
+    daysOfWeekDisabled = input<number[]>([]);
+
+    /** 1 => January, 12 => december */
     mois = model.required<number>({ alias: "month" });
     annee = model.required<number>({ alias: "year" });
     
@@ -48,6 +52,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     readonlyPast = input(false, { transform: booleanAttribute });
     loading = input(false, { transform: booleanAttribute });
     showBtnAdd = input(false, { transform: booleanAttribute });
+    hideNavYearBtn = input(false, { transform: booleanAttribute });
     
     themeConfig = input<ThemeConfigCalandar>();
     sidebarConfig = input<SidebarConfigCalandar>();
@@ -62,7 +67,6 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     protected estPetitEcran = signal(false);
     protected darkModeActif = signal(false);
     protected langueNavigateur = navigator.language || "fr-FR";
-
     protected trad = signal({
         aujourdhui: "Today", 
         ajouter: "Add new", 
@@ -71,6 +75,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         chargement: "Loading",
         ariaPrecedent: "Previous month", 
         ariaSuivant: "Next month",
+        ariaAnneePrecedente: "Previous year", 
+        ariaAnneeSuivante: "Next year",
         ariaMenuMois: "Change month", 
         ariaMenuAnnee: "Change year",
         sansGroupe: "Other events", 
@@ -147,6 +153,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         const specialEvs = this.specialEvents();
         const annee = this.annee();
         const mois = this.mois(); 
+        const joursDesactives = this.daysOfWeekDisabled();
 
         const debutMois = new Date(annee, mois - 1, 1).getTime();
         const finMois = new Date(annee, mois, 0, 23, 59, 59).getTime();
@@ -157,27 +164,30 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
 
         const groupsMap = new Map<number, { dateObj: Date, events: EventCalandar[], specialEvents: DateSpecialEvent[] }>();
 
+        // --- PASSE 1 : Événements standards ---
         eventsDuMois.forEach(ev => 
         {
             let dateParcours = new Date(ev.startDate);
-            if (dateParcours.getTime() < debutMois) 
-                dateParcours = new Date(annee, mois - 1, 1);
-
+            if (dateParcours.getTime() < debutMois) dateParcours = new Date(annee, mois - 1, 1);
             dateParcours.setHours(0, 0, 0, 0);
 
             let dateFinVisible = new Date(ev.endDate);
-            if (dateFinVisible.getTime() > finMois) 
-                dateFinVisible = new Date(annee, mois, 0);
-
+            if (dateFinVisible.getTime() > finMois) dateFinVisible = new Date(annee, mois, 0);
             dateFinVisible.setHours(0, 0, 0, 0);
 
             while (dateParcours.getTime() <= dateFinVisible.getTime()) 
             {
                 const t = dateParcours.getTime();
-                if (!groupsMap.has(t))
-                    groupsMap.set(t, { dateObj: new Date(t), events: [], specialEvents: [] });
+                const dayOfWeek = dateParcours.getDay(); // 🆕 Identifie le jour de la semaine (0-6)
 
-                groupsMap.get(t)!.events.push(ev);
+                // 🆕 N'ajoute la journée que si elle ne fait pas partie des jours désactivés
+                if (!joursDesactives.includes(dayOfWeek)) 
+                {
+                    if (!groupsMap.has(t)) {
+                        groupsMap.set(t, { dateObj: new Date(t), events: [], specialEvents: [] });
+                    }
+                    groupsMap.get(t)!.events.push(ev);
+                }
                 dateParcours.setDate(dateParcours.getDate() + 1);
             }
         });
@@ -191,30 +201,33 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
             {
                 const M = dateParcours.getMonth() + 1;
                 const D = dateParcours.getDate();
-                
-                const spForDay = specialEvs.filter(sp => 
+                const dayOfWeek = dateParcours.getDay();
+
+                // 🆕 On applique également le filtre sur les badges spéciaux
+                if (!joursDesactives.includes(dayOfWeek)) 
                 {
-                    const startM = sp.dateStart.month;
-                    const startD = sp.dateStart.day;
-                    const endM = sp.dateEnd.month;
-                    const endD = sp.dateEnd.day;
+                    const spForDay = specialEvs.filter(sp => {
+                        const startM = sp.dateStart.month;
+                        const startD = sp.dateStart.day;
+                        const endM = sp.dateEnd.month;
+                        const endD = sp.dateEnd.day;
 
-                    const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
+                        const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
 
-                    if (isNormalInterval) 
-                        return (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
-                    else 
-                        return (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
-                });
+                        if (isNormalInterval) 
+                            return (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
+                        else 
+                            return (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
+                    });
 
-                if (spForDay.length > 0)
-                {
-                    const t = dateParcours.getTime();
-                    // Si le jour n'existait pas (aucun event standard), on le crée !
-                    if (!groupsMap.has(t))
-                        groupsMap.set(t, { dateObj: new Date(t), events: [], specialEvents: [] });
-
-                    groupsMap.get(t)!.specialEvents = spForDay;
+                    if (spForDay.length > 0) 
+                    {
+                        const t = dateParcours.getTime();
+                        if (!groupsMap.has(t)) {
+                            groupsMap.set(t, { dateObj: new Date(t), events: [], specialEvents: [] });
+                        }
+                        groupsMap.get(t)!.specialEvents = spForDay;
+                    }
                 }
 
                 dateParcours.setDate(dateParcours.getDate() + 1);
@@ -275,6 +288,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aujourdhui: "Aujourd'hui", ajouter: "Ajouter", modifier: "Modifier", supprimer: "Supprimer",
                 chargement: "Chargement en cours",
                 ariaPrecedent: "Mois précédent", ariaSuivant: "Mois suivant",
+                ariaAnneePrecedente: "Année précédente", ariaAnneeSuivante: "Année suivante",
                 ariaMenuMois: "Changer le mois", ariaMenuAnnee: "Changer l'année",
                 sansGroupe: "Autres événements", titreGroupes: "Thèmes", 
                 aucunEvent: "Aucun événement prévu ce mois-ci.",
@@ -287,6 +301,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
                 chargement: "Cargando",
                 ariaPrecedent: "Mes anterior", ariaSuivant: "Mes siguiente",
+                ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente",
                 ariaMenuMois: "Cambiar mes", ariaMenuAnnee: "Cambiar año",
                 sansGroupe: "Otros eventos", titreGroupes: "Temas", 
                 aucunEvent: "No hay eventos programados este mes.",
@@ -299,6 +314,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
                 chargement: "Caricamento",
                 ariaPrecedent: "Mese precedente", ariaSuivant: "Mese successivo",
+                ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo",
                 ariaMenuMois: "Cambia mese", ariaMenuAnnee: "Cambia anno",
                 sansGroupe: "Altri eventi", titreGroupes: "Temi", 
                 aucunEvent: "Nessun evento in programma questo mese.",
@@ -311,6 +327,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
                 chargement: "Wird geladen",
                 ariaPrecedent: "Vorheriger Monat", ariaSuivant: "Nächster Monat",
+                ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr",
                 ariaMenuMois: "Monat ändern", ariaMenuAnnee: "Jahr ändern",
                 sansGroupe: "Andere Ereignisse", titreGroupes: "Themen", 
                 aucunEvent: "Diesen Monat sind keine Ereignisse geplant.",
@@ -323,6 +340,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
                 chargement: "Carregando",
                 ariaPrecedent: "Mês anterior", ariaSuivant: "Mês seguinte",
+                ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte",
                 ariaMenuMois: "Mudar mês", ariaMenuAnnee: "Mudar ano",
                 sansGroupe: "Outros eventos", titreGroupes: "Temas", 
                 aucunEvent: "Nenhum evento programado para este mês.",
@@ -450,6 +468,16 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         if (n === 1) 
             this.annee.set(this.annee() + 1);
         this.mois.set(n);
+    }
+
+    protected AnneePrecedente(): void 
+    {
+        this.annee.set(this.annee() - 1);
+    }
+
+    protected AnneeSuivante(): void 
+    {
+        this.annee.set(this.annee() + 1);
     }
 
     protected AllerAujourdhui(): void
