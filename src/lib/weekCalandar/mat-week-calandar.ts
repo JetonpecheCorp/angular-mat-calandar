@@ -383,7 +383,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 aideEventModif: " (Modification en cours. Entrée pour valider, Échap pour annuler)",
                 aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au créneau horaire)",
                 aideNavMois: ". Page haut ou Page bas pour changer de semaine. Ctrl plus Page pour changer de mois",
-                ariaBloque: "Non disponible", 
+                ariaBloque: "Non disponible", ariaFermerMenu: "Fermer le menu des thèmes",
                 ariaLectureSeule: "Lecture seule"
             },
             'es': { 
@@ -398,7 +398,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 aideEventModif: " (Modificación en curso. Intro para validar, Escape para cancelar)",
                 aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para cambiar el final. Ctrl más Mayús más flechas para cambiar el inicio. Alt más flecha arriba para volver al tramo horario)",
                 aideNavMois: ". Avanzar página o Retroceder página para cambiar de semana. Ctrl más Página para cambiar de mes",
-                ariaBloque: "No disponible", ariaLectureSeule: "Solo lectura"
+                ariaBloque: "No disponible", ariaLectureSeule: "Solo lectura",
+                ariaFermerMenu: "Cerrar el menú de temas",
             },
             'it': { 
                 aujourdhui: "Oggi", semaine: "S", nouveau: "nuovo", ajouter: "Aggiungi", 
@@ -412,7 +413,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 aideEventModif: " (Modifica in corso. Invio per confermare, Esc per annullare)",
                 aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per ridimensionare la fine. Ctrl più Maiusc più frecce per ridimensionare l'inizio. Alt più freccia su per tornare alla fascia oraria)",
                 aideNavMois: ". Pagina Su o Pagina Giù per cambiare settimana. Ctrl più Pagina per cambiare mese",
-                ariaBloque: "Non disponibile", ariaLectureSeule: "Sola lettura"
+                ariaBloque: "Non disponibile", ariaLectureSeule: "Sola lettura",
+                ariaFermerMenu: "Chiudi il menu dei temi",
             },
             'de': { 
                 aujourdhui: "Heute", semaine: "W", nouveau: "neu", ajouter: "Hinzufügen", 
@@ -426,7 +428,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 aideEventModif: " (Bearbeitung läuft. Eingabe zum Bestätigen, Esc zum Abbrechen)",
                 aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten zum Ändern des Endes. Ctrl plus Umschalt plus Pfeiltasten zum Ändern des Starts. Alt plus Pfeiltaste nach oben, um zum Zeitfenster zurückzukehren)",
                 aideNavMois: ". Bild auf oder Bild ab, um die Woche zu ändern. Strg plus Bild, um den Monat zu ändern",
-                ariaBloque: "Nicht verfügbar", ariaLectureSeule: "Schreibgeschützt"
+                ariaBloque: "Nicht verfügbar", ariaLectureSeule: "Schreibgeschützt",
+                ariaFermerMenu: "Themenmenü schließen",
             },
             'pt': { 
                 aujourdhui: "Hoje", semaine: "S", nouveau: "novo", ajouter: "Adicionar", 
@@ -440,7 +443,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 aideEventModif: " (Modificação em curso. Enter para validar, Esc para cancelar)",
                 aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para redimensionar o fim. Ctrl mais Shift mais setas para redimensionar o início. Alt mais seta para cima para voltar ao horário)",
                 aideNavMois: ". PageUp ou PageDown para mudar de semana. Ctrl mais Page para mudar de mês",
-                ariaBloque: "Indisponível", ariaLectureSeule: "Somente leitura"
+                ariaBloque: "Indisponível", ariaLectureSeule: "Somente leitura",
+                ariaFermerMenu: "Fechar o menu de temas",
             }
         };
 
