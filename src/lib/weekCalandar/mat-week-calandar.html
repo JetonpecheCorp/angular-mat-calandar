@@ -84,7 +84,8 @@
 
                     <div class="header-main-container">
                         <div class="header-nav-row">
-                            @if(!hideNavYearBtn()) {
+                            @if(!hideNavYearBtn()) 
+                            {
                                 <button mat-icon-button (click)="MoisPrecedent()" [attr.aria-label]="trad().ariaMoisPrecedent">
                                     <mat-icon>keyboard_double_arrow_left</mat-icon>
                                 </button>
