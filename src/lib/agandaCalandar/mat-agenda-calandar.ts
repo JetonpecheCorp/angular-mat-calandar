@@ -44,7 +44,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     useAmPm = input(false, { transform: booleanAttribute });
     readonly = input(false, { transform: booleanAttribute });
     readonlyPast = input(false, { transform: booleanAttribute });
-    loading = input(true, { transform: booleanAttribute });
+    loading = input(false, { transform: booleanAttribute });
     showBtnAdd = input(false, { transform: booleanAttribute });
     
     themeConfig = input<ThemeConfigCalandar>();
