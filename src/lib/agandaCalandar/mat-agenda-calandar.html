@@ -1,13 +1,64 @@
 <mat-sidenav-container class="agenda-calendar-root mat-elevation-z2" [hasBackdrop]="estPetitEcran()">
 
-    <mat-sidenav #sidenav class="side-panel" [mode]="estPetitEcran() ? 'over' : 'side'" [opened]="panneauOuvert()">
+<mat-sidenav #sidenav 
+                 class="side-panel" 
+                 [mode]="estPetitEcran() ? 'over' : 'side'" 
+                 [opened]="panneauOuvert()" 
+                 (openedChange)="panneauOuvert.set($event)">
+                 
         <div class="side-panel-header">
-            <h3>{{ trad().titreGroupes }}</h3>
+            <h3>{{ sidebarConfig()?.title || trad().titreGroupes }}</h3>
             <button mat-icon-button (click)="sidenav.close()" [attr.aria-label]="trad().ariaFermerMenu">
                 <mat-icon>chevron_left</mat-icon>
             </button>
         </div>
-        </mat-sidenav>
+        
+        <div class="side-panel-content">
+            <mat-accordion class="side-panel-accordion" [multi]="sidebarConfig()?.multi ?? true">
+                
+                @for (item of listeEvenementGroupe(); track item.group?.id || 'sans-groupe'; let index = $index) 
+                {
+                    @let truc = sidebarConfig()?.accordeonMod == 'expandedFirst' && index == 0 ? true : (sidebarConfig()?.accordeonMod == 'expanded');
+                    <mat-expansion-panel class="group-expansion-panel" [expanded]="truc" [hideToggle]="sidebarConfig()?.hideToggle ?? false">
+                        
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                <mat-checkbox 
+                                    (click)="$event.stopPropagation()"
+                                    [checked]="!EstGroupeMasque(item.group?.id || null)"
+                                    (change)="BasculerVisibiliteGroupe(item.group?.id || null)"
+                                    [aria-label]="(EstGroupeMasque(item.group?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.group ? item.group.id : trad().sansGroupe)">
+                                </mat-checkbox>
+
+                                <div class="group-title" 
+                                     [ngStyle]="{'--g-color': item.group ? (darkModeActif() ? (item.group.bgColorDark || item.group.bgColorLight) : item.group.bgColorLight) : 'var(--mat-sys-outline-variant)'}">
+                                    <div class="group-color-indicator" aria-hidden="true"></div>
+                                    
+                                    <span class="group-name">{{ item.group ? item.group.id : (trad().sansGroupe || 'Autres') }}</span>
+                                </div>
+                            </mat-panel-title>
+                        </mat-expansion-panel-header>
+
+                        <div class="group-events-list">
+                            @for (ev of item.events; track ev.id) 
+                            {
+                                <button class="side-event-card-clean" 
+                                     (click)="ClickEvent(ev); estPetitEcran() ? sidenav.close() : null"
+                                     matRipple
+                                     [attr.aria-label]="trad().ariaOuvrirEvent + ' ' + ev.titre + ' le ' + FormaterDateCourte(ev.startDate)">
+                                    
+                                    <span class="side-event-date">{{ FormaterDateCourte(ev.startDate) }}</span>
+                                    <span class="side-event-title">{{ ev.titre }}</span>
+                                    
+                                </button>
+                            }
+                        </div>
+
+                    </mat-expansion-panel>
+                }
+            </mat-accordion>
+        </div>
+    </mat-sidenav>
 
     <mat-sidenav-content class="agenda-main-content">
         <mat-toolbar class="calendar-header">

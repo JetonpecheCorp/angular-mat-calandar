@@ -72,9 +72,12 @@ export class MatAgendaCalandar implements OnInit
         titreGroupes: "Themes", 
         aucunEvent: "No events scheduled this month.",
         ariaOuvrirMenu: "Open themes menu",
+        ariaFermerMenu: "Close themes menu",
         ariaEvenement: "Event:",
         ariaLectureSeule: "Read-only",
-        ariaFermerMenu: "Close themes menu",
+        ariaMasquerGroupe: "Hide",
+        ariaAfficherGroupe: "Show",
+        ariaOuvrirEvent: "Open event"
     });
 
     private pendingScrollTime = signal<number | null>(null);
@@ -193,6 +196,29 @@ export class MatAgendaCalandar implements OnInit
         return arrayTrie;
     });
 
+    protected listeEvenementGroupe = computed(() => 
+    {
+        const tousLesEvents = this.events() || [];
+        const tousLesGroupes = this.groups() || [];
+        const resultat: { group: any | null, events: EventCalandar[] }[] = [];
+
+        // Événements avec groupe
+        tousLesGroupes.forEach(g => 
+        {
+            const evs = tousLesEvents.filter(e => e.groupEventId === g.id);
+            if (evs.length > 0)
+                resultat.push({ group: g, events: evs });
+        });
+
+        // Événements sans groupe
+        const sansGroupe = tousLesEvents.filter(e => !e.groupEventId);
+
+        if (sansGroupe.length > 0)
+            resultat.push({ group: null, events: sansGroupe });
+
+        return resultat;
+    });
+
     ngOnInit(): void
     {
         if (window.innerWidth <= 768) 
@@ -203,63 +229,95 @@ export class MatAgendaCalandar implements OnInit
         const DICT_TRADUCTION: Record<string, any> = {
             'fr': { 
                 aujourdhui: "Aujourd'hui", ajouter: "Ajouter", modifier: "Modifier", supprimer: "Supprimer",
+                chargement: "Chargement en cours",
                 ariaPrecedent: "Mois précédent", ariaSuivant: "Mois suivant",
                 ariaMenuMois: "Changer le mois", ariaMenuAnnee: "Changer l'année",
-                sansGroupe: "Autres", titreGroupes: "Thèmes", 
+                sansGroupe: "Autres événements", titreGroupes: "Thèmes", 
                 aucunEvent: "Aucun événement prévu ce mois-ci.",
-                ariaOuvrirMenu: "Ouvrir le menu des thèmes",
+                ariaOuvrirMenu: "Ouvrir le menu des thèmes", ariaFermerMenu: "Fermer le menu des thèmes",
                 ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule",
-                chargement: "Chargement en cours",
-                ariaFermerMenu: "Fermer le menu des thèmes",
+                ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir l'événement"
             },
-            'es': { 
+            'es': {
                 aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
+                chargement: "Cargando",
                 ariaPrecedent: "Mes anterior", ariaSuivant: "Mes siguiente",
                 ariaMenuMois: "Cambiar mes", ariaMenuAnnee: "Cambiar año",
-                sansGroupe: "Otros", titreGroupes: "Temas", 
+                sansGroupe: "Otros eventos", titreGroupes: "Temas", 
                 aucunEvent: "No hay eventos programados este mes.",
-                ariaOuvrirMenu: "Abrir el menú de temas",
+                ariaOuvrirMenu: "Abrir el menú de temas", ariaFermerMenu: "Cerrar le menú de temas",
                 ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura",
-                chargement: "Cargando",
-                ariaFermerMenu: "Cerrar el menú de temas",
+                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento"
             },
             'it': { 
                 aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
+                chargement: "Caricamento",
                 ariaPrecedent: "Mese precedente", ariaSuivant: "Mese successivo",
                 ariaMenuMois: "Cambia mese", ariaMenuAnnee: "Cambia anno",
-                sansGroupe: "Altri", titreGroupes: "Temi", 
+                sansGroupe: "Altri eventi", titreGroupes: "Temi", 
                 aucunEvent: "Nessun evento in programma questo mese.",
-                ariaOuvrirMenu: "Apri il menu dei temi",
+                ariaOuvrirMenu: "Apri il menu dei temi", ariaFermerMenu: "Chiudi il menu dei temi",
                 ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura",
-                chargement: "Caricamento",
-                ariaFermerMenu: "Chiudi il menu dei temi",
+                ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri evento"
             },
             'de': { 
                 aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
+                chargement: "Wird geladen",
                 ariaPrecedent: "Vorheriger Monat", ariaSuivant: "Nächster Monat",
                 ariaMenuMois: "Monat ändern", ariaMenuAnnee: "Jahr ändern",
-                sansGroupe: "Andere", titreGroupes: "Themen", 
+                sansGroupe: "Andere Ereignisse", titreGroupes: "Themen", 
                 aucunEvent: "Diesen Monat sind keine Ereignisse geplant.",
-                ariaOuvrirMenu: "Themenmenü öffnen",
+                ariaOuvrirMenu: "Themenmenü öffnen", ariaFermerMenu: "Themenmenü schließen",
                 ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt",
-                chargement: "Wird geladen",
-                ariaFermerMenu: "Themenmenü schließen",
+                ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Ereignis öffnen"
             },
             'pt': { 
                 aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
+                chargement: "Carregando",
                 ariaPrecedent: "Mês anterior", ariaSuivant: "Mês seguinte",
                 ariaMenuMois: "Mudar mês", ariaMenuAnnee: "Mudar ano",
-                sansGroupe: "Outros", titreGroupes: "Temas", 
+                sansGroupe: "Outros eventos", titreGroupes: "Temas", 
                 aucunEvent: "Nenhum evento programado para este mês.",
-                ariaOuvrirMenu: "Abrir o menu de temas",
+                ariaOuvrirMenu: "Abrir o menu de temas", ariaFermerMenu: "Fechar o menu de temas",
                 ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura",
-                chargement: "Carregando",
-                ariaFermerMenu: "Fechar o menu de temas",
+                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento"
             }
         };
 
         if(DICT_TRADUCTION[LANGUE])
             this.trad.set(DICT_TRADUCTION[LANGUE]);
+    }
+
+    protected BasculerVisibiliteGroupe(idGroupe: string | number | null): void 
+    {
+        const actuel = new Set(this.groupesMasques());
+        const idABasculer = idGroupe === null ? 'sans-groupe' : idGroupe;
+        
+        if (actuel.has(idABasculer))
+            actuel.delete(idABasculer);
+        else
+            actuel.add(idABasculer);
+
+        this.groupesMasques.set(actuel);
+    }
+
+    protected EstGroupeMasque(idGroupe: string | number | null): boolean 
+    {
+        const idAVerifier = idGroupe === null ? 'sans-groupe' : idGroupe;
+        return this.groupesMasques().has(idAVerifier);
+    }
+
+    protected FormaterDateCourte(_date: Date): string 
+    { 
+        if (!_date) 
+            return '';
+        
+        return new Intl.DateTimeFormat(this.langueNavigateur, { day: '2-digit', month: 'short' }).format(_date);
+    }
+
+    protected ClickEvent(_event: EventCalandar): void 
+    {
+        this.eventClicked.emit(_event);
     }
 
     protected OnDateSelected(date: Date | null): void 
