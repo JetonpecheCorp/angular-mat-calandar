@@ -1,4 +1,4 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input, model, OnInit, output, signal } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, effect, input, model, OnInit, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -74,6 +74,36 @@ export class MatAgendaCalandar implements OnInit
         ariaEvenement: "Event:",
         ariaLectureSeule: "Read-only"
     });
+
+    private pendingScrollTime = signal<number | null>(null);
+
+    constructor() 
+    {
+        effect(() => 
+        {
+            const isLoading = this.loading();
+            const targetTime = this.pendingScrollTime();
+
+            if (!isLoading && targetTime !== null) 
+            {
+                setTimeout(() => 
+                {
+                    this.pendingScrollTime.set(null);
+
+                    const groupeCible = this.groupedAgendaEvents().find(g => g.dateObj.getTime() >= targetTime);
+                    
+                    if (groupeCible) 
+                    {
+                        document.getElementById('day-' + groupeCible.dateObj.getTime())?.scrollIntoView({ 
+                            behavior: 'smooth', block: 'start' 
+                        });
+                    } 
+                    else 
+                        document.querySelector('.agenda-scroll-viewport')?.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 50);
+            }
+        });
+    }
 
     protected datePickerValue = computed(() => new Date(this.annee(), this.mois() - 1, 1));
 
@@ -228,21 +258,7 @@ export class MatAgendaCalandar implements OnInit
         this.annee.set(date.getFullYear());
         this.mois.set(date.getMonth() + 1);
 
-        const targetTime = new Date(date).setHours(0, 0, 0, 0);
-
-        setTimeout(() => 
-        {
-            const groupeCible = this.groupedAgendaEvents().find(g => g.dateObj.getTime() >= targetTime);
-            
-            if (groupeCible) 
-            {
-                document.getElementById('day-' + groupeCible.dateObj.getTime())?.scrollIntoView({ 
-                    behavior: 'smooth', block: 'start' 
-                });
-            } 
-            else 
-                document.querySelector('.agenda-scroll-viewport')?.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 50);
+        this.pendingScrollTime.set(date.setHours(0, 0, 0, 0));
     }
 
     protected GetStartDisplay(ev: EventCalandar, dateGroupe: Date): string 
@@ -326,11 +342,12 @@ export class MatAgendaCalandar implements OnInit
 
     protected AllerAujourdhui(): void
     {
-        this.mois.set(new Date().getMonth() + 1);
-        this.annee.set(new Date().getFullYear());
+        let date = new Date();
 
-        const d = new Date();
-        this.OnDateSelected(new Date(this.annee(), this.mois() -1, d.getDate()));
+        this.mois.set(date.getMonth() + 1);
+        this.annee.set(date.getFullYear());
+
+        this.pendingScrollTime.set(new Date(this.annee(), this.mois() -1, date.getDate()).setHours(0, 0, 0, 0));
     }
 
     protected EstMemeJour(date1: Date, date2: Date): boolean 
