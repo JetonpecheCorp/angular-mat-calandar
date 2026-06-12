@@ -1,9 +1,9 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, effect, input, model, OnInit, output, signal } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, input, model, OnDestroy, OnInit, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatRippleModule, provideNativeDateAdapter } from '@angular/material/core';
+import { MAT_DATE_LOCALE, MatRippleModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatMenu, MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -18,7 +18,10 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 @Component({
   selector: 'jp-mat-agenda-calandar',
   standalone: true,
-  providers: [provideNativeDateAdapter()],
+  providers: [
+    provideNativeDateAdapter(),
+    { provide: MAT_DATE_LOCALE, useValue: navigator.language || 'en-US' }
+  ],
   imports: [
     MatDatepickerModule,
     CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatRippleModule, 
@@ -29,7 +32,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
   styleUrls: ['./mat-agenda-calandar.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MatAgendaCalandar implements OnInit 
+export class MatAgendaCalandar implements OnInit, OnDestroy
 {
     events = input<EventCalandar[]>([]);
     groups = input<EventGroup[]>([]);
@@ -41,7 +44,7 @@ export class MatAgendaCalandar implements OnInit
     useAmPm = input(false, { transform: booleanAttribute });
     readonly = input(false, { transform: booleanAttribute });
     readonlyPast = input(false, { transform: booleanAttribute });
-    loading = input(false, { transform: booleanAttribute });
+    loading = input(true, { transform: booleanAttribute });
     showBtnAdd = input(false, { transform: booleanAttribute });
     
     themeConfig = input<ThemeConfigCalandar>();
@@ -80,6 +83,7 @@ export class MatAgendaCalandar implements OnInit
         ariaOuvrirEvent: "Open event"
     });
 
+    private themeObserver: MutationObserver | null = null;
     private pendingScrollTime = signal<number | null>(null);
 
     constructor() 
@@ -224,6 +228,16 @@ export class MatAgendaCalandar implements OnInit
         if (window.innerWidth <= 768) 
             this.estPetitEcran.set(true);
 
+        this.VerifierTheme();
+
+        // Surveille les changements de classe sur la balise <html> et <body>
+        this.themeObserver = new MutationObserver(() => {
+            this.VerifierTheme();
+        });
+
+        this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
         const LANGUE = this.langueNavigateur.split('-')[0];
         
         const DICT_TRADUCTION: Record<string, any> = {
@@ -286,6 +300,12 @@ export class MatAgendaCalandar implements OnInit
 
         if(DICT_TRADUCTION[LANGUE])
             this.trad.set(DICT_TRADUCTION[LANGUE]);
+    }
+
+    ngOnDestroy(): void 
+    {
+        if (this.themeObserver)
+            this.themeObserver.disconnect();
     }
 
     protected BasculerVisibiliteGroupe(idGroupe: string | number | null): void 
@@ -353,30 +373,6 @@ export class MatAgendaCalandar implements OnInit
 
         // CAS 2 : Événement sur plusieurs jours et on est sur un jour intermédiaire ou le premier jour
         return `${this.FormaterJourMois(ev.endDate)} - ${this.FormatTime(ev.endDate)}`;
-    }
-
-    protected FormatDureeEvent(ev: EventCalandar): string 
-    {
-        const heureDebut = this.FormatTime(ev.startDate);
-        const heureFin = this.FormatTime(ev.endDate);
-
-        // Si l'événement commence et se termine le même jour
-        if (ev.startDate.getDate() === ev.endDate.getDate() &&
-            ev.startDate.getMonth() === ev.endDate.getMonth() &&
-            ev.startDate.getFullYear() === ev.endDate.getFullYear()) 
-        {
-            return `${heureDebut} - ${heureFin}`;
-        } 
-        else 
-        {
-            // Si l'événement est à cheval sur plusieurs jours
-            const dateFinCourte = ev.endDate.toLocaleDateString(this.langueNavigateur, { 
-                day: 'numeric', 
-                month: 'short' 
-            });
-
-            return `${heureDebut} au ${dateFinCourte} à ${heureFin}`;
-        }
     }
 
     protected GetEventStyle(eventObj: EventCalandar): any 
@@ -479,5 +475,28 @@ export class MatAgendaCalandar implements OnInit
             event.preventDefault();
             this.eventClicked.emit(ev);
         }
+    }
+
+    private VerifierTheme(): void 
+    {
+        const config = this.themeConfig();
+        const classDark = config?.darkModeClass || '';
+        const classLight = config?.lightModeClass || '';
+        const themeDefaut = config?.defaultTheme || 'light';
+        
+        const aClasseSombre = classDark ? 
+            (document.body.classList.contains(classDark) || document.documentElement.classList.contains(classDark)) : false;
+
+        const aClasseClaire = classLight ? 
+            (document.body.classList.contains(classLight) || document.documentElement.classList.contains(classLight)) : false;
+
+        if (aClasseSombre) 
+            this.darkModeActif.set(true);
+
+        else if (aClasseClaire) 
+            this.darkModeActif.set(false);
+
+        else 
+            this.darkModeActif.set(themeDefaut == 'dark');
     }
 }

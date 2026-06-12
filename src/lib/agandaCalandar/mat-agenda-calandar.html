@@ -108,60 +108,61 @@
             </div>
         </mat-toolbar>
 
-        <div class="agenda-scroll-viewport">
+        <div class="content-wrapper">
             @if (loading()) 
             {
                 <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
                     <mat-spinner diameter="48"></mat-spinner>
                 </div>
             }
+            <div class="agenda-scroll-viewport">
+                <div class="agenda-timeline-container">
+                    @for (dayGroup of groupedAgendaEvents(); track dayGroup.dateObj.getTime()) 
+                    {    
+                        <div class="agenda-day-group" [id]="'day-' + dayGroup.dateObj.getTime()">
+                            
+                            <div class="agenda-day-header">
+                                <div class="day-dot" aria-hidden="true"></div>
+                                <h2 class="day-title">{{ FormatDateAria(dayGroup.dateObj) }}</h2>
+                            </div>
 
-            <div class="agenda-timeline-container">
-                @for (dayGroup of groupedAgendaEvents(); track dayGroup.dateObj.getTime()) 
-                {    
-                    <div class="agenda-day-group" [id]="'day-' + dayGroup.dateObj.getTime()">
-                        
-                        <div class="agenda-day-header">
-                            <div class="day-dot" aria-hidden="true"></div>
-                            <h2 class="day-title">{{ FormatDateAria(dayGroup.dateObj) }}</h2>
-                        </div>
+                            <div class="agenda-events-list">
+                                @for (ev of dayGroup.events; track ev.id) 
+                                {    
+                                    <div class="agenda-event-card"
+                                        role="button" 
+                                        tabindex="0"
+                                        [attr.aria-label]="GetEventAriaLabel(ev, dayGroup.dateObj)"
+                                        (keydown)="OnEventKeydown($event, ev)"
+                                        [class.is-readonly]="readonly() || ev.readonly"
+                                        [ngStyle]="GetEventStyle(ev)"
+                                        (click)="eventClicked.emit(ev)"
+                                        [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
+                                        [matContextMenuTriggerData]="{ eventCal: ev }">
+                                        
+                                        <div class="event-time-col" aria-hidden="true">
+                                            <span class="time-start">{{ GetStartDisplay(ev, dayGroup.dateObj) }}</span>
+                                            <span class="time-end">{{ GetEndDisplay(ev, dayGroup.dateObj) }}</span>
+                                        </div>
 
-                        <div class="agenda-events-list">
-                            @for (ev of dayGroup.events; track ev.id) 
-                            {    
-                                <div class="agenda-event-card"
-                                     role="button" 
-                                     tabindex="0"
-                                     [attr.aria-label]="GetEventAriaLabel(ev, dayGroup.dateObj)"
-                                     (keydown)="OnEventKeydown($event, ev)"
-                                     [class.is-readonly]="readonly() || ev.readonly"
-                                     [ngStyle]="GetEventStyle(ev)"
-                                     (click)="eventClicked.emit(ev)"
-                                     [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
-                                     [matContextMenuTriggerData]="{ eventCal: ev }">
+                                        <div class="event-details-col" aria-hidden="true">
+                                            <span class="event-title">{{ ev.titre }}</span>
+                                            <span class="event-desc">{{ ev.description }}</span>
+                                        </div>
+                                    </div>
                                     
-                                    <div class="event-time-col">
-                                        <span class="time-start">{{ GetStartDisplay(ev, dayGroup.dateObj) }}</span>
-                                        <span class="time-end">{{ GetEndDisplay(ev, dayGroup.dateObj) }}</span>
-                                    </div>
-
-                                    <div class="event-details-col">
-                                        <span class="event-title">{{ ev.titre }}</span>
-                                        <span class="event-desc">{{ ev.description }}</span>
-                                    </div>
-                                </div>
-                                
-                            }
+                                }
+                            </div>
                         </div>
-                    </div>
-                }
-                
-                @empty {
-                    <div class="agenda-empty-state" role="status" aria-live="polite">
-                        <mat-icon aria-hidden="true">event_busy</mat-icon>
-                        <p>{{ trad().aucunEvent }}</p>
-                    </div>
-                }
+                    }
+                    
+                    @empty {
+                        <div class="agenda-empty-state" role="status" aria-live="polite">
+                            <mat-icon aria-hidden="true">event_busy</mat-icon>
+                            <p>{{ trad().aucunEvent }}</p>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </mat-sidenav-content>
