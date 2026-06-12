@@ -24,7 +24,7 @@
                                     (click)="$event.stopPropagation()"
                                     [checked]="!EstGroupeMasque(item.groupe?.id || null)"
                                     (change)="BasculerVisibiliteGroupe(item.groupe?.id || null)"
-                                    [attr.aria-label]="(EstGroupeMasque(item.groupe?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.groupe ? item.groupe.id : trad().sansGroupe)">
+                                    [aria-label]="(EstGroupeMasque(item.groupe?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.groupe ? item.groupe.id : trad().sansGroupe)">
                                 </mat-checkbox>
                                 
                                 <div class="group-title" 
