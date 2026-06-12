@@ -361,6 +361,13 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
             this.themeObserver.disconnect();
     }
 
+    protected dateFilter = (date: Date | null): boolean => 
+    {
+        if (!date) return true;
+        
+        return !this.daysOfWeekDisabled().includes(date.getDay());
+    };
+
     protected ScrollHorizontal(event: WheelEvent): void 
     {
         const conteneur = event.currentTarget as HTMLElement;

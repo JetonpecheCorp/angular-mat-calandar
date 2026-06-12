@@ -94,6 +94,7 @@
                     <input [matDatepicker]="picker" 
                            [value]="datePickerValue()" 
                            (dateChange)="OnDateSelected($event.value)" 
+                           [matDatepickerFilter]="dateFilter"
                            class="hidden-datepicker-input"
                            aria-hidden="true"
                            tabindex="-1">
