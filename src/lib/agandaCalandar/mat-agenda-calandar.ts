@@ -11,6 +11,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EventCalandar } from '../../models/EventCalandar';
 import { EventGroup } from '../../models/EventGroup';
+import { DateSpecialEvent } from '../../models/DateSpecialEvent';
 import { SidebarConfigCalandar } from '../../models/SidebarConfigCalandar';
 import { ThemeConfigCalandar } from '../../models/ThemeConfigCalandar';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -35,6 +36,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 export class MatAgendaCalandar implements OnInit, OnDestroy
 {
     events = input<EventCalandar[]>([]);
+    specialEvents = input<DateSpecialEvent[]>([]);
     groups = input<EventGroup[]>([]);
     customMatMenu = input<MatMenu | null>(null);
 
@@ -80,7 +82,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         ariaLectureSeule: "Read-only",
         ariaMasquerGroupe: "Hide",
         ariaAfficherGroupe: "Show",
-        ariaOuvrirEvent: "Open event"
+        ariaOuvrirEvent: "Open event",
+        ariaEventSpecial: "Special event:"
     });
 
     private themeObserver: MutationObserver | null = null;
@@ -141,58 +144,85 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     protected groupedAgendaEvents = computed(() => 
     {
         const events = this.displayEvents();
+        const specialEvs = this.specialEvents();
         const annee = this.annee();
         const mois = this.mois(); 
 
-        // 1. Définir les limites du mois
         const debutMois = new Date(annee, mois - 1, 1).getTime();
         const finMois = new Date(annee, mois, 0, 23, 59, 59).getTime();
 
-        // 2. Filtrer les événements qui touchent ce mois
         const eventsDuMois = events.filter(ev => 
             ev.startDate.getTime() <= finMois && ev.endDate.getTime() >= debutMois
         );
 
-        const groupsMap = new Map<number, { dateObj: Date, events: EventCalandar[] }>();
+        const groupsMap = new Map<number, { dateObj: Date, events: EventCalandar[], specialEvents: DateSpecialEvent[] }>();
 
-        // 3. Répartir les événements dans chaque jour
         eventsDuMois.forEach(ev => 
         {
-            // Trouver le premier jour visible (au plus tôt le 1er du mois)
             let dateParcours = new Date(ev.startDate);
-            if (dateParcours.getTime() < debutMois) {
+            if (dateParcours.getTime() < debutMois) 
                 dateParcours = new Date(annee, mois - 1, 1);
-            }
+
             dateParcours.setHours(0, 0, 0, 0);
 
-            // Trouver le dernier jour visible (au plus tard le dernier jour du mois)
             let dateFinVisible = new Date(ev.endDate);
-            if (dateFinVisible.getTime() > finMois) {
+            if (dateFinVisible.getTime() > finMois) 
                 dateFinVisible = new Date(annee, mois, 0);
-            }
+
             dateFinVisible.setHours(0, 0, 0, 0);
 
-            // 🆕 LA BOUCLE MAGIQUE : Ajouter l'événement à TOUS LES JOURS qu'il traverse
             while (dateParcours.getTime() <= dateFinVisible.getTime()) 
             {
                 const t = dateParcours.getTime();
+                if (!groupsMap.has(t))
+                    groupsMap.set(t, { dateObj: new Date(t), events: [], specialEvents: [] });
 
-                if (!groupsMap.has(t)) {
-                    groupsMap.set(t, { dateObj: new Date(t), events: [] });
-                }
-                
-                // On ajoute l'événement au jour
                 groupsMap.get(t)!.events.push(ev);
-
-                // On passe au jour suivant
                 dateParcours.setDate(dateParcours.getDate() + 1);
             }
         });
 
-        // 4. Convertir en tableau et trier par jour
+        if (specialEvs.length > 0) 
+        {
+            let dateParcours = new Date(annee, mois - 1, 1);
+            const fin = new Date(annee, mois, 0);
+            
+            while (dateParcours.getTime() <= fin.getTime()) 
+            {
+                const M = dateParcours.getMonth() + 1;
+                const D = dateParcours.getDate();
+                
+                const spForDay = specialEvs.filter(sp => 
+                {
+                    const startM = sp.dateStart.month;
+                    const startD = sp.dateStart.day;
+                    const endM = sp.dateEnd.month;
+                    const endD = sp.dateEnd.day;
+
+                    const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
+
+                    if (isNormalInterval) 
+                        return (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
+                    else 
+                        return (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
+                });
+
+                if (spForDay.length > 0)
+                {
+                    const t = dateParcours.getTime();
+                    // Si le jour n'existait pas (aucun event standard), on le crée !
+                    if (!groupsMap.has(t))
+                        groupsMap.set(t, { dateObj: new Date(t), events: [], specialEvents: [] });
+
+                    groupsMap.get(t)!.specialEvents = spForDay;
+                }
+
+                dateParcours.setDate(dateParcours.getDate() + 1);
+            }
+        }
+
         const arrayTrie = Array.from(groupsMap.values()).sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
         
-        // 5. Trier chronologiquement à l'intérieur de chaque jour
         arrayTrie.forEach(groupe => {
             groupe.events.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
         });
@@ -250,7 +280,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aucunEvent: "Aucun événement prévu ce mois-ci.",
                 ariaOuvrirMenu: "Ouvrir le menu des thèmes", ariaFermerMenu: "Fermer le menu des thèmes",
                 ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule",
-                ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir l'événement"
+                ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir l'événement",
+                ariaEventSpecial: "Événement spécial :"
             },
             'es': {
                 aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
@@ -261,7 +292,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aucunEvent: "No hay eventos programados este mes.",
                 ariaOuvrirMenu: "Abrir el menú de temas", ariaFermerMenu: "Cerrar le menú de temas",
                 ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura",
-                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento"
+                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
+                ariaEventSpecial: "Evento especial:"
             },
             'it': { 
                 aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
@@ -272,7 +304,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aucunEvent: "Nessun evento in programma questo mese.",
                 ariaOuvrirMenu: "Apri il menu dei temi", ariaFermerMenu: "Chiudi il menu dei temi",
                 ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura",
-                ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri evento"
+                ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri evento",
+                ariaEventSpecial: "Evento speciale:"
             },
             'de': { 
                 aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
@@ -283,7 +316,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aucunEvent: "Diesen Monat sind keine Ereignisse geplant.",
                 ariaOuvrirMenu: "Themenmenü öffnen", ariaFermerMenu: "Themenmenü schließen",
                 ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt",
-                ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Ereignis öffnen"
+                ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Ereignis öffnen",
+                ariaEventSpecial: "Besonderes Ereignis:"
             },
             'pt': { 
                 aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
@@ -294,7 +328,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
                 aucunEvent: "Nenhum evento programado para este mês.",
                 ariaOuvrirMenu: "Abrir o menu de temas", ariaFermerMenu: "Fechar o menu de temas",
                 ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura",
-                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento"
+                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
+                ariaEventSpecial: "Evento especial:"
             }
         };
 
@@ -306,6 +341,17 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     {
         if (this.themeObserver)
             this.themeObserver.disconnect();
+    }
+
+    protected ScrollHorizontal(event: WheelEvent): void 
+    {
+        const conteneur = event.currentTarget as HTMLElement;
+
+        if (conteneur.scrollWidth > conteneur.clientWidth)
+        {
+            event.preventDefault();  
+            conteneur.scrollLeft += event.deltaY; 
+        }
     }
 
     protected BasculerVisibiliteGroupe(idGroupe: string | number | null): void 

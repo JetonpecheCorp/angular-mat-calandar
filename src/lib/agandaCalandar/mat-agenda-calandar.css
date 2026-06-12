@@ -61,9 +61,62 @@
     z-index: 10;
     display: flex;
     align-items: center;
+    gap: 12px;
     background-color: var(--mat-sys-surface-container-lowest);
     padding: 8px 0;
     margin-bottom: 12px;
+}
+
+.special-event-indicators-container {
+    display: flex;
+    flex-direction: row; 
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    justify-content: flex-start;
+    gap: 4px; 
+    flex: 1;
+    min-width: 0;
+    
+    /* Pour Firefox : barre fine */
+    scrollbar-width: thin; 
+    scrollbar-color: var(--mat-sys-outline-variant) transparent;
+}
+
+.special-event-indicators-container::-webkit-scrollbar {
+    height: 4px; 
+}
+
+.special-event-indicators-container::-webkit-scrollbar-track {
+    background: transparent; 
+}
+
+.special-event-indicators-container::-webkit-scrollbar-thumb {
+    background-color: var(--mat-sys-outline-variant); 
+    border-radius: 4px;
+}
+
+.special-event-indicators-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--mat-sys-primary); 
+}
+
+.special-badge {
+    flex-shrink: 0;
+    background-color: var(--mat-sys-tertiary-container, #e8def8);
+    color: var(--mat-sys-on-tertiary-container, #1d192b);
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+}
+
+.special-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .day-dot {

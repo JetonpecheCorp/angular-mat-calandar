@@ -124,6 +124,18 @@
                             <div class="agenda-day-header">
                                 <div class="day-dot" aria-hidden="true"></div>
                                 <h2 class="day-title">{{ FormatDateAria(dayGroup.dateObj) }}</h2>
+
+                                @if (dayGroup.specialEvents && dayGroup.specialEvents.length > 0) 
+                                {
+                                    <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)" role="list">
+                                        @for (sp of dayGroup.specialEvents; track $index) 
+                                        {
+                                            <div class="special-badge" [title]="sp.title" role="listitem" [attr.aria-label]="trad().ariaEventSpecial + ' ' + sp.title">
+                                                <span class="special-text" aria-hidden="true">{{ sp.title }}</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
                             </div>
 
                             <div class="agenda-events-list">
