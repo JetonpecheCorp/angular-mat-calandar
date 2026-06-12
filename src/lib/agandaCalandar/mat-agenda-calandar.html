@@ -3,7 +3,7 @@
     <mat-sidenav #sidenav class="side-panel" [mode]="estPetitEcran() ? 'over' : 'side'" [opened]="panneauOuvert()">
         <div class="side-panel-header">
             <h3>{{ trad().titreGroupes }}</h3>
-            <button mat-icon-button (click)="sidenav.close()">
+            <button mat-icon-button (click)="sidenav.close()" [attr.aria-label]="trad().ariaFermerMenu">
                 <mat-icon>chevron_left</mat-icon>
             </button>
         </div>
@@ -29,7 +29,7 @@
 
                     <button matButton="filled"
                             (click)="picker.open()" 
-                            [attr.aria-label]="trad().ariaMenuMois">
+                            [attr.aria-label]="nomMois() + ' ' + annee() + ', ' + trad().ariaMenuMois">
                         {{ nomMois() }} {{ annee() }}
                     </button>
                     
@@ -58,8 +58,11 @@
         </mat-toolbar>
 
         <div class="agenda-scroll-viewport">
-            @if (loading()) {
-                <div class="loading-overlay"><mat-spinner diameter="48"></mat-spinner></div>
+            @if (loading()) 
+            {
+                <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
+                    <mat-spinner diameter="48"></mat-spinner>
+                </div>
             }
 
             <div class="agenda-timeline-container">

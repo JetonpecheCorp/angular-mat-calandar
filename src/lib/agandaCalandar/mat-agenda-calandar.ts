@@ -63,6 +63,7 @@ export class MatAgendaCalandar implements OnInit
         ajouter: "Add new", 
         modifier: "Edit", 
         supprimer: "Delete",
+        chargement: "Loading",
         ariaPrecedent: "Previous month", 
         ariaSuivant: "Next month",
         ariaMenuMois: "Change month", 
@@ -72,7 +73,8 @@ export class MatAgendaCalandar implements OnInit
         aucunEvent: "No events scheduled this month.",
         ariaOuvrirMenu: "Open themes menu",
         ariaEvenement: "Event:",
-        ariaLectureSeule: "Read-only"
+        ariaLectureSeule: "Read-only",
+        ariaFermerMenu: "Close themes menu",
     });
 
     private pendingScrollTime = signal<number | null>(null);
@@ -206,7 +208,9 @@ export class MatAgendaCalandar implements OnInit
                 sansGroupe: "Autres", titreGroupes: "Thèmes", 
                 aucunEvent: "Aucun événement prévu ce mois-ci.",
                 ariaOuvrirMenu: "Ouvrir le menu des thèmes",
-                ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule"
+                ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule",
+                chargement: "Chargement en cours",
+                ariaFermerMenu: "Fermer le menu des thèmes",
             },
             'es': { 
                 aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
@@ -215,7 +219,9 @@ export class MatAgendaCalandar implements OnInit
                 sansGroupe: "Otros", titreGroupes: "Temas", 
                 aucunEvent: "No hay eventos programados este mes.",
                 ariaOuvrirMenu: "Abrir el menú de temas",
-                ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura"
+                ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura",
+                chargement: "Cargando",
+                ariaFermerMenu: "Cerrar el menú de temas",
             },
             'it': { 
                 aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
@@ -224,7 +230,9 @@ export class MatAgendaCalandar implements OnInit
                 sansGroupe: "Altri", titreGroupes: "Temi", 
                 aucunEvent: "Nessun evento in programma questo mese.",
                 ariaOuvrirMenu: "Apri il menu dei temi",
-                ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura"
+                ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura",
+                chargement: "Caricamento",
+                ariaFermerMenu: "Chiudi il menu dei temi",
             },
             'de': { 
                 aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
@@ -233,7 +241,9 @@ export class MatAgendaCalandar implements OnInit
                 sansGroupe: "Andere", titreGroupes: "Themen", 
                 aucunEvent: "Diesen Monat sind keine Ereignisse geplant.",
                 ariaOuvrirMenu: "Themenmenü öffnen",
-                ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt"
+                ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt",
+                chargement: "Wird geladen",
+                ariaFermerMenu: "Themenmenü schließen",
             },
             'pt': { 
                 aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
@@ -242,7 +252,9 @@ export class MatAgendaCalandar implements OnInit
                 sansGroupe: "Outros", titreGroupes: "Temas", 
                 aucunEvent: "Nenhum evento programado para este mês.",
                 ariaOuvrirMenu: "Abrir o menu de temas",
-                ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura"
+                ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura",
+                chargement: "Carregando",
+                ariaFermerMenu: "Fechar o menu de temas",
             }
         };
 

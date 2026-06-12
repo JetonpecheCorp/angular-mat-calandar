@@ -95,6 +95,14 @@
     border-left: 6px solid var(--event-bg, var(--mat-sys-primary));
 }
 
+.agenda-event-card:focus-visible 
+{
+    outline: 3px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
 .agenda-event-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
