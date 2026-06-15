@@ -51,8 +51,8 @@ Traduction automatique celons la **langue du navigateur.**
 - `FLECHES`: Parcourir les jours du composant 
 - `ALT + FLECHE BAS`: parcourir les events d'un jour
 - `CTRL + FLECHE HAUT`: Revenir sur le jour
-- `PageUp / PageDown`: Avancer ou reculer d'un mois
-- `CTRL + PageUp / PageDown`: Avancer ou reculer d'un an
+- `N / P`: Avancer ou reculer d'un mois
+- `SHIFT + N / P`: Avancer ou reculer d'un an
 
 ### Creation
 - `SHIFT + fleches clavier` puis `Entrer` pour valider
@@ -92,8 +92,8 @@ Traduction automatique celons la **langue du navigateur.**
 ## Navigation via clavier
 - `TAB`: parcourir le composant
 - `FLECHES`: Parcourir les heures et jours du composant 
-- `PageUp / PageDown`: Avancer ou reculer d'une semaine
-- `CTRL + PageUp / PageDown`: Avancer ou reculer d'un mois
+- `N / P`: Avancer ou reculer d'une semaine
+- `SHIFT + N / P`: Avancer ou reculer d'un mois
 
 ### Creation
 - `SHIFT + FLECHES` puis `Entrer` pour valider
