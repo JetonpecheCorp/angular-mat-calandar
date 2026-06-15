@@ -1,9 +1,9 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, effect, input, model, OnDestroy, OnInit, output, signal } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, effect, inject, input, model, OnDestroy, OnInit, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MAT_DATE_LOCALE, MatRippleModule, provideNativeDateAdapter } from '@angular/material/core';
+import { DateAdapter, MAT_DATE_LOCALE, MatRippleModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatMenu, MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -20,10 +20,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 @Component({
   selector: 'jp-mat-agenda-calandar',
   standalone: true,
-  providers: [
-    provideNativeDateAdapter(),
-    { provide: MAT_DATE_LOCALE, useValue: navigator.language || 'en-US' }
-  ],
+  providers: [provideNativeDateAdapter()],
   imports: [
     MatDatepickerModule,
     CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatRippleModule, 
@@ -79,6 +76,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
 
     private themeObserver: MutationObserver | null = null;
     private pendingScrollTime = signal<number | null>(null);
+    private dateAdapter = inject(DateAdapter);
     private readonly DICT_TRADUCTION: Record<string, any> = {
         'fr': { 
             aujourdhui: "Aujourd'hui", ajouter: "Ajouter", modifier: "Modifier", supprimer: "Supprimer",
@@ -173,6 +171,10 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
 
     constructor() 
     {
+        effect(() => {
+            this.dateAdapter.setLocale(this.langue());
+        });
+        
         effect(() => 
         {
             const isLoading = this.loading();
