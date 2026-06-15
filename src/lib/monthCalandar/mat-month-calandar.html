@@ -9,7 +9,7 @@
         <div class="side-panel-header">
             <h3>{{ sidebarConfig()?.title || trad().titreGroupes }}</h3>
             <button mat-icon-button (click)="sidenav.close()" [attr.aria-label]="trad().ariaFermerMenu">
-                <mat-icon>chevron_left</mat-icon>
+                <mat-icon aria-hidden="true">chevron_left</mat-icon>
             </button>
         </div>
         
@@ -27,7 +27,7 @@
                                     (click)="$event.stopPropagation()"
                                     [checked]="!EstGroupeMasque(item.group?.id || null)"
                                     (change)="BasculerVisibiliteGroupe(item.group?.id || null)"
-                                    [aria-label]="(EstGroupeMasque(item.group?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.group ? item.group.id : trad().sansGroupe)">
+                                    [attr.aria-label]="(EstGroupeMasque(item.group?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.group ? item.group.id : trad().sansGroupe)">
                                 </mat-checkbox>
 
                                     <div class="group-title" 
@@ -86,7 +86,7 @@
                             [attr.aria-expanded]="panneauOuvert()"
                             [tabindex]="panneauOuvert() ? -1 : 0"
                             (click)="sidenav.open()">
-                    <mat-icon>menu</mat-icon>
+                    <mat-icon aria-hidden="true">menu</mat-icon>
                 </button>
 
                 <div class="header-main-container">
@@ -95,12 +95,12 @@
                         @if(!hideNavYearBtn())
                         {
                             <button mat-icon-button (click)="AnneePrecedente()" [attr.aria-label]="trad().ariaAnneePrecedente">
-                                <mat-icon>keyboard_double_arrow_left</mat-icon>
+                                <mat-icon aria-hidden="true">keyboard_double_arrow_left</mat-icon>
                             </button>
                         }
 
                         <button mat-icon-button (click)="Precedent()" [attr.aria-label]="trad().ariaPrecedent">
-                            <mat-icon>chevron_left</mat-icon>
+                            <mat-icon aria-hidden="true">chevron_left</mat-icon>
                         </button>
                         
                         <div class="title-selector">
@@ -123,13 +123,13 @@
                         </div>
 
                         <button mat-icon-button (click)="Suivant()" [attr.aria-label]="trad().ariaSuivant">
-                            <mat-icon>chevron_right</mat-icon>
+                            <mat-icon aria-hidden="true">chevron_right</mat-icon>
                         </button>
 
                         @if(!hideNavYearBtn())
                         {
                             <button mat-icon-button (click)="AnneeSuivante()" [attr.aria-label]="trad().ariaAnneeSuivante">
-                                <mat-icon>keyboard_double_arrow_right</mat-icon>
+                                <mat-icon aria-hidden="true">keyboard_double_arrow_right</mat-icon>
                             </button>
                         }
                     </div>
