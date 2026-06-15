@@ -63,6 +63,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     monthsDisabled = input<number[]>([]);
     daysDisabled = input<Date[]>();
 
+    /** Translate language (default navigator or en) */
+    langue = input<string>(typeof navigator !== 'undefined' ? navigator.language : 'en');
+
     /** Disabled interval date */
     intervalsDisabled = input<DateCalandarDisabled[]>([]);
     themeConfig = input<ThemeConfigCalandar>();
@@ -80,42 +83,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     protected overrideRipple = signal(false);
     protected hoveredEvent = signal<EventCalandar | null>(null);
     protected dateRetourFocus = signal<number | null>(null);
-    protected trad = signal({
-        plus: "more", 
-        aujourdhui: "Today", 
-        ajouter: "Add new",
-        modifier: "Edit",
-        supprimer: "Delete",
-        ariaPrecedent: "Previous", 
-        ariaSuivant: "Next", 
-        ariaAnneePrecedente: "Previous year", 
-        ariaAnneeSuivante: "Next year", 
-        ariaMenuMois: "Change month menu",
-        ariaMenuAnnee: "Change year menu",
-        ariaEvenement: "Event:", 
-        ariaCreer: "Create event on",
-        chargement: "Loading",
-        aideCreerEtendre: " (Shift plus arrows to extend)",
-        aideCreerValider: " (Enter to validate)",
-        aideDescendre: ". Alt plus down arrow to select an event",
-        aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
-        aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)",
-        aideNavMois: ". P or N to change month. Add SHIFT to change year",
-        titreGroupes: "Themes", 
-        sansGroupe: "Other events",
-        ariaMasquerGroupe: "Hide",
-        ariaAfficherGroupe: "Show",
-        ariaOuvrirEvent: "Open event",
-        ariaOuvrirMenu: "Open themes menu",
-        ariaFermerMenu: "Close themes menu",
-        ariaBloque: "Unavailable",
-        ariaLectureSeule: "Read-only"
-    });
 
     protected panneauOuvert = signal(false);
     protected groupesMasques = signal<Set<string | number>>(new Set());
-
-    private readonly langueNavigateur = navigator.language || "en-US";
     
     private dernierTouchTime = 0;
     protected dragCreationEnCours = signal(false);
@@ -131,6 +101,114 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     private navigationInterval: any = null;
     private ignoreBlur = false;
     private focusTimeout: any = null;
+    private readonly DICT_TRADUCTION: Record<string, any> = {
+        'fr': { 
+            aujourdhui: "Aujourd'hui", ajouter: "Ajouter", modifier: "Modifier", supprimer: "Supprimer",
+            chargement: "Chargement en cours",
+            ariaPrecedent: "Mois précédent", ariaSuivant: "Mois suivant",
+            ariaAnneePrecedente: "Année précédente", ariaAnneeSuivante: "Année suivante",
+            ariaMenuMois: "Changer le mois", ariaMenuAnnee: "Changer l'année",
+            sansGroupe: "Autres événements", titreGroupes: "Thèmes", 
+            aucunEvent: "Aucun événement prévu ce mois-ci.",
+            ariaOuvrirMenu: "Ouvrir le menu des thèmes", ariaFermerMenu: "Fermer le menu des thèmes",
+            ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule",
+            ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir l'événement",
+            ariaEventSpecial: "Événement spécial :",
+            aideNavMois: ". Touches P et N pour changer de mois. Majuscule plus P et N pour changer d'année"
+        },
+        'en': {
+            plus: "more", 
+            aujourdhui: "Today", 
+            ajouter: "Add new",
+            modifier: "Edit",
+            supprimer: "Delete",
+            ariaPrecedent: "Previous", 
+            ariaSuivant: "Next", 
+            ariaAnneePrecedente: "Previous year", 
+            ariaAnneeSuivante: "Next year", 
+            ariaMenuMois: "Change month menu",
+            ariaMenuAnnee: "Change year menu",
+            ariaEvenement: "Event:", 
+            ariaCreer: "Create event on",
+            chargement: "Loading",
+            aideCreerEtendre: " (Shift plus arrows to extend)",
+            aideCreerValider: " (Enter to validate)",
+            aideDescendre: ". Alt plus down arrow to select an event",
+            aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
+            aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)",
+            aideNavMois: ". P or N to change month. Add SHIFT to change year",
+            titreGroupes: "Themes", 
+            sansGroupe: "Other events",
+            ariaMasquerGroupe: "Hide",
+            ariaAfficherGroupe: "Show",
+            ariaOuvrirEvent: "Open event",
+            ariaOuvrirMenu: "Open themes menu",
+            ariaFermerMenu: "Close themes menu",
+            ariaBloque: "Unavailable",
+            ariaLectureSeule: "Read-only"
+        },
+        'es': {
+            aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
+            chargement: "Cargando",
+            ariaPrecedent: "Mes anterior", ariaSuivant: "Mes siguiente",
+            ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente",
+            ariaMenuMois: "Cambiar mes", ariaMenuAnnee: "Cambiar año",
+            sansGroupe: "Otros eventos", titreGroupes: "Temas", 
+            aucunEvent: "No hay eventos programados este mes.",
+            ariaOuvrirMenu: "Abrir el menú de temas", ariaFermerMenu: "Cerrar le menú de temas",
+            ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura",
+            ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
+            ariaEventSpecial: "Evento especial:",
+            aideNavMois: ". Teclas P y N para cambiar de mes. Añade MAYÚS para cambiar de año"
+        },
+        'it': { 
+            aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
+            chargement: "Caricamento",
+            ariaPrecedent: "Mese precedente", ariaSuivant: "Mese successivo",
+            ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo",
+            ariaMenuMois: "Cambia mese", ariaMenuAnnee: "Cambia anno",
+            sansGroupe: "Altri eventi", titreGroupes: "Temi", 
+            aucunEvent: "Nessun evento in programma questo mese.",
+            ariaOuvrirMenu: "Apri il menu dei temi", ariaFermerMenu: "Chiudi il menu dei temi",
+            ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura",
+            ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri evento",
+            ariaEventSpecial: "Evento speciale:",
+            aideNavMois: ". Tasti P e N per cambiare mese. Aggiungi MAIUSC per cambiare anno"
+        },
+        'de': { 
+            aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
+            chargement: "Wird geladen",
+            ariaPrecedent: "Vorheriger Monat", ariaSuivant: "Nächster Monat",
+            ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr",
+            ariaMenuMois: "Monat ändern", ariaMenuAnnee: "Jahr ändern",
+            sansGroupe: "Andere Ereignisse", titreGroupes: "Themen", 
+            aucunEvent: "Diesen Monat sind keine Ereignisse geplant.",
+            ariaOuvrirMenu: "Themenmenü öffnen", ariaFermerMenu: "Themenmenü schließen",
+            ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt",
+            ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Ereignis öffnen",
+            ariaEventSpecial: "Besonderes Ereignis:",
+            aideNavMois: ". Tasten P und N, um den Monat zu ändern. Umschalt hinzufügen, um das Jahr zu ändern"
+        },
+        'pt': { 
+            aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
+            chargement: "Carregando",
+            ariaPrecedent: "Mês anterior", ariaSuivant: "Mês seguinte",
+            ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte",
+            ariaMenuMois: "Mudar mês", ariaMenuAnnee: "Mudar ano",
+            sansGroupe: "Outros eventos", titreGroupes: "Temas", 
+            aucunEvent: "Nenhum evento programado para este mês.",
+            ariaOuvrirMenu: "Abrir o menu de temas", ariaFermerMenu: "Fechar o menu de temas",
+            ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura",
+            ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
+            ariaEventSpecial: "Evento especial:",
+            aideNavMois: ". Teclas P e N para mudar de mês. Adicione SHIFT para mudar de ano"
+        }
+    };
+
+    protected trad = computed(() => {
+        const codeLangue = this.langue().substring(0, 2).toLowerCase();
+        return this.DICT_TRADUCTION[codeLangue] || this.DICT_TRADUCTION['fr'];
+    });
 
     protected listeEvenementGroupe = computed(() => 
     {
@@ -185,7 +263,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     protected nomMois = computed(() =>
     {
         const DATE = new Date(this.annee(), this.mois() - 1, 1);
-        return new Intl.DateTimeFormat(this.langueNavigateur, { month: 'long' }).format(DATE);
+        return new Intl.DateTimeFormat(this.langue(), { month: 'long' }).format(DATE);
     });
 
     protected nbColonnes = computed(() => 7 - this.joursAExclure().length);
@@ -215,8 +293,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         const JOUR_DEBUT = this.mondayFirst() ? 5 : 4; 
         const DATE_REF = new Date(2025, 4, JOUR_DEBUT); 
         
-        const shortFormatter = new Intl.DateTimeFormat(this.langueNavigateur, { weekday: 'short' });
-        const longFormatter = new Intl.DateTimeFormat(this.langueNavigateur, { weekday: 'long' });
+        const shortFormatter = new Intl.DateTimeFormat(this.langue(), { weekday: 'short' });
+        const longFormatter = new Intl.DateTimeFormat(this.langue(), { weekday: 'long' });
 
         for (let i = 0; i < 7; i++) 
         {
@@ -309,7 +387,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
     protected listeMoisTraduit = computed(() => 
     {
-        const FORMATEUR = new Intl.DateTimeFormat(this.langueNavigateur, { month: 'long' });
+        const FORMATEUR = new Intl.DateTimeFormat(this.langue(), { month: 'long' });
         
         return Array.from({ length: 12 }, (_, i) => 
         {
@@ -360,84 +438,6 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
         this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
-        const LANGUE = this.langueNavigateur.split('-')[0];
-        
-        const DICT_TRADUCTION: Record<string, any> = {
-            'fr': { 
-                aujourdhui: "Aujourd'hui", ajouter: "Ajouter", modifier: "Modifier", supprimer: "Supprimer",
-                chargement: "Chargement en cours",
-                ariaPrecedent: "Mois précédent", ariaSuivant: "Mois suivant",
-                ariaAnneePrecedente: "Année précédente", ariaAnneeSuivante: "Année suivante",
-                ariaMenuMois: "Changer le mois", ariaMenuAnnee: "Changer l'année",
-                sansGroupe: "Autres événements", titreGroupes: "Thèmes", 
-                aucunEvent: "Aucun événement prévu ce mois-ci.",
-                ariaOuvrirMenu: "Ouvrir le menu des thèmes", ariaFermerMenu: "Fermer le menu des thèmes",
-                ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule",
-                ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir l'événement",
-                ariaEventSpecial: "Événement spécial :",
-                aideNavMois: ". Touches P et N pour changer de mois. Majuscule plus P et N pour changer d'année"
-            },
-            'es': {
-                aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
-                chargement: "Cargando",
-                ariaPrecedent: "Mes anterior", ariaSuivant: "Mes siguiente",
-                ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente",
-                ariaMenuMois: "Cambiar mes", ariaMenuAnnee: "Cambiar año",
-                sansGroupe: "Otros eventos", titreGroupes: "Temas", 
-                aucunEvent: "No hay eventos programados este mes.",
-                ariaOuvrirMenu: "Abrir el menú de temas", ariaFermerMenu: "Cerrar le menú de temas",
-                ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura",
-                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
-                ariaEventSpecial: "Evento especial:",
-                aideNavMois: ". Teclas P y N para cambiar de mes. Añade MAYÚS para cambiar de año"
-            },
-            'it': { 
-                aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
-                chargement: "Caricamento",
-                ariaPrecedent: "Mese precedente", ariaSuivant: "Mese successivo",
-                ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo",
-                ariaMenuMois: "Cambia mese", ariaMenuAnnee: "Cambia anno",
-                sansGroupe: "Altri eventi", titreGroupes: "Temi", 
-                aucunEvent: "Nessun evento in programma questo mese.",
-                ariaOuvrirMenu: "Apri il menu dei temi", ariaFermerMenu: "Chiudi il menu dei temi",
-                ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura",
-                ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri evento",
-                ariaEventSpecial: "Evento speciale:",
-                aideNavMois: ". Tasti P e N per cambiare mese. Aggiungi MAIUSC per cambiare anno"
-            },
-            'de': { 
-                aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
-                chargement: "Wird geladen",
-                ariaPrecedent: "Vorheriger Monat", ariaSuivant: "Nächster Monat",
-                ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr",
-                ariaMenuMois: "Monat ändern", ariaMenuAnnee: "Jahr ändern",
-                sansGroupe: "Andere Ereignisse", titreGroupes: "Themen", 
-                aucunEvent: "Diesen Monat sind keine Ereignisse geplant.",
-                ariaOuvrirMenu: "Themenmenü öffnen", ariaFermerMenu: "Themenmenü schließen",
-                ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt",
-                ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Ereignis öffnen",
-                ariaEventSpecial: "Besonderes Ereignis:",
-                aideNavMois: ". Tasten P und N, um den Monat zu ändern. Umschalt hinzufügen, um das Jahr zu ändern"
-            },
-            'pt': { 
-                aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
-                chargement: "Carregando",
-                ariaPrecedent: "Mês anterior", ariaSuivant: "Mês seguinte",
-                ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte",
-                ariaMenuMois: "Mudar mês", ariaMenuAnnee: "Mudar ano",
-                sansGroupe: "Outros eventos", titreGroupes: "Temas", 
-                aucunEvent: "Nenhum evento programado para este mês.",
-                ariaOuvrirMenu: "Abrir o menu de temas", ariaFermerMenu: "Fechar o menu de temas",
-                ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura",
-                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
-                ariaEventSpecial: "Evento especial:",
-                aideNavMois: ". Teclas P e N para mudar de mês. Adicione SHIFT para mudar de ano"
-            }
-        };
-
-        if(DICT_TRADUCTION[LANGUE])
-            this.trad.set(DICT_TRADUCTION[LANGUE]);
     }
 
     ngOnDestroy(): void 
@@ -1499,7 +1499,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             return '';
         
         // Utilise la langue détectée de ton composant (ou 'fr-FR' par défaut)
-        const langue = this.langueNavigateur || 'fr-FR'; 
+        const langue = this.langue() || 'fr-FR'; 
 
         // Renvoie par exemple "jeudi 15 mai 2026"
         return date.toLocaleDateString(langue, {
@@ -1515,7 +1515,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         if (!_date) 
             return '';
 
-        return new Intl.DateTimeFormat(this.langueNavigateur, { day: '2-digit', month: 'short' }).format(_date);
+        return new Intl.DateTimeFormat(this.langue(), { day: '2-digit', month: 'short' }).format(_date);
     }
 
     protected BasculerVisibiliteGroupe(idGroupe: string | number | null): void 
