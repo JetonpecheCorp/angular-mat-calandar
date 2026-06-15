@@ -1,4 +1,4 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, input, model, OnDestroy, OnInit, output, signal } from '@angular/core';
+import { booleanAttribute, ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, input, model, OnDestroy, OnInit, output, signal } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,6 +16,8 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { SidebarConfigCalandar } from '../../models/SidebarConfigCalandar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideNativeDateAdapter, DateAdapter } from '@angular/material/core';
 
 interface EventPositionne {
     event: EventCalandar;
@@ -31,9 +33,10 @@ interface SemaineCalendrier {
 
 @Component({
   selector: 'jp-mat-month-calandar',
-  imports: [MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],
+  imports: [MatDatepickerModule, MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, MatMenuModule, MatRippleModule, DatePipe, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],
   templateUrl: './mat-month-calandar.html',
   styleUrl: './mat-month-calandar.css',
+  providers: [provideNativeDateAdapter()],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MatMonthCalandar implements OnInit, OnDestroy
@@ -98,6 +101,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
     private themeObserver: MutationObserver | null = null;
     private el = inject(ElementRef);
+    private dateAdapter = inject(DateAdapter);
     private navigationInterval: any = null;
     private ignoreBlur = false;
     private focusTimeout: any = null;
@@ -204,6 +208,13 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             aideNavMois: ". Teclas P e N para mudar de mês. Adicione SHIFT para mudar de ano"
         }
     };
+
+    constructor() 
+    {
+        effect(() => this.dateAdapter.setLocale(this.langue()));
+    }
+
+    protected dateReference = computed(() => new Date(this.annee(), this.mois() - 1, 1));
 
     protected trad = computed(() => {
         const codeLangue = this.langue().substring(0, 2).toLowerCase();
@@ -385,30 +396,6 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         return semaines;
     });
 
-    protected listeMoisTraduit = computed(() => 
-    {
-        const FORMATEUR = new Intl.DateTimeFormat(this.langue(), { month: 'long' });
-        
-        return Array.from({ length: 12 }, (_, i) => 
-        {
-            return {
-                id: i + 1,
-                nom: FORMATEUR.format(new Date(2024, i, 1))
-            };
-        })
-        .filter(x => !this.monthsDisabled().includes(x.id));
-    });
-
-    protected listeAnnee = computed(() => 
-    {
-        const ANNEE_REFERENCE = this.annee();
-
-        const ANNEE_DEBUT = ANNEE_REFERENCE - 50;
-        const ANNEE_FIN = ANNEE_REFERENCE + 50;
-        
-        return Array.from({ length: (ANNEE_FIN - ANNEE_DEBUT) + 1 }, (_, i) => ANNEE_DEBUT + i);
-    });
-
     private joursAExclure = computed(() => 
     {
         const A_MASQUER = new Set(this.daysOfWeekDisabled());
@@ -446,6 +433,13 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             this.themeObserver.disconnect();
     }
 
+    protected OnMonthSelected(date: Date, datepicker: any): void 
+    {
+        this.mois.set(date.getMonth() + 1);
+        this.annee.set(date.getFullYear());
+        datepicker.close();
+    }
+
     protected GetEventStyle(eventObj: EventCalandar): any 
     {
         if (!eventObj.groupEventId) 
@@ -468,55 +462,6 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 '--event-bg': group.bgColorLight,
                 '--event-text': group.textColorLight
             };
-        }
-    }
-
-    protected ScrollVersAnneeActive(): void 
-    {
-        // le temps que le mat menu existe reelement
-        setTimeout(() => 
-        {
-            const boutonActif = document.querySelector('.year-grid .active-year') as HTMLElement;
-
-            if (boutonActif) 
-            {
-                boutonActif.scrollIntoView({
-                    behavior: "instant",
-                    block: "center"
-                });
-
-                boutonActif.focus();
-            }
-        }, 50);
-    }
-
-    protected NaviguationClavierMatMenuAnnee(event: KeyboardEvent): void
-    {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key))
-        {
-            event.preventDefault();
-            event.stopPropagation();
-
-            // On récupère la grille courante (currentTarget évite les problèmes de décalage du DOM de Material)
-            const grille = event.currentTarget as HTMLElement;
-            const toutesLesAnnees = Array.from(grille.querySelectorAll('.year-chip')) as HTMLElement[];
-            const indexActuel = toutesLesAnnees.indexOf(event.target as HTMLElement);
-
-            if (indexActuel !== -1)
-            {
-                let indexCible = indexActuel;
-
-                if (event.key === 'ArrowRight') indexCible++;
-                else if (event.key === 'ArrowLeft') indexCible--;
-                else if (event.key === 'ArrowDown') indexCible += 4; // Descend d'une ligne (4 colonnes)
-                else if (event.key === 'ArrowUp') indexCible -= 4;   // Monte d'une ligne (4 colonnes)
-
-                // Si la cible existe, on lui donne le focus
-                if (indexCible >= 0 && indexCible < toutesLesAnnees.length)
-                {
-                    toutesLesAnnees[indexCible].focus();
-                }
-            }
         }
     }
 
@@ -577,16 +522,6 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         let dateJour = new Date();
         this.mois.set(dateJour.getMonth() + 1);
         this.annee.set(dateJour.getFullYear());
-    }
-
-    protected ChangerMois(_numeroMois: number): void
-    {
-        this.mois.set(_numeroMois);
-    }
-
-    protected ChangerAnnee(_annee: number): void
-    {
-        this.annee.set(_annee);
     }
 
     protected ScrollHorizontal(event: WheelEvent): void 

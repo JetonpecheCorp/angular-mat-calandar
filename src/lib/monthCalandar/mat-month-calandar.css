@@ -282,67 +282,13 @@ display: flex;
     color: var(--mat-sys-on-primary);
 }
 
-.capitalize 
-{
-    text-transform: capitalize;
-}
-
-.active-item
-{
-    color: var(--mat-sys-primary);
-    font-weight: bold;
-    background-color: var(--mat-sys-primary-container);
-}
-
-.month-title 
-{
+.period-title {
     font-size: 1.25rem;
     font-weight: 400;
     text-align: center;
     text-transform: capitalize;
     cursor: pointer;
     min-width: 0;
-}
-
-.year-grid 
-{
-display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    padding: 12px;
-    
-    width: 280px;
-    box-sizing: border-box;
-    overflow-x: hidden;
-    
-    max-height: 280px;
-    overflow-y: auto;
-}
-
-.year-chip 
-{
-    min-width: 0px;
-    height: 40px;
-    padding: 0;
-    border-radius: 20px;
-    font-weight: 400;
-    font-size: 0.9rem;
-}
-
-.year-grid::-webkit-scrollbar 
-{
-    width: 6px;
-}
-
-.year-grid::-webkit-scrollbar-thumb 
-{
-    background-color: var(--mat-sys-outline-variant);
-    border-radius: 10px;
-}
-
-.year-title
-{
-    cursor: pointer;
 }
 
 .title-selector {
@@ -411,12 +357,12 @@ display: grid;
 .event-ghost-preview {
     position: fixed !important;
     margin: 0 !important;
-    pointer-events: none !important; /* Indispensable pour que la souris clique "à travers" */
-    z-index: 99999 !important; /* Toujours au premier plan */
+    pointer-events: none !important;
+    z-index: 99999 !important;
     opacity: 0.9 !important;
     box-shadow: 0 10px 25px rgba(0,0,0,0.4) !important;
-    transform: scale(1.02) !important; /* Fait légèrement "gonfler" l'événement quand on le soulève */
-    transition: none !important; /* Le fantôme doit suivre la souris à la milliseconde près */
+    transform: scale(1.02) !important;
+    transition: none !important;
     cursor: grabbing !important;
     border-radius: 4px;
 }
@@ -779,6 +725,7 @@ display: grid;
 
 @media (max-width: 600px) 
 {
+    .period-title { font-size: 1rem; }
     .calendar-header {
         min-height: auto !important;
         padding: 4px 0;
@@ -901,6 +848,7 @@ display: grid;
 
 @media (max-width: 350px) 
 {
+    .period-title { font-size: 0.85rem; }
     .month-title, .year-title { font-size: 0.85rem; }
     .header-nav-row button { transform: scale(0.85); }
     .today-btn { font-size: 0.65rem; padding: 0 6px; }

@@ -104,26 +104,29 @@
                         </button>
                         
                         <div class="title-selector">
-                            <span #btnMois 
-                                    class="month-title" 
+                            <input matInput 
+                                [matDatepicker]="picker" 
+                                [value]="dateReference()"
+                                style="width: 0; height: 0; border: none; padding: 0; margin: 0; position: absolute; opacity: 0; pointer-events: none;"
+                                tabindex="-1"
+                                aria-hidden="true">
+                            
+                            <span #btnPeriode
+                                    class="period-title" 
                                     role="button" 
                                     tabindex="0"
-                                    (keydown.enter)="btnMois.click()"
-                                    [matMenuTriggerFor]="menuMois" 
+                                    (click)="picker.open()"
+                                    (keydown.enter)="picker.open()"
                                     [attr.aria-label]="trad().ariaMenuMois">
-                                {{ nomMois() }}
+                                {{ nomMois() }} {{ annee() }}
                             </span>
 
-                            <span #btnAnnee
-                                    class="year-title" 
-                                    role="button" 
-                                    tabindex="0"
-                                    (keydown.enter)="btnAnnee.click()"
-                                    [matMenuTriggerFor]="menuAnnee" 
-                                    (menuOpened)="ScrollVersAnneeActive()" 
-                                    [attr.aria-label]="trad().ariaMenuAnnee"> 
-                                {{ annee() }}
-                            </span>
+                            <mat-datepicker #picker 
+                                            [restoreFocus]="false" 
+                                            [touchUi]="estPetitEcran()"
+                                            startView="multi-year"
+                                            (monthSelected)="OnMonthSelected($event, picker)">
+                            </mat-datepicker>
                         </div>
 
                         <button mat-icon-button (click)="Suivant()" [attr.aria-label]="trad().ariaSuivant">
@@ -297,39 +300,6 @@
         </div>
     </mat-sidenav-content>
 </mat-sidenav-container>
-
-<mat-menu #menuMois="matMenu">
-    @for (element of listeMoisTraduit(); track element.id) 
-    {
-        <button mat-menu-item 
-                (click)="ChangerMois(element.id)"
-                [attr.aria-current]="element.id == mois() ? 'true' : null" 
-                [class.active-item]="element.id === mois()"
-                class="capitalize">
-            {{ element.nom }}
-        </button>
-    }
-    @empty 
-    {
-        <button mat-menu-item disabled>Aucun mois disponible</button>
-    }
-</mat-menu>
-
-<mat-menu #menuAnnee="matMenu">
-    <div class="year-grid" (click)="$event.stopPropagation()" (keydown)="NaviguationClavierMatMenuAnnee($event)">
-        @for (element of listeAnnee(); track element) 
-        {
-            <button [matButton]="element == annee() ? 'filled' : 'text'"
-                        class="year-chip" 
-                        role="menuitem" 
-                        [attr.aria-current]="element == annee() ? 'true' : null" 
-                        [class.active-year]="element == annee()"
-                        (click)="ChangerAnnee(element)">
-                {{ element }}
-            </button>
-        }
-    </div>
-</mat-menu>
 
 <mat-menu #defaultMenu="matMenu">
     <ng-template matMenuContent let-ev="eventCal">
