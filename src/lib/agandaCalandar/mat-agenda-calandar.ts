@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { DateAdapter, MAT_DATE_LOCALE, MatRippleModule, provideNativeDateAdapter } from '@angular/material/core';
+import { DateAdapter, MatRippleModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatMenu, MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatCheckboxModule } from '@angular/material/checkbox';
