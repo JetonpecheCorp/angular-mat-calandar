@@ -1,13 +1,13 @@
 # Angular mat calandar
 
-Calendrier au style material design de angular.
+Calendrier au style material design de angular.  
 Traduction automatique celons la **langue du navigateur.**.
 
 # Information
 
 - Compatible Angular 22
 - Compatible et conçu pour Angular material
-- Accessible via aria, naviguation et actions par le clavier
+- Accessible via aria, navigation et actions par le clavier
 
 # Attributs en commun
 - `events`: Liste des evenements à mettre sur le calandrier
