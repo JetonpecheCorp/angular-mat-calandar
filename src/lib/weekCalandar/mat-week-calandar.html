@@ -199,7 +199,8 @@
                                         [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
                                         [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'"
                                         [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
-                                        [matContextMenuTriggerData]="{ eventCal: ev }">
+                                        [matContextMenuTriggerData]="{ eventCal: ev }"
+                                        [matContextMenuTriggerRestoreFocus]="false">
 
                                         @if (!ev.continueAvant && !readonly() && !ev.readonly)
                                         {
