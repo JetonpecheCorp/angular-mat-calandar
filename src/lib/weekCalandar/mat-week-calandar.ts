@@ -1138,29 +1138,48 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             return;
         }
 
-        // 1. Navigation Rapide (Semaine / Mois)
-        if (['PageUp', 'PageDown'].includes(event.key)) 
+        // Navigation Rapide (Semaine / Mois)
+        if (['p', 'n'].includes(event.key.toLowerCase()) && !event.ctrlKey && !event.metaKey && !event.altKey) 
         {
             event.preventDefault();
             
-            if (event.ctrlKey || event.metaKey || event.shiftKey) 
+            const recule = event.key.toLowerCase() === 'p';
+            
+            if (event.shiftKey) 
             {
-                if (event.key === 'PageUp') 
+                if (recule) 
                     this.MoisPrecedent();
                 else 
                     this.MoisSuivant();
             } 
             else 
             {
-                if (event.key === 'PageUp') 
+                if (recule) 
                     this.Precedent();
                 else 
                     this.Suivant();
             }
 
+            let nouvelleDate = new Date(dateJour);
+            if (event.shiftKey)
+                nouvelleDate.setMonth(nouvelleDate.getMonth() + (recule ? -1 : 1));
+            else
+                nouvelleDate.setDate(nouvelleDate.getDate() + (recule ? -7 : 7));
+
+            let strHour = heureLabel.replace(/\s+/g, '');
+
             setTimeout(() => {
-                const caseSlot = this.el.nativeElement.querySelector(`#slot-${idSlot}`) as HTMLElement;
-                if (caseSlot) caseSlot.focus();
+                const targetId = nouvelleDate.getTime() + '-' + strHour;
+                const caseSlot = this.el.nativeElement.querySelector(`#slot-${targetId}`) as HTMLElement;
+                
+                if (caseSlot)
+                    caseSlot.focus();
+                else 
+                {
+                    const fallbackSlot = this.el.nativeElement.querySelector('.hour-slot') as HTMLElement;
+                    if (fallbackSlot) 
+                        fallbackSlot.focus();
+                }
             }, 120);
 
             return;
@@ -1235,11 +1254,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                     nouvelleHeureLabel = this.heures()[heureActuelleIndex - 1];
             }
 
-            // Gérer le changement de page si on sort de la semaine affichée
-            const tNouvelleDate = nouvelleDate.getTime();
+            const tNouvelleDate = new Date(nouvelleDate.getFullYear(), nouvelleDate.getMonth(), nouvelleDate.getDate()).getTime();
             const listeSemaine = this.listeNomSemaine();
             
-            // On prend les dates de début et fin de semaine (à minuit)
             const tDebutSemaine = new Date(listeSemaine[0].date.getFullYear(), listeSemaine[0].date.getMonth(), listeSemaine[0].date.getDate()).getTime();
             const tFinSemaine = new Date(listeSemaine[listeSemaine.length - 1].date.getFullYear(), listeSemaine[listeSemaine.length - 1].date.getMonth(), listeSemaine[listeSemaine.length - 1].date.getDate()).getTime();
 
@@ -1265,26 +1282,26 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             return;
         }
 
-        // 4. Création au clavier (Shift + Flèches)
+        // Création au clavier (Shift + Flèches)
         if (event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) 
         {
             event.preventDefault();
             if (this.readonly()) return;
+
+            this.ignoreBlur = true;
+            if (this.focusTimeout) clearTimeout(this.focusTimeout);
 
             if (!this.dragCreationEnCours()) 
             {
                 if (this.EstJourPasse(dateJour, heureLabel)) 
                     return;
 
-                // Transformation du label heure en vraie Date
                 let heures = parseInt(heureLabel, 10);
                 if (this.useAmPm()) 
                 {
                     const estPM = heureLabel.toLowerCase().includes('pm');
-                    if (estPM && heures < 12) 
-                        heures += 12;
-                    if (!estPM && heures === 12) 
-                        heures = 0;
+                    if (estPM && heures < 12) heures += 12;
+                    if (!estPM && heures === 12) heures = 0;
                 }
                 
                 let dateDebut = new Date(dateJour);
@@ -1299,17 +1316,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
             let decMinutes = 0;
             let decJours = 0;
-            if (event.key === 'ArrowRight') 
-                decJours = 1;
-
-            else if (event.key === 'ArrowLeft') 
-                decJours = -1;
-
-            else if (event.key === 'ArrowDown') 
-                decMinutes = 15;
-            
-            else if (event.key === 'ArrowUp') 
-                decMinutes = -15;
+            if (event.key === 'ArrowRight') decJours = 1;
+            else if (event.key === 'ArrowLeft') decJours = -1;
+            else if (event.key === 'ArrowDown') decMinutes = 15;
+            else if (event.key === 'ArrowUp') decMinutes = -15;
 
             const dateActuelleFin = this.dateFinCreation()!;
             const nouvelleDateFin = new Date(dateActuelleFin);
@@ -1318,17 +1328,51 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
             this.dateFinCreation.set(nouvelleDateFin);
 
-            // Gérer le changement de semaine si on déborde
-            const semaineModifiee = (nouvelleDateFin.getTime() < this.listeNomSemaine()[0].date.getTime() || 
-                                     nouvelleDateFin.getTime() > this.listeNomSemaine()[this.listeNomSemaine().length - 1].date.getTime() + 86400000);
+            let targetSlotDate = new Date(dateJour);
+            targetSlotDate.setDate(targetSlotDate.getDate() + decJours);
+
+            const tCible = new Date(targetSlotDate.getFullYear(), targetSlotDate.getMonth(), targetSlotDate.getDate()).getTime();
+            const listeSemaine = this.listeNomSemaine();
             
-            if (semaineModifiee) 
-            {
-                if (decJours > 0) 
-                    this.Suivant();
-                else 
-                    this.Precedent();
+            const tDebutSemaine = new Date(listeSemaine[0].date.getFullYear(), listeSemaine[0].date.getMonth(), listeSemaine[0].date.getDate()).getTime();
+            const tFinSemaine = new Date(listeSemaine[listeSemaine.length - 1].date.getFullYear(), listeSemaine[listeSemaine.length - 1].date.getMonth(), listeSemaine[listeSemaine.length - 1].date.getDate()).getTime();
+
+            let aTournePage = false;
+            
+            if (tCible < tDebutSemaine) 
+            { 
+                this.Precedent(); 
+                aTournePage = true; 
             }
+            else if (tCible > tFinSemaine) 
+            { 
+                this.Suivant(); 
+                aTournePage = true; 
+            }
+
+            // 🆕 3. Formatage de l'heure cible pour coller à l'ID HTML
+            let hCible = nouvelleDateFin.getHours();
+            let strHour = '';
+            
+            if (this.useAmPm()) {
+                const period = hCible >= 12 ? 'PM' : 'AM';
+                const displayHour = hCible % 12 || 12;
+                strHour = `${displayHour} ${period}`;
+            } else {
+                strHour = `${hCible}h`;
+            }
+
+            this.focusTimeout = setTimeout(() => 
+            {
+                const idCible = targetSlotDate.getTime() + '-' + strHour.replace(/\s+/g, '');
+                const slot = this.el.nativeElement.querySelector(`#slot-${idCible}`) as HTMLElement;
+                
+                if (slot) 
+                    slot.focus();
+                
+                this.ignoreBlur = false; 
+
+            }, aTournePage ? 120 : 30);
         }
     }
 
@@ -1357,21 +1401,23 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         }
 
         // Navigation Rapide
-        if (['PageUp', 'PageDown'].includes(event.key)) 
+        if (['p', 'n'].includes(event.key.toLowerCase()) && !event.ctrlKey && !event.metaKey && !event.altKey) 
         {
             event.preventDefault();
             event.stopPropagation();
             
-            if (event.ctrlKey || event.metaKey || event.shiftKey) 
+            const recule = event.key.toLowerCase() === 'p';
+            
+            if (event.shiftKey) 
             {
-                if (event.key == 'PageUp') 
+                if (recule) 
                     this.MoisPrecedent();
                 else 
                     this.MoisSuivant();
             } 
             else 
             {
-                if (event.key === 'PageUp') 
+                if (recule) 
                     this.Precedent();
                 else 
                     this.Suivant();
@@ -1380,7 +1426,13 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             setTimeout(() => {
                 const e = this.el.nativeElement.querySelector(`#event-${ev.id}`) as HTMLElement;
                 if (e) 
-                    e.focus();
+                    e.focus(); 
+                else 
+                {
+                    const fallbackSlot = this.el.nativeElement.querySelector('.hour-slot') as HTMLElement;
+                    if (fallbackSlot) 
+                        fallbackSlot.focus();
+                }
             }, 120);
 
             return;
@@ -1502,8 +1554,15 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
             this.previewResize.set({ eventId: ev.id, startDate: newStart, endDate: newEnd });
 
-            // Changement de page si on sort de la semaine visible
-            const referenceDate = estResizingDebut ? newStart : newEnd;
+            let referenceDate: Date;
+
+            if (estResizingDebut) 
+                referenceDate = newStart;
+            else if (estResizingFin) 
+                referenceDate = newEnd;
+            else 
+                referenceDate = decJours < 0 ? newStart : newEnd; 
+
             let aTournePage = false;
             
             // Calcul plus sûr pour les bornes de la semaine
@@ -1516,7 +1575,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             if (referenceDate.getTime() < debutSemaine.getTime()) { this.Precedent(); aTournePage = true; }
             else if (referenceDate.getTime() > finSemaine.getTime()) { this.Suivant(); aTournePage = true; }
 
-            // 🆕 On réassigne le focus au bon bout de l'événement (comme dans la vue Mois)
             this.focusTimeout = setTimeout(() => 
             {
                 // Sélectionne tous les "bouts" de cet événement dans les différentes colonnes
