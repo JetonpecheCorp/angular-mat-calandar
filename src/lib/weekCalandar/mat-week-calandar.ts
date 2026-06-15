@@ -47,6 +47,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     /** 23 max */
     hourMax = input(23, { transform: numberAttribute });
 
+    /** Translate language (default navigator or en) */
+    langue = input<string>(typeof navigator !== 'undefined' ? navigator.language : 'en');
+
     /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
 
@@ -78,33 +81,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
     protected isDarkModeActive = signal(false);
-    protected trad = signal({
-        aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new",
-        modifier: "Edit", supprimer: "Delete",
-        ariaPrecedent: "Previous", ariaSuivant: "Next", 
-        ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month",
-        ariaMenu: "Change view", ariaEvenement: "Event:", ariaCreer: "Create event on",
-        chargement: "Loading",
-        aideCreerEtendre: " (Arrow keys to navigate. Shift plus arrows to extend a creation)",        
-        aideCreerValider: " (Enter to validate)",
-        aideDescendre: ". Alt plus down arrow to select an event",
-        aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
-        aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to time slot)",
-        aideNavMois: ". P or N to change week. Add SHIFT to change month",
-        titreGroupes: "Themes", 
-        sansGroupe: "Other events",
-        ariaMasquerGroupe: "Hide",
-        ariaAfficherGroupe: "Show",
-        ariaOuvrirEvent: "Open event",
-        ariaOuvrirMenu: "Open themes menu",
-        ariaFermerMenu: "Close themes menu",
-        ariaBloque: "Unavailable",
-        ariaLectureSeule: "Read-only"
-    });
 
     private themeObserver: MutationObserver | null = null;
     private el = inject(ElementRef);
-    private readonly langueNavigateur = navigator.language || "en-US";
     private timerInterval: any;
     private heureActuelle = signal(new Date());
     private dernierTouchTime = 0;
@@ -116,6 +95,107 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     private autoScrollInterval: any = null;
     private ignoreBlur = false;
     private focusTimeout: any = null;
+    private DICT_TRADUCTION: Record<string, any> = 
+    {
+        'fr': { 
+            aujourdhui: "Aujourd'hui", semaine: "S", nouveau: "nouveau", ajouter: "Ajouter", 
+            modifier: "Modifier", supprimer: "Supprimer",
+            ariaPrecedent: "Précédent", ariaSuivant: "Suivant", ariaMenu: "Changer la vue", 
+            ariaEvenement: "Événement :", ariaCreer: "Créer un événement le", 
+            ariaMoisPrecedent: "Mois précédent", ariaMoisSuivant: "Mois suivant", chargement: "Chargement en cours",
+            aideCreerEtendre: " (Flèches simples pour naviguer. Majuscule plus flèches pour étendre une création)",
+            aideCreerValider: " (Entrée pour valider)",
+            aideDescendre: ". Alt plus flèche bas pour sélectionner un événement",
+            aideEventModif: " (Modification en cours. Entrée pour valider, Échap pour annuler)",
+            aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au créneau horaire)",
+            aideNavMois: ". Touches P et N pour changer de semaine. Majuscule plus P et N pour changer de mois",
+            ariaBloque: "Non disponible", ariaFermerMenu: "Fermer le menu des thèmes",
+            ariaLectureSeule: "Lecture seule"
+        },
+        'en': {
+            aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new",
+            modifier: "Edit", supprimer: "Delete",
+            ariaPrecedent: "Previous", ariaSuivant: "Next", 
+            ariaMoisPrecedent: "Previous month", ariaMoisSuivant: "Next month",
+            ariaMenu: "Change view", ariaEvenement: "Event:", ariaCreer: "Create event on",
+            chargement: "Loading",
+            aideCreerEtendre: " (Arrow keys to navigate. Shift plus arrows to extend a creation)",        
+            aideCreerValider: " (Enter to validate)",
+            aideDescendre: ". Alt plus down arrow to select an event",
+            aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
+            aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to time slot)",
+            aideNavMois: ". P or N to change week. Add SHIFT to change month",
+            titreGroupes: "Themes", 
+            sansGroupe: "Other events",
+            ariaMasquerGroupe: "Hide",
+            ariaAfficherGroupe: "Show",
+            ariaOuvrirEvent: "Open event",
+            ariaOuvrirMenu: "Open themes menu",
+            ariaFermerMenu: "Close themes menu",
+            ariaBloque: "Unavailable",
+            ariaLectureSeule: "Read-only"
+        },
+        'es': { 
+            aujourdhui: "Hoy", semaine: "S", nouveau: "nuevo", ajouter: "Añadir", 
+            modifier: "Editar", supprimer: "Eliminar",
+            ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", ariaMenu: "Cambiar vista", 
+            ariaEvenement: "Evento:", ariaCreer: "Crear evento el", 
+            ariaMoisPrecedent: "Mes anterior", ariaMoisSuivant: "Mes siguiente", chargement: "Cargando",
+            aideCreerEtendre: " (Flechas para navegar. Mayús más flechas para extender una creación)",
+            aideCreerValider: " (Intro para validar)",
+            aideDescendre: ". Alt más flecha abajo para seleccionar un evento",
+            aideEventModif: " (Modificación en curso. Intro para validar, Escape para cancelar)",
+            aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para cambiar el final. Ctrl más Mayús más flechas para cambiar el inicio. Alt más flecha arriba para volver al tramo horario)",
+            aideNavMois: ". Teclas P y N para cambiar de semana. Añade MAYÚS para cambiar de mes",
+            ariaBloque: "No disponible", ariaLectureSeule: "Solo lectura",
+            ariaFermerMenu: "Cerrar el menú de temas",
+        },
+        'it': { 
+            aujourdhui: "Oggi", semaine: "S", nouveau: "nuovo", ajouter: "Aggiungi", 
+            modifier: "Modifica", supprimer: "Elimina",
+            ariaPrecedent: "Precedente", ariaSuivant: "Successivo", ariaMenu: "Cambia vista", 
+            ariaEvenement: "Evento:", ariaCreer: "Crea evento il", 
+            ariaMoisPrecedent: "Mese precedente", ariaMoisSuivant: "Mese successivo", chargement: "Caricamento",
+            aideCreerEtendre: " (Frecce per navigare. Maiusc più frecce per estendere una creazione)",                
+            aideCreerValider: " (Invio per confermare)",
+            aideDescendre: ". Alt più freccia giù per selezionare un evento",
+            aideEventModif: " (Modifica in corso. Invio per confermare, Esc per annullare)",
+            aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per ridimensionare la fine. Ctrl più Maiusc più frecce per ridimensionare l'inizio. Alt più freccia su per tornare alla fascia oraria)",
+            aideNavMois: ". Tasti P e N per cambiare settimana. Aggiungi MAIUSC per cambiare mese",
+            ariaBloque: "Non disponibile", ariaLectureSeule: "Sola lettura",
+            ariaFermerMenu: "Chiudi il menu dei temi",
+        },
+        'de': { 
+            aujourdhui: "Heute", semaine: "W", nouveau: "neu", ajouter: "Hinzufügen", 
+            modifier: "Bearbeiten", supprimer: "Löschen",
+            ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", ariaMenu: "Ansicht ändern", 
+            ariaEvenement: "Ereignis:", ariaCreer: "Ereignis erstellen am", 
+            ariaMoisPrecedent: "Vorheriger Monat", ariaMoisSuivant: "Nächster Monat", chargement: "Wird geladen",
+            aideCreerEtendre: " (Pfeiltasten zum Navigieren. Umschalt plus Pfeiltasten zum Erweitern einer Erstellung)",
+            aideCreerValider: " (Eingabe zum Bestätigen)",
+            aideDescendre: ". Alt plus Pfeiltaste nach unten, um ein Ereignis auszuwählen",
+            aideEventModif: " (Bearbeitung läuft. Eingabe zum Bestätigen, Esc zum Abbrechen)",
+            aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten zum Ändern des Endes. Ctrl plus Umschalt plus Pfeiltasten zum Ändern des Starts. Alt plus Pfeiltaste nach oben, um zum Zeitfenster zurückzukehren)",
+            aideNavMois: ". Tasten P und N, um die Woche zu ändern. Umschalt hinzufügen, um den Monat zu ändern",
+            ariaBloque: "Nicht verfügbar", ariaLectureSeule: "Schreibgeschützt",
+            ariaFermerMenu: "Themenmenü schließen",
+        },
+        'pt': { 
+            aujourdhui: "Hoje", semaine: "S", nouveau: "novo", ajouter: "Adicionar", 
+            modifier: "Editar", supprimer: "Excluir",
+            ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", ariaMenu: "Mudar vista", 
+            ariaEvenement: "Evento:", ariaCreer: "Criar evento em", 
+            ariaMoisPrecedent: "Mês anterior", ariaMoisSuivant: "Mês seguinte", chargement: "Carregando",
+            aideCreerEtendre: " (Setas para navegar. Shift mais setas para estender uma criação)",
+            aideCreerValider: " (Enter para validar)",
+            aideDescendre: ". Alt mais seta para baixo para selecionar um evento",
+            aideEventModif: " (Modificação em curso. Enter para validar, Esc para cancelar)",
+            aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para redimensionar o fim. Ctrl mais Shift mais setas para redimensionar o início. Alt mais seta para cima para voltar ao horário)",
+            aideNavMois: ". Teclas P e N para mudar de semana. Adicione SHIFT para mudar de mês",
+            ariaBloque: "Indisponível", ariaLectureSeule: "Somente leitura",
+            ariaFermerMenu: "Fechar o menu de temas",
+        }
+    };
 
     protected dragCreationEnCours = signal(false);
     protected dateDebutCreation = signal<Date | null>(null);
@@ -123,6 +203,12 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected zoneNavigationActive = signal<'left' | 'right' | null>(null);
     protected bulleSurvolee = signal<'left' | 'right' | null>(null);
     protected slotRetourFocus = signal<string | null>(null);
+
+    protected trad = computed(() => 
+    {
+        const codeLangue = this.langue().substring(0, 2).toLowerCase();
+        return this.DICT_TRADUCTION[codeLangue] || this.DICT_TRADUCTION['en'];
+    });
 
     protected listeEvenementGroupe = computed(() => 
     {
@@ -179,7 +265,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         const debut = LISTE_NOM_SEMAINE[0];
         const fin = LISTE_NOM_SEMAINE[LISTE_NOM_SEMAINE.length - 1];
-        const format = new Intl.DateTimeFormat(this.langueNavigateur, { month: 'long', year: 'numeric' });
+        const format = new Intl.DateTimeFormat(this.langue(), { month: 'long', year: 'numeric' });
         
         if (debut.date.getMonth() != fin.date.getMonth())
             return `${format.format(debut.date)} - ${format.format(fin.date)}`;
@@ -278,8 +364,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 numero: this.RecupererNumeroSemaine(start),
                 date: start,
                 // On prépare les deux labels
-                labelDebut: start.toLocaleDateString(this.langueNavigateur, { day: '2-digit', month: 'short' }),
-                labelFin: end.toLocaleDateString(this.langueNavigateur, { day: '2-digit', month: 'short' })
+                labelDebut: start.toLocaleDateString(this.langue(), { day: '2-digit', month: 'short' }),
+                labelFin: end.toLocaleDateString(this.langue(), { day: '2-digit', month: 'short' })
             });
         }
 
@@ -348,7 +434,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     });
 
     ngOnInit(): void
-    {
+    {   
         if(this.sidebarConfig()?.defaultOpen === true)
             this.panneauOuvert.set(true);
 
@@ -365,89 +451,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
-        const LANGUE = this.langueNavigateur.split('-')[0];
-
-        const DICT_TRADUCTION: Record<string, any> = {
-            'fr': { 
-                aujourdhui: "Aujourd'hui", semaine: "S", nouveau: "nouveau", ajouter: "Ajouter", 
-                modifier: "Modifier", supprimer: "Supprimer",
-                ariaPrecedent: "Précédent", ariaSuivant: "Suivant", ariaMenu: "Changer la vue", 
-                ariaEvenement: "Événement :", ariaCreer: "Créer un événement le", 
-                ariaMoisPrecedent: "Mois précédent", ariaMoisSuivant: "Mois suivant", chargement: "Chargement en cours",
-                aideCreerEtendre: " (Flèches simples pour naviguer. Majuscule plus flèches pour étendre une création)",
-                aideCreerValider: " (Entrée pour valider)",
-                aideDescendre: ". Alt plus flèche bas pour sélectionner un événement",
-                aideEventModif: " (Modification en cours. Entrée pour valider, Échap pour annuler)",
-                aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au créneau horaire)",
-                aideNavMois: ". Touches P et N pour changer de semaine. Majuscule plus P et N pour changer de mois",
-                ariaBloque: "Non disponible", ariaFermerMenu: "Fermer le menu des thèmes",
-                ariaLectureSeule: "Lecture seule"
-            },
-            'es': { 
-                aujourdhui: "Hoy", semaine: "S", nouveau: "nuevo", ajouter: "Añadir", 
-                modifier: "Editar", supprimer: "Eliminar",
-                ariaPrecedent: "Anterior", ariaSuivant: "Siguiente", ariaMenu: "Cambiar vista", 
-                ariaEvenement: "Evento:", ariaCreer: "Crear evento el", 
-                ariaMoisPrecedent: "Mes anterior", ariaMoisSuivant: "Mes siguiente", chargement: "Cargando",
-                aideCreerEtendre: " (Flechas para navegar. Mayús más flechas para extender una creación)",
-                aideCreerValider: " (Intro para validar)",
-                aideDescendre: ". Alt más flecha abajo para seleccionar un evento",
-                aideEventModif: " (Modificación en curso. Intro para validar, Escape para cancelar)",
-                aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para cambiar el final. Ctrl más Mayús más flechas para cambiar el inicio. Alt más flecha arriba para volver al tramo horario)",
-                aideNavMois: ". Teclas P y N para cambiar de semana. Añade MAYÚS para cambiar de mes",
-                ariaBloque: "No disponible", ariaLectureSeule: "Solo lectura",
-                ariaFermerMenu: "Cerrar el menú de temas",
-            },
-            'it': { 
-                aujourdhui: "Oggi", semaine: "S", nouveau: "nuovo", ajouter: "Aggiungi", 
-                modifier: "Modifica", supprimer: "Elimina",
-                ariaPrecedent: "Precedente", ariaSuivant: "Successivo", ariaMenu: "Cambia vista", 
-                ariaEvenement: "Evento:", ariaCreer: "Crea evento il", 
-                ariaMoisPrecedent: "Mese precedente", ariaMoisSuivant: "Mese successivo", chargement: "Caricamento",
-                aideCreerEtendre: " (Frecce per navigare. Maiusc più frecce per estendere una creazione)",                
-                aideCreerValider: " (Invio per confermare)",
-                aideDescendre: ". Alt più freccia giù per selezionare un evento",
-                aideEventModif: " (Modifica in corso. Invio per confermare, Esc per annullare)",
-                aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per ridimensionare la fine. Ctrl più Maiusc più frecce per ridimensionare l'inizio. Alt più freccia su per tornare alla fascia oraria)",
-                aideNavMois: ". Tasti P e N per cambiare settimana. Aggiungi MAIUSC per cambiare mese",
-                ariaBloque: "Non disponibile", ariaLectureSeule: "Sola lettura",
-                ariaFermerMenu: "Chiudi il menu dei temi",
-            },
-            'de': { 
-                aujourdhui: "Heute", semaine: "W", nouveau: "neu", ajouter: "Hinzufügen", 
-                modifier: "Bearbeiten", supprimer: "Löschen",
-                ariaPrecedent: "Vorherige", ariaSuivant: "Nächste", ariaMenu: "Ansicht ändern", 
-                ariaEvenement: "Ereignis:", ariaCreer: "Ereignis erstellen am", 
-                ariaMoisPrecedent: "Vorheriger Monat", ariaMoisSuivant: "Nächster Monat", chargement: "Wird geladen",
-                aideCreerEtendre: " (Pfeiltasten zum Navigieren. Umschalt plus Pfeiltasten zum Erweitern einer Erstellung)",
-                aideCreerValider: " (Eingabe zum Bestätigen)",
-                aideDescendre: ". Alt plus Pfeiltaste nach unten, um ein Ereignis auszuwählen",
-                aideEventModif: " (Bearbeitung läuft. Eingabe zum Bestätigen, Esc zum Abbrechen)",
-                aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten zum Ändern des Endes. Ctrl plus Umschalt plus Pfeiltasten zum Ändern des Starts. Alt plus Pfeiltaste nach oben, um zum Zeitfenster zurückzukehren)",
-                aideNavMois: ". Tasten P und N, um die Woche zu ändern. Umschalt hinzufügen, um den Monat zu ändern",
-                ariaBloque: "Nicht verfügbar", ariaLectureSeule: "Schreibgeschützt",
-                ariaFermerMenu: "Themenmenü schließen",
-            },
-            'pt': { 
-                aujourdhui: "Hoje", semaine: "S", nouveau: "novo", ajouter: "Adicionar", 
-                modifier: "Editar", supprimer: "Excluir",
-                ariaPrecedent: "Anterior", ariaSuivant: "Seguinte", ariaMenu: "Mudar vista", 
-                ariaEvenement: "Evento:", ariaCreer: "Criar evento em", 
-                ariaMoisPrecedent: "Mês anterior", ariaMoisSuivant: "Mês seguinte", chargement: "Carregando",
-                aideCreerEtendre: " (Setas para navegar. Shift mais setas para estender uma criação)",
-                aideCreerValider: " (Enter para validar)",
-                aideDescendre: ". Alt mais seta para baixo para selecionar um evento",
-                aideEventModif: " (Modificação em curso. Enter para validar, Esc para cancelar)",
-                aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para redimensionar o fim. Ctrl mais Shift mais setas para redimensionar o início. Alt mais seta para cima para voltar ao horário)",
-                aideNavMois: ". Teclas P e N para mudar de semana. Adicione SHIFT para mudar de mês",
-                ariaBloque: "Indisponível", ariaLectureSeule: "Somente leitura",
-                ariaFermerMenu: "Fechar o menu de temas",
-            }
-        };
-
-        if(DICT_TRADUCTION[LANGUE])
-            this.trad.set(DICT_TRADUCTION[LANGUE]);
     }
 
     ngOnDestroy(): void 
@@ -501,7 +504,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         if (!date) 
             return '';
         
-        return new Intl.DateTimeFormat(this.langueNavigateur, { day: '2-digit', month: 'short' }).format(date);
+        return new Intl.DateTimeFormat(this.langue(), { day: '2-digit', month: 'short' }).format(date);
     }
 
     private EstDansIntervalle(_dateAChecker: Date, _debut: Date, _fin: Date): boolean
@@ -1645,7 +1648,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         if (!date) 
             return '';
 
-        const langue = this.langueNavigateur || 'fr-FR'; 
+        const langue = this.langue() || 'fr-FR'; 
         return date.toLocaleDateString(langue, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     }
 
@@ -1901,7 +1904,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         // 2. Si l'événement s'étale sur plusieurs jours : Date + Heure
         if (!this.EstMemeJour(start, end)) 
         {
-            const formatterDate = new Intl.DateTimeFormat(this.langueNavigateur, { day: 'numeric', month: 'short' });
+            const formatterDate = new Intl.DateTimeFormat(this.langue(), { day: 'numeric', month: 'short' });
             return `${formatterDate.format(start)} ${formatHeure(start)} - ${formatterDate.format(end)} ${formatHeure(end)}`;
         }
 
