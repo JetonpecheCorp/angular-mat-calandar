@@ -19,6 +19,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `intervalDisabled`: Liste des intervals de jours a désactiver
 - `daysDisabled`: Liste des jours à désactiver
 - `customMatMenu`: Permet d'utiliser un menu contextuel personnalisé
+- `langue`: Permet de definir une traduction (defaut la langue du naviguateur, si pas de traduction langue anglais)
 
 ## Attributs boolean
 - `matRippleDisabled`: désactiver l'effet ripple
