@@ -100,7 +100,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         aideDescendre: ". Alt plus down arrow to select an event",
         aideEventModif: " (Editing in progress. Enter to validate, Escape to cancel)",
         aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows to resize end. Ctrl plus Shift plus arrows to resize start. Alt plus up arrow to return to day)",
-        aideNavMois: ". PageUp or PageDown to change month. Ctrl plus Page to change year",
+        aideNavMois: ". P or N to change month. Add SHIFT to change year",
         titreGroupes: "Themes", 
         sansGroupe: "Other events",
         ariaMasquerGroupe: "Hide",
@@ -375,7 +375,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaOuvrirMenu: "Ouvrir le menu des thèmes", ariaFermerMenu: "Fermer le menu des thèmes",
                 ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule",
                 ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir l'événement",
-                ariaEventSpecial: "Événement spécial :"
+                ariaEventSpecial: "Événement spécial :",
+                aideNavMois: ". Touches P et N pour changer de mois. Majuscule plus P et N pour changer d'année"
             },
             'es': {
                 aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
@@ -388,7 +389,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaOuvrirMenu: "Abrir el menú de temas", ariaFermerMenu: "Cerrar le menú de temas",
                 ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura",
                 ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
-                ariaEventSpecial: "Evento especial:"
+                ariaEventSpecial: "Evento especial:",
+                aideNavMois: ". Teclas P y N para cambiar de mes. Añade MAYÚS para cambiar de año"
             },
             'it': { 
                 aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
@@ -401,7 +403,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaOuvrirMenu: "Apri il menu dei temi", ariaFermerMenu: "Chiudi il menu dei temi",
                 ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura",
                 ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri evento",
-                ariaEventSpecial: "Evento speciale:"
+                ariaEventSpecial: "Evento speciale:",
+                aideNavMois: ". Tasti P e N per cambiare mese. Aggiungi MAIUSC per cambiare anno"
             },
             'de': { 
                 aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
@@ -414,7 +417,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaOuvrirMenu: "Themenmenü öffnen", ariaFermerMenu: "Themenmenü schließen",
                 ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt",
                 ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Ereignis öffnen",
-                ariaEventSpecial: "Besonderes Ereignis:"
+                ariaEventSpecial: "Besonderes Ereignis:",
+                aideNavMois: ". Tasten P und N, um den Monat zu ändern. Umschalt hinzufügen, um das Jahr zu ändern"
             },
             'pt': { 
                 aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
@@ -427,7 +431,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 ariaOuvrirMenu: "Abrir o menu de temas", ariaFermerMenu: "Fechar o menu de temas",
                 ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura",
                 ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
-                ariaEventSpecial: "Evento especial:"
+                ariaEventSpecial: "Evento especial:",
+                aideNavMois: ". Teclas P e N para mudar de mês. Adicione SHIFT para mudar de ano"
             }
         };
 
@@ -1079,35 +1084,39 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             return;
         }
 
-        if (['PageUp', 'PageDown'].includes(event.key)) 
+        // Navigation Rapide
+        if (['p', 'n'].includes(event.key.toLowerCase()) && !event.ctrlKey && !event.metaKey && !event.altKey) 
         {
             event.preventDefault();
 
             let nouvelleDate = new Date(dateJour);
+            const recule = event.key.toLowerCase() === 'p';
 
-            // Avec Majuscule = Année / Sans Majuscule = Mois
-            if (event.shiftKey || event.ctrlKey || event.metaKey)
-                nouvelleDate.setFullYear(nouvelleDate.getFullYear() + (event.key === 'PageUp' ? -1 : 1));
-
+            if (event.shiftKey)
+                nouvelleDate.setFullYear(nouvelleDate.getFullYear() + (recule ? -1 : 1));
             else 
             {
-                const moisCible = nouvelleDate.getMonth() + (event.key === 'PageUp' ? -1 : 1);
+                const moisCible = nouvelleDate.getMonth() + (recule ? -1 : 1);
                 nouvelleDate.setMonth(moisCible);
                 
-                // Sécurité : si on passe du 31 Janvier au mois de Février, le JS saute en Mars par défaut. 
-                // Cette ligne le force à s'arrêter au 28 (ou 29) Février :
                 if (nouvelleDate.getMonth() !== ((moisCible % 12 + 12) % 12))
                     nouvelleDate.setDate(0); 
             }
 
-            // On met à jour le calendrier
             this.mois.set(nouvelleDate.getMonth() + 1);
             this.annee.set(nouvelleDate.getFullYear());
 
-            // On remet instantanément le curseur sur le même jour dans le nouveau mois affiché !
             setTimeout(() => {
-                const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${nouvelleDate.getTime()}"]`) as HTMLElement;
-                if (caseJour) caseJour.focus();
+                let caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${nouvelleDate.getTime()}"]`) as HTMLElement;
+                
+                if (caseJour)
+                    caseJour.focus();
+                else 
+                {
+                    const fallbackCell = this.el.nativeElement.querySelector('.day-cell:not(.out-of-month)') as HTMLElement;
+                    if (fallbackCell) 
+                        fallbackCell.focus();
+                }
             }, 120);
 
             return;
@@ -1266,18 +1275,20 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             return;
         }
 
-        if (['PageUp', 'PageDown'].includes(_event.key))
+        // Navigation Rapide
+        if (['p', 'n'].includes(_event.key.toLowerCase()) && !_event.ctrlKey && !_event.metaKey && !_event.altKey)
         {
             _event.preventDefault();
             _event.stopPropagation();
 
             let nouvelleDate = new Date(_eventObj.startDate);
+            const recule = _event.key.toLowerCase() === 'p';
 
-            if (_event.shiftKey || _event.ctrlKey || _event.metaKey)
-                nouvelleDate.setFullYear(nouvelleDate.getFullYear() + (_event.key === 'PageUp' ? -1 : 1));
+            if (_event.shiftKey)
+                nouvelleDate.setFullYear(nouvelleDate.getFullYear() + (recule ? -1 : 1));
             else
             {
-                const moisCible = nouvelleDate.getMonth() + (_event.key === 'PageUp' ? -1 : 1);
+                const moisCible = nouvelleDate.getMonth() + (recule ? -1 : 1);
                 nouvelleDate.setMonth(moisCible);
 
                 if (nouvelleDate.getMonth() !== ((moisCible % 12 + 12) % 12))
@@ -1287,12 +1298,20 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             this.mois.set(nouvelleDate.getMonth() + 1);
             this.annee.set(nouvelleDate.getFullYear());
 
-            // On libère le focus de l'événement et on le pose sur la case du jour du nouveau mois
             setTimeout(() => {
-                const caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${nouvelleDate.getTime()}"]`) as HTMLElement;
+                const eventElement = this.el.nativeElement.querySelector(`#event-${_eventObj.id}`) as HTMLElement;
+                
+                if (eventElement)
+                    eventElement.focus();
+                else 
+                {
+                    let caseJour = this.el.nativeElement.querySelector(`.day-cell[data-date="${nouvelleDate.getTime()}"]`) as HTMLElement;
+                    if (!caseJour)
+                        caseJour = this.el.nativeElement.querySelector('.day-cell:not(.out-of-month)') as HTMLElement;
 
-                if (caseJour) 
-                    caseJour.focus();
+                    if (caseJour) 
+                        caseJour.focus();
+                }
             }, 120);
 
             return;
