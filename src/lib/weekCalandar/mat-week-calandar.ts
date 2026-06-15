@@ -1,13 +1,10 @@
 import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, HostListener, numberAttribute, output, ChangeDetectionStrategy, inject, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDividerModule } from '@angular/material/divider';
 import { EventCalandar, EventGroup } from '../../public-api';
 import {MatMenuModule, MatMenu} from '@angular/material/menu';
 import { DateInterval } from '../../models/DateInterval';
-import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { DateSpecialEvent } from '../../models/DateSpecialEvent';
 import {MatRippleModule} from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -16,6 +13,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { SidebarConfigCalandar } from '../../models/SidebarConfigCalandar';
+import { NgStyle } from '@angular/common';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -27,12 +25,12 @@ interface PositionedEvent extends EventCalandar
 }
 
 @Component({
-  selector: 'jp-mat-week-calandar',
-  standalone: true,
-  imports: [MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, MatRippleModule, DragDropModule, MatMenuModule, CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, MatDividerModule],
-  templateUrl: './mat-week-calandar.html',
-  styleUrls: ['./mat-week-calandar.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'jp-mat-week-calandar',
+    standalone: true,
+    imports: [MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, MatRippleModule, MatMenuModule, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],  
+    templateUrl: './mat-week-calandar.html',
+    styleUrls: ['./mat-week-calandar.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MatWeekCalendar implements OnInit, OnDestroy
 {
@@ -78,7 +76,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected groupesMasques = signal<Set<string | number>>(new Set());
     protected estPetitEcran = signal(false);
 
-    protected eventEnCoursDeDrag = signal<PositionedEvent | null>(null);
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
     protected isDarkModeActive = signal(false);
     protected trad = signal({
@@ -111,13 +108,14 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     private timerInterval: any;
     private heureActuelle = signal(new Date());
     private dernierTouchTime = 0;
-    private semainesDecaleesPendantDrag = 0;
     private navigationInterval: any;
 
     // pour le scroll horizontal en cas de drag
     private pointerX = 0;
     private pointerY = 0;
     private autoScrollInterval: any = null;
+    private ignoreBlur = false;
+    private focusTimeout: any = null;
 
     protected dragCreationEnCours = signal(false);
     protected dateDebutCreation = signal<Date | null>(null);
@@ -590,12 +588,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return positionedEvents;
     }
 
-    protected OnEventDragStarted(ev: PositionedEvent): void 
-    {
-        this.eventEnCoursDeDrag.set(ev);
-        this.semainesDecaleesPendantDrag = 0;
-    }
-
     protected CalculerStyleEvent(event: EventCalandar, dateJour: Date): any
     {
         const start = new Date(event.startDate);
@@ -654,81 +646,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected ChoisirSemaine(_date: Date): void
     {
         this.dateReference.set(_date);
-    }
-
-    protected OnEventDragMoved(dragEvent: any, ev: PositionedEvent): void 
-    {
-        // On passe les coordonnées X et Y, et "true" pour dire que c'est un glisser-déposer CDK
-        const clientX = dragEvent.pointerPosition.x; 
-        const clientY = dragEvent.pointerPosition.y; 
-        
-        this.pointerX = clientX;
-        this.pointerY = clientY;
-        this.DemarrerAutoScrollContinu();
-
-        this.GererNavigationBulle(clientX, clientY, true);
-
-        const distance = dragEvent.distance;
-        
-        const GRID_ELEMENT = dragEvent.source.element.nativeElement.closest('.days-grid');
-        const LARGEUR_COLONNE = GRID_ELEMENT ? GRID_ELEMENT.clientWidth / this.listeNomSemaine().length : 1;
-
-        const joursDecalage = Math.round(distance.x / LARGEUR_COLONNE);
-        const minutesDecalage = Math.round(distance.y / 15) * 15;
-
-        let nouvelleDateDebut = new Date(ev.startDate);
-        nouvelleDateDebut.setDate(nouvelleDateDebut.getDate() + joursDecalage);
-        nouvelleDateDebut.setMinutes(nouvelleDateDebut.getMinutes() + minutesDecalage);
-
-        let nouvelleDateFin = new Date(ev.endDate);
-        nouvelleDateFin.setDate(nouvelleDateFin.getDate() + joursDecalage);
-        nouvelleDateFin.setMinutes(nouvelleDateFin.getMinutes() + minutesDecalage);
-    }
-
-    protected OnEventDragEnded(_dragEvent: CdkDragEnd, ev: PositionedEvent): void 
-    {
-        this.eventEnCoursDeDrag.set(null);
-        this.NettoyerNavigationBulle();
-        this.ArreterAutoScroll();
-
-        const distance = _dragEvent.distance;
-
-        if (Math.abs(distance.x) < 5 && Math.abs(distance.y) < 5) 
-        {
-            this.ClickEvent(ev);
-            _dragEvent.source._dragRef.reset();
-            return;
-        }
-        
-        const GRID_ELEMENT = _dragEvent.source.element.nativeElement.closest('.days-grid');
-        const LARGEUR_COLONNE = GRID_ELEMENT ? GRID_ELEMENT.clientWidth / this.listeNomSemaine().length : 1;
-
-        // On ajoute au décalage les semaines qui ont été sautées pendant le drag
-        const joursDecalage = Math.round(distance.x / LARGEUR_COLONNE) + (this.semainesDecaleesPendantDrag * 7);
-        const minutesDecalage = Math.round(distance.y / 15) * 15;
-
-        let nouvelleDateDebut = new Date(ev.startDate);
-        nouvelleDateDebut.setDate(nouvelleDateDebut.getDate() + joursDecalage);
-        nouvelleDateDebut.setMinutes(nouvelleDateDebut.getMinutes() + minutesDecalage);
-
-        let nouvelleDateFin = new Date(ev.endDate);
-        nouvelleDateFin.setDate(nouvelleDateFin.getDate() + joursDecalage);
-        nouvelleDateFin.setMinutes(nouvelleDateFin.getMinutes() + minutesDecalage);
-
-        _dragEvent.source._dragRef.reset();
-
-        if (this.readonlyPast() && nouvelleDateDebut.getTime() < this.heureActuelle().getTime()) 
-            return;
-
-        this.eventUpdated.emit({
-            id: ev.id,
-            titre: ev.titre,
-            description: ev.description,
-            groupEventId: ev.groupEventId,
-            readonly: ev.readonly,
-            startDate: nouvelleDateDebut,
-            endDate: nouvelleDateFin
-        });
     }
 
     protected ClickTimeSlot(_dateJour: Date, _heureLabel: string): void 
@@ -813,8 +730,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             this.GererNavigationBulle(clientX, clientY, false);
 
             // 2. Détecte la colonne survolée
-            const elementUnder = document.elementFromPoint(clientX, clientY);
-            const hoveredCol = elementUnder ? elementUnder.closest('.day-column') as HTMLElement : null;
+            const elementsSurvoles = document.elementsFromPoint(clientX, clientY);
+            const hoveredCol = elementsSurvoles.find(el => el.classList.contains('day-column')) as HTMLElement | undefined;
 
             if (hoveredCol && hoveredCol.dataset['date']) 
             {
@@ -892,6 +809,170 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return _date.getDate() == DATE.getDate() && 
             _date.getMonth() == DATE.getMonth() && 
             _date.getFullYear() == DATE.getFullYear();
+    }
+
+    protected OnMoveStart(_e: MouseEvent | TouchEvent, ev: PositionedEvent): void 
+    {
+        if (this.readonly() || ev.readonly) 
+            return;
+
+        // Ignore le clic droit
+        if (_e instanceof MouseEvent && _e.button !== 0) 
+            return; 
+
+        _e.preventDefault();
+        _e.stopPropagation();
+
+        let clientXDebut = _e instanceof MouseEvent ? _e.clientX : _e.touches[0].clientX;
+        let clientYDebut = _e instanceof MouseEvent ? _e.clientY : _e.touches[0].clientY;
+
+        const targetElement = (_e.target as HTMLElement).closest('.event-block') as HTMLElement;
+        if (!targetElement) return;
+
+        const rect = targetElement.getBoundingClientRect();
+        const offsetX = clientXDebut - rect.left;
+        const offsetY = clientYDebut - rect.top;
+
+        let elementsDebut = document.elementsFromPoint(clientXDebut, clientYDebut);
+        let colOrigine = elementsDebut.find(el => el.classList.contains('day-column')) as HTMLElement | undefined;
+
+        if (!colOrigine || !colOrigine.dataset['date']) return;
+
+        // Calcul du temps cliqué au départ
+        const colRectDebut = colOrigine.getBoundingClientRect();
+        let yDebutStr = clientYDebut - colRectDebut.top;
+        if (yDebutStr < 0) yDebutStr = 0;
+        let minsDebut = Math.floor(yDebutStr / 15) * 15;
+        let tMinsDebut = (this.hourMin() * 60) + minsDebut;
+
+        let dateOrigine = new Date(parseInt(colOrigine.dataset['date'], 10));
+        dateOrigine.setHours(Math.floor(tMinsDebut / 60), tMinsDebut % 60, 0, 0);
+
+        let aBouge = false;
+        let dateTrouvee = false;
+        let finalStartDate = new Date(ev.startDate);
+        let finalEndDate = new Date(ev.endDate);
+        
+        let elementFantome: HTMLElement | null = null;
+
+        const wrapperClass = this.el.nativeElement.querySelector('.week-calendar-container') ? '.week-calendar-container' : '.calendar-wrapper';
+        const wrapper = this.el.nativeElement.querySelector(wrapperClass) as HTMLElement;
+        const wrapperRect = wrapper.getBoundingClientRect();
+
+        const onMouseMove = (_moveEvent: MouseEvent | TouchEvent) => 
+        {
+            if (_moveEvent.cancelable) 
+                _moveEvent.preventDefault();
+
+            let clientX = _moveEvent instanceof MouseEvent ? _moveEvent.clientX : _moveEvent.touches[0].clientX;
+            let clientY = _moveEvent instanceof MouseEvent ? _moveEvent.clientY : _moveEvent.touches[0].clientY;
+
+            if (!aBouge && (Math.abs(clientX - clientXDebut) > 5 || Math.abs(clientY - clientYDebut) > 5)) 
+            {
+                aBouge = true;
+
+                elementFantome = targetElement.cloneNode(true) as HTMLElement;
+                elementFantome.classList.add('event-ghost-preview');
+                elementFantome.style.width = rect.width + 'px';
+                elementFantome.style.height = rect.height + 'px';
+                
+                wrapper.appendChild(elementFantome);
+            }
+
+            if (aBouge) 
+            {
+                if (elementFantome) 
+                {
+                    let localX = clientX - wrapperRect.left;
+                    let localY = clientY - wrapperRect.top;
+
+                    elementFantome.style.left = (localX - offsetX) + 'px';
+                    elementFantome.style.top = (localY - offsetY) + 'px';
+                }
+
+                this.pointerX = clientX;
+                this.pointerY = clientY;
+                this.DemarrerAutoScrollContinu();
+                this.GererNavigationBulle(clientX, clientY);
+
+                const elementsSurvoles = document.elementsFromPoint(clientX, clientY);
+                let hoveredCol = elementsSurvoles.find(el => el.classList.contains('day-column')) as HTMLElement | undefined;
+
+                if (hoveredCol && hoveredCol.dataset['date']) 
+                {
+                    const colTimestamp = parseInt(hoveredCol.dataset['date'], 10);
+                    const colRect = hoveredCol.getBoundingClientRect();
+                    
+                    let yActuel = clientY - colRect.top;
+                    if (yActuel < 0) yActuel = 0;
+                    
+                    let minutesSurvolees = Math.floor(yActuel / 15) * 15;
+                    const totalMins = (this.hourMin() * 60) + minutesSurvolees;
+                    
+                    let dateSurvolee = new Date(colTimestamp);
+                    dateSurvolee.setHours(Math.floor(totalMins / 60), totalMins % 60, 0, 0);
+
+                    // On applique le décalage calculé à l'événement
+                    const diffMs = dateSurvolee.getTime() - dateOrigine.getTime();
+                    let nouvelleDateDebut = new Date(ev.startDate.getTime() + diffMs);
+                    let nouvelleDateFin = new Date(ev.endDate.getTime() + diffMs);
+
+                    if (this.readonlyPast() && nouvelleDateDebut.getTime() < this.heureActuelle().getTime()) 
+                        return;
+
+                    finalStartDate = nouvelleDateDebut;
+                    finalEndDate = nouvelleDateFin;
+                    dateTrouvee = true;
+
+                    // Mise à jour magique de l'aperçu
+                    this.previewResize.set({
+                        eventId: ev.id,
+                        startDate: finalStartDate,
+                        endDate: finalEndDate
+                    });
+                }
+            }
+        };
+
+        const onMouseUp = () => 
+        {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            window.removeEventListener('touchmove', onMouseMove);
+            window.removeEventListener('touchend', onMouseUp);
+
+            if (elementFantome) {
+                elementFantome.remove();
+                elementFantome = null;
+            }
+
+            this.previewResize.set(null);
+            this.NettoyerNavigationBulle();
+            this.ArreterAutoScroll();
+
+            // Validation de la nouvelle date
+            if (aBouge && dateTrouvee && (finalStartDate.getTime() != ev.startDate.getTime() || finalEndDate.getTime() != ev.endDate.getTime())) 
+            {
+                this.eventUpdated.emit({
+                    id: ev.id,
+                    titre: ev.titre,
+                    description: ev.description,
+                    groupEventId: ev.groupEventId,
+                    readonly: ev.readonly,
+                    startDate: finalStartDate,
+                    endDate: finalEndDate
+                });
+            }
+            else if (!aBouge) 
+            {
+                this.ClickEvent(ev);
+            }
+        };
+
+        window.addEventListener('mousemove', onMouseMove, { passive: false });
+        window.addEventListener('mouseup', onMouseUp);
+        window.addEventListener('touchmove', onMouseMove, { passive: false });
+        window.addEventListener('touchend', onMouseUp);
     }
     
     protected OnMouseDownHoraire(dateJour: Date, event: MouseEvent | TouchEvent | Event): void 
@@ -1290,6 +1371,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected OnEventBlur(ev: PositionedEvent): void 
     {
+        if (this.ignoreBlur) 
+            return;
+
         const preview = this.previewResize();
         if (preview && preview.eventId === ev.id) 
             this.previewResize.set(null);
@@ -1402,16 +1486,20 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             return;
         }
 
-        // Déplacement et Redimensionnement
+       // Déplacement et Redimensionnement
         let estEnDeplacement = event.shiftKey && !event.ctrlKey && !event.metaKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
-        let estResizingFin = (event.ctrlKey || event.metaKey) && !event.shiftKey && ['ArrowUp', 'ArrowDown'].includes(event.key);
-        let estResizingDebut = (event.ctrlKey || event.metaKey) && event.shiftKey && ['ArrowUp', 'ArrowDown'].includes(event.key);
+        let estResizingFin = (event.ctrlKey || event.metaKey) && !event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
+        let estResizingDebut = (event.ctrlKey || event.metaKey) && event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
 
         if (estEnDeplacement || estResizingFin || estResizingDebut) 
         {
             event.preventDefault();
             event.stopPropagation();
             if (this.readonly() || ev.readonly) return;
+
+            // 🆕 ON BLOQUE LE BLUR AVANT LE CHANGEMENT DU DOM
+            this.ignoreBlur = true;
+            if (this.focusTimeout) clearTimeout(this.focusTimeout);
 
             const apercu = this.previewResize();
             let newStart = new Date(apercu && apercu.eventId === ev.id ? apercu.startDate : ev.startDate);
@@ -1424,6 +1512,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             else if (event.key === 'ArrowDown') decMinutes = 15;
             else if (event.key === 'ArrowUp') decMinutes = -15;
 
+            // 🆕 On ajoute maintenant bien "decJours" ET "decMinutes" dans tous les cas
             if (estEnDeplacement) 
             {
                 newStart.setDate(newStart.getDate() + decJours);
@@ -1434,28 +1523,53 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             else if (estResizingFin) 
             {
                 let testEnd = new Date(newEnd);
+                testEnd.setDate(testEnd.getDate() + decJours);
                 testEnd.setMinutes(testEnd.getMinutes() + decMinutes);
+                
                 if (testEnd.getTime() > newStart.getTime()) newEnd = testEnd;
             }
             else if (estResizingDebut) 
             {
                 let testStart = new Date(newStart);
+                testStart.setDate(testStart.getDate() + decJours);
                 testStart.setMinutes(testStart.getMinutes() + decMinutes);
+                
                 if (testStart.getTime() < newEnd.getTime()) newStart = testStart;
             }
 
             this.previewResize.set({ eventId: ev.id, startDate: newStart, endDate: newEnd });
 
-            // Changement de page si on sort de la vue
+            // Changement de page si on sort de la semaine visible
             const referenceDate = estResizingDebut ? newStart : newEnd;
             let aTournePage = false;
             
-            if (referenceDate.getTime() < this.listeNomSemaine()[0].date.getTime()) { this.Precedent(); aTournePage = true; }
-            else if (referenceDate.getTime() > this.listeNomSemaine()[this.listeNomSemaine().length - 1].date.getTime() + 86400000) { this.Suivant(); aTournePage = true; }
+            // Calcul plus sûr pour les bornes de la semaine
+            const debutSemaine = new Date(this.listeNomSemaine()[0].date);
+            debutSemaine.setHours(0, 0, 0, 0);
+            
+            const finSemaine = new Date(this.listeNomSemaine()[this.listeNomSemaine().length - 1].date);
+            finSemaine.setHours(23, 59, 59, 999);
 
-            setTimeout(() => {
-                const elementEvenement = this.el.nativeElement.querySelector(`#event-${ev.id}`) as HTMLElement;
-                if (elementEvenement) elementEvenement.focus();
+            if (referenceDate.getTime() < debutSemaine.getTime()) { this.Precedent(); aTournePage = true; }
+            else if (referenceDate.getTime() > finSemaine.getTime()) { this.Suivant(); aTournePage = true; }
+
+            // 🆕 On réassigne le focus au bon bout de l'événement (comme dans la vue Mois)
+            this.focusTimeout = setTimeout(() => 
+            {
+                // Sélectionne tous les "bouts" de cet événement dans les différentes colonnes
+                const elementsEvenement = this.el.nativeElement.querySelectorAll(`#event-${ev.id}`);
+                
+                if (elementsEvenement.length > 0)
+                {
+                    // Si on s'étend vers la droite (Fin ou Déplacement), on focus le dernier bout. Sinon le premier.
+                    if (estResizingFin || (estEnDeplacement && decJours > 0))
+                        (elementsEvenement[elementsEvenement.length - 1] as HTMLElement).focus();
+                    else
+                        (elementsEvenement[0] as HTMLElement).focus();
+                }
+                
+                this.ignoreBlur = false; // On relâche la sécurité
+                
             }, aTournePage ? 120 : 30);
         }
     }
@@ -1514,6 +1628,24 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return date.toLocaleDateString(langue, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     }
 
+    protected ScrollVersSemaineActive(): void 
+    {
+        setTimeout(() => 
+        {
+            const boutonActif = document.querySelector('.menu-scroll-container .active-week') as HTMLElement;
+            
+            if (boutonActif) 
+            {
+                boutonActif.scrollIntoView({
+                    behavior: "instant",
+                    block: "center"
+                });
+                
+                boutonActif.focus(); 
+            }
+        }, 50);
+    }
+
     private VerifierTheme(): void 
     {
         const config = this.themeConfig();
@@ -1548,20 +1680,13 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         this.dateFinCreation.set(null);
     }
 
-    private DeclencherNavigation(direction: 'left' | 'right', isCdkDrag: boolean): void 
+    private DeclencherNavigation(direction: 'left' | 'right'): void 
     {
         if (direction == 'left') 
-        {
             this.Precedent();
-            if (isCdkDrag) 
-                this.semainesDecaleesPendantDrag--;
-        } 
+
         else 
-        {
             this.Suivant();
-            if (isCdkDrag) 
-                this.semainesDecaleesPendantDrag++;
-        }
     }
 
     private DemarrerAutoScrollContinu(): void 
@@ -1669,12 +1794,17 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             // Si on vient de se poser sur la bulle
             if (surLaBulle) 
             {
-                // On navigue une 1ère fois
-                this.DeclencherNavigation(surLaBulle, isCdkDrag);
-                
-                // On lance un défilement auto toutes les 800ms
-                this.navigationInterval = setInterval(() => {
-                    this.DeclencherNavigation(surLaBulle, isCdkDrag);
+                this.DeclencherNavigation(surLaBulle);
+                this.navigationInterval = setInterval(() => 
+                {
+                    // Sécurité Anti-Boucle
+                    if (!this.dragCreationEnCours() && !this.previewResize()) 
+                    {
+                        this.NettoyerNavigationBulle();
+                        return;
+                    }
+
+                    this.DeclencherNavigation(surLaBulle!);
                 }, 800);
             }
             

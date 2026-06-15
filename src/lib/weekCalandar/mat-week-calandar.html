@@ -24,7 +24,7 @@
                                     (click)="$event.stopPropagation()"
                                     [checked]="!EstGroupeMasque(item.groupe?.id || null)"
                                     (change)="BasculerVisibiliteGroupe(item.groupe?.id || null)"
-                                    [attr.aria-label]="(EstGroupeMasque(item.groupe?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.groupe ? item.groupe.id : trad().sansGroupe)">
+                                    [aria-label]="(EstGroupeMasque(item.groupe?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.groupe ? item.groupe.id : trad().sansGroupe)">
                                 </mat-checkbox>
                                 
                                 <div class="group-title" 
@@ -75,8 +75,8 @@
                     <button mat-icon-button 
                             class="burger-menu-btn" 
                             [class.is-hidden]="panneauOuvert()" 
-                            [aria-label]="trad().ariaOuvrirMenu"
-                            [aria-expanded]="panneauOuvert()"
+                            [attr.aria-label]="trad().ariaOuvrirMenu"
+                            [attr.aria-expanded]="panneauOuvert()"
                             [tabindex]="panneauOuvert() ? -1 : 0"
                             (click)="sidenav.open()">
                         <mat-icon aria-hidden="true">menu</mat-icon>
@@ -94,11 +94,14 @@
                                 <mat-icon aria-hidden="true">chevron_left</mat-icon>
                             </button>
 
-                            <span class="period-title" 
+                            <span #btnPeriode
+                                    class="period-title" 
                                     role="button" 
                                     tabindex="0" 
                                     [attr.aria-label]="trad().ariaMenu"
-                                    [matMenuTriggerFor]="menuSemaine">
+                                    [matMenuTriggerFor]="menuSemaine"
+                                    (menuOpened)="ScrollVersSemaineActive()"
+                                    (keydown.enter)="btnPeriode.click()">
                                 {{ titrePeriode() }}
                             </span>
                             
@@ -128,7 +131,14 @@
                     <div class="days-labels-grid" [style.grid-template-columns]="'repeat(' + listeNomSemaine().length + ', 1fr)'">
                         @for (element of listeNomSemaine(); track element.date) 
                         {
-                            <div class="day-label" [class.today]="element.estAujourdhui" (click)="ClickJour(element.date)">
+                            <div class="day-label" 
+                                    [class.today]="element.estAujourdhui" 
+                                    role="button"
+                                    tabindex="0"
+                                    [attr.aria-label]="(element.estAujourdhui ? trad().aujourdhui + ', ' : '') + element.normal"
+                                    (click)="ClickJour(element.date)"
+                                    (keydown.enter)="ClickJour(element.date)">
+
                                 <span class="name long">{{ element.normal }}</span>
                                 <span class="name short">{{ element.reduit }}</span>
                                 <span class="number">{{ element.date.getDate() }}</span>
@@ -172,33 +182,19 @@
 
                                 @for (ev of getPositionedEvents(jour.date); track ev.id) 
                                 {
-                                    @if (eventEnCoursDeDrag()?.id == ev.id) 
-                                    {
-                                        <div class="event-block event-phantom"
-                                            [ngStyle]="CalculerStyleEvent(ev, jour.date)"
-                                            [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
-                                            [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'">
-                                            <div class="event-content">
-                                                <span class="event-title">{{ ev.titre }}</span>
-                                                <span class="event-time">{{ ev.formatHeure }}</span>
-                                            </div>
-                                        </div>
-                                    }
-
                                     <div class="event-block"
                                         role="button"
                                         tabindex="0"
                                         [id]="'event-' + ev.id"
                                         [attr.aria-label]="trad().ariaEvenement + ' ' +  ev.titre + ' ' + FormatDateAria(ev.startDate) + ' ' + ev.formatHeure + 
                                             (previewResize()?.eventId === ev.id ? trad().aideEventModif : (!readonly() && !ev.readonly ? trad().aideEventNormal : '')) + trad().aideNavMois"
-                                        cdkDrag
-                                        [cdkDragDisabled]="readonly() || ev.readonly"
-                                        (cdkDragStarted)="OnEventDragStarted(ev)" 
-                                        (cdkDragMoved)="OnEventDragMoved($event, ev)"
-                                        (cdkDragEnded)="OnEventDragEnded($event, ev)"
                                         (keydown)="OnEventKeydown($event, ev)"
                                         (blur)="OnEventBlur(ev)"
-                                        (click)="$event.stopPropagation(); (readonly() || ev.readonly) ? ClickEvent(ev) : null"
+                                        
+                                        [class.is-dragging]="previewResize()?.eventId === ev.id"
+                                        (mousedown)="OnMoveStart($event, ev)"
+                                        (touchstart)="OnMoveStart($event, ev)"
+                                        
                                         [ngStyle]="CalculerStyleEvent(ev, jour.date)"
                                         [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
                                         [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'"
@@ -261,9 +257,9 @@
                                             role="button"
                                             tabindex="0"
                                             [attr.aria-disabled]="EstJourPasse(jour.date, h)"
-                                            [attr.aria-label]="EstJourPasse(jour.date, h) ? 
+                                           [attr.aria-label]="(jour.estAujourdhui ? trad().aujourdhui + ', ' : '') + (EstJourPasse(jour.date, h) ? 
                                                 (FormatDateAria(jour.date) + ' ' + h + ', ' + trad().ariaBloque) : 
-                                                (trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois)"
+                                                (trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois))"
                                             (keydown)="OnTimeSlotKeydown($event, jour.date, h, getPositionedEvents(jour.date))"
                                             matRipple 
                                             [matRippleDisabled]="matRippleDisabled() || EstJourPasse(jour.date, h)" 
@@ -283,7 +279,10 @@
     <div class="menu-scroll-container" >
         @for (w of listeToutesSemaines(); track w.date.getTime()) 
         {
-            <button mat-menu-item (click)="ChoisirSemaine(w.date)">
+            <button mat-menu-item 
+                        (click)="ChoisirSemaine(w.date)" 
+                        [attr.aria-current]="w.numero == numeroSemaine() ? 'true' : null"
+                        [class.active-week]="w.numero == numeroSemaine()">
                 <div class="week-row" [class.current-week-tag]="w.numero == numeroSemaine()">
                     <span class="week-label">{{ trad().semaine }}{{ w.numero }} —</span>
                     <span>{{ w.labelDebut }} au {{ w.labelFin }}</span>

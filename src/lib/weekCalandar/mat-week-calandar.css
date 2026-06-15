@@ -1,6 +1,6 @@
 :host {
     display: block;
-    height: 100vh;
+    height: 100%;
     background: var(--mat-sys-surface);
     --hour-height: 60px;
     --time-column-width: 60px;
@@ -45,12 +45,6 @@ mat-sidenav-content {
     border-bottom: 1px solid var(--mat-sys-outline-variant);
     background-color: var(--mat-sys-surface-container);
     box-sizing: border-box;
-}
-
-.group-panel-title {
-    display: flex;
-    align-items: center;
-    gap: 4px;
 }
 
 .side-panel-header h3 { margin: 0; font-size: 1.1rem; font-weight: 500; text-transform: capitalize; }
@@ -141,6 +135,7 @@ mat-sidenav-content {
     justify-content: center;
     opacity: 0;
     transition: opacity 0.2s ease;
+    z-index: 100;
 }
 
 .nav-edge-indicator.left {
@@ -434,16 +429,24 @@ mat-sidenav-content {
     cursor: grabbing;
 }
 
-.event-block.cdk-drag-disabled {
-    cursor: pointer;
+.event-block.is-dragging {
+    opacity: 0.5;
+    border: 1px dashed var(--event-text, var(--mat-sys-primary)) !important;
 }
 
-.event-block.event-phantom {
-    opacity: 0.4; 
-    border: 1px dashed var(--event-text, var(--mat-sys-primary));
-    background-color: var(--event-bg, var(--mat-sys-surface-variant));
-    pointer-events: none;
-    z-index: 2;
+/* --- FANTÔME DU DRAG & DROP CUSTOM --- */
+.event-ghost-preview 
+{
+    position: absolute !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+    z-index: 90 !important;
+    opacity: 0.9 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4) !important;
+    transform: scale(1.02) !important;
+    transition: none !important;
+    cursor: grabbing !important;
+    border-radius: 4px;
 }
 
 .event-content {
@@ -569,26 +572,6 @@ mat-sidenav-content {
 .hour-slot.slot-disabled:hover 
 {
     background-color: var(--mat-sys-surface-container-low);
-}
-
-.cdk-drag-preview {
-    box-sizing: border-box;
-    border-radius: 4px;
-    box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.4);
-    opacity: 0.9;
-    z-index: 1000 !important; 
-}
-
-.cdk-drag-preview .resize-handle {
-    display: none;
-}
-
-.cdk-drag-placeholder {
-    opacity: 0.3;
-}
-
-.cdk-drag-animating {
-    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .current-time-line {
