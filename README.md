@@ -1,7 +1,7 @@
 # Angular mat calandar
 
 Calendrier au style material design de angular.
-Traduction automatique celons la **langue du navigateur.**
+Traduction automatique celons la **langue du navigateur.**.
 
 # Information
 
@@ -20,7 +20,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `daysDisabled`: Liste des jours à désactiver
 - `customMatMenu`: Permet d'utiliser un menu contextuel personnalisé
 - `langue`: Permet de definir une traduction (defaut la langue du naviguateur, si pas de traduction langue anglais)
-
+    - Langue disponible (en, fr, es, it, de, pt)
 ## Attributs boolean
 - `matRippleDisabled`: désactiver l'effet ripple
 - `weekendDisabled`: Masquer le weekend (samedi et dimanche)
