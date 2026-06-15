@@ -50,6 +50,9 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     /** 1 => January, 12 => december */
     mois = model.required<number>({ alias: "month" });
     annee = model.required<number>({ alias: "year" });
+
+    /** Translate language (default navigator or en) */
+    langue = input<string>(typeof navigator !== 'undefined' ? navigator.language : 'en');
     
     useAmPm = input(false, { transform: booleanAttribute });
     readonly = input(false, { transform: booleanAttribute });
@@ -73,33 +76,100 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     protected estPetitEcran = signal(false);
     protected darkModeActif = signal(false);
     protected langueNavigateur = navigator.language || "fr-FR";
-    protected trad = signal({
-        aujourdhui: "Today", 
-        ajouter: "Add new", 
-        modifier: "Edit", 
-        supprimer: "Delete",
-        chargement: "Loading",
-        ariaPrecedent: "Previous month", 
-        ariaSuivant: "Next month",
-        ariaAnneePrecedente: "Previous year", 
-        ariaAnneeSuivante: "Next year",
-        ariaMenuMois: "Change month", 
-        ariaMenuAnnee: "Change year",
-        sansGroupe: "Other events", 
-        titreGroupes: "Themes", 
-        aucunEvent: "No events scheduled this month.",
-        ariaOuvrirMenu: "Open themes menu",
-        ariaFermerMenu: "Close themes menu",
-        ariaEvenement: "Event:",
-        ariaLectureSeule: "Read-only",
-        ariaMasquerGroupe: "Hide",
-        ariaAfficherGroupe: "Show",
-        ariaOuvrirEvent: "Open event",
-        ariaEventSpecial: "Special event:"
-    });
 
     private themeObserver: MutationObserver | null = null;
     private pendingScrollTime = signal<number | null>(null);
+    private readonly DICT_TRADUCTION: Record<string, any> = {
+        'fr': { 
+            aujourdhui: "Aujourd'hui", ajouter: "Ajouter", modifier: "Modifier", supprimer: "Supprimer",
+            chargement: "Chargement en cours",
+            ariaPrecedent: "Mois précédent", ariaSuivant: "Mois suivant",
+            ariaAnneePrecedente: "Année précédente", ariaAnneeSuivante: "Année suivante",
+            ariaMenuMois: "Changer le mois", ariaMenuAnnee: "Changer l'année",
+            sansGroupe: "Autres événements", titreGroupes: "Thèmes", 
+            aucunEvent: "Aucun événement prévu ce mois-ci.",
+            ariaOuvrirMenu: "Ouvrir le menu des thèmes", ariaFermerMenu: "Fermer le menu des thèmes",
+            ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule",
+            ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir l'événement",
+            ariaEventSpecial: "Événement spécial :"
+        },
+        'en': {
+            aujourdhui: "Today", 
+            ajouter: "Add new", 
+            modifier: "Edit", 
+            supprimer: "Delete",
+            chargement: "Loading",
+            ariaPrecedent: "Previous month", 
+            ariaSuivant: "Next month",
+            ariaAnneePrecedente: "Previous year", 
+            ariaAnneeSuivante: "Next year",
+            ariaMenuMois: "Change month", 
+            ariaMenuAnnee: "Change year",
+            sansGroupe: "Other events", 
+            titreGroupes: "Themes", 
+            aucunEvent: "No events scheduled this month.",
+            ariaOuvrirMenu: "Open themes menu",
+            ariaFermerMenu: "Close themes menu",
+            ariaEvenement: "Event:",
+            ariaLectureSeule: "Read-only",
+            ariaMasquerGroupe: "Hide",
+            ariaAfficherGroupe: "Show",
+            ariaOuvrirEvent: "Open event",
+            ariaEventSpecial: "Special event:"
+        },
+        'es': {
+            aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
+            chargement: "Cargando",
+            ariaPrecedent: "Mes anterior", ariaSuivant: "Mes siguiente",
+            ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente",
+            ariaMenuMois: "Cambiar mes", ariaMenuAnnee: "Cambiar año",
+            sansGroupe: "Otros eventos", titreGroupes: "Temas", 
+            aucunEvent: "No hay eventos programados este mes.",
+            ariaOuvrirMenu: "Abrir el menú de temas", ariaFermerMenu: "Cerrar le menú de temas",
+            ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura",
+            ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
+            ariaEventSpecial: "Evento especial:"
+        },
+        'it': { 
+            aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
+            chargement: "Caricamento",
+            ariaPrecedent: "Mese precedente", ariaSuivant: "Mese successivo",
+            ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo",
+            ariaMenuMois: "Cambia mese", ariaMenuAnnee: "Cambia anno",
+            sansGroupe: "Altri eventi", titreGroupes: "Temi", 
+            aucunEvent: "Nessun evento in programma questo mese.",
+            ariaOuvrirMenu: "Apri il menu dei temi", ariaFermerMenu: "Chiudi il menu dei temi",
+            ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura",
+            ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri evento",
+            ariaEventSpecial: "Evento speciale:"
+        },
+        'de': { 
+            aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
+            chargement: "Wird geladen",
+            ariaPrecedent: "Vorheriger Monat", ariaSuivant: "Nächster Monat",
+            ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr",
+            ariaMenuMois: "Monat ändern", ariaMenuAnnee: "Jahr ändern",
+            sansGroupe: "Andere Ereignisse", titreGroupes: "Themen", 
+            aucunEvent: "Diesen Monat sind keine Ereignisse geplant.",
+            ariaOuvrirMenu: "Themenmenü öffnen", ariaFermerMenu: "Themenmenü schließen",
+            ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt",
+            ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Ereignis öffnen",
+            ariaEventSpecial: "Besonderes Ereignis:"
+        },
+        'pt': { 
+            aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
+            chargement: "Carregando",
+            ariaPrecedent: "Mês anterior", ariaSuivant: "Mês seguinte",
+            ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte",
+            ariaMenuMois: "Mudar mês", ariaMenuAnnee: "Mudar ano",
+            sansGroupe: "Outros eventos", titreGroupes: "Temas", 
+            aucunEvent: "Nenhum evento programado para este mês.",
+            ariaOuvrirMenu: "Abrir o menu de temas", ariaFermerMenu: "Fechar o menu de temas",
+            ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura",
+            ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
+            ariaEventSpecial: "Evento especial:"
+        }
+    };
 
     constructor() 
     {
@@ -129,12 +199,18 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         });
     }
 
+    protected trad = computed(() => 
+    {
+        const codeLangue = this.langue().substring(0, 2).toLowerCase();
+        return this.DICT_TRADUCTION[codeLangue] || this.DICT_TRADUCTION['en'];
+    });
+
     protected datePickerValue = computed(() => new Date(this.annee(), this.mois() - 1, 1));
 
     protected nomMois = computed(() => 
     {
         const DATE = new Date(this.annee(), this.mois() - 1, 1);
-        return new Intl.DateTimeFormat(this.langueNavigateur, { month: 'long' }).format(DATE);
+        return new Intl.DateTimeFormat(this.langue(), { month: 'long' }).format(DATE);
     });
 
     protected displayEvents = computed(() => 
@@ -357,79 +433,6 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
 
         this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
-        const LANGUE = this.langueNavigateur.split('-')[0];
-        
-        const DICT_TRADUCTION: Record<string, any> = {
-            'fr': { 
-                aujourdhui: "Aujourd'hui", ajouter: "Ajouter", modifier: "Modifier", supprimer: "Supprimer",
-                chargement: "Chargement en cours",
-                ariaPrecedent: "Mois précédent", ariaSuivant: "Mois suivant",
-                ariaAnneePrecedente: "Année précédente", ariaAnneeSuivante: "Année suivante",
-                ariaMenuMois: "Changer le mois", ariaMenuAnnee: "Changer l'année",
-                sansGroupe: "Autres événements", titreGroupes: "Thèmes", 
-                aucunEvent: "Aucun événement prévu ce mois-ci.",
-                ariaOuvrirMenu: "Ouvrir le menu des thèmes", ariaFermerMenu: "Fermer le menu des thèmes",
-                ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule",
-                ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir l'événement",
-                ariaEventSpecial: "Événement spécial :"
-            },
-            'es': {
-                aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
-                chargement: "Cargando",
-                ariaPrecedent: "Mes anterior", ariaSuivant: "Mes siguiente",
-                ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente",
-                ariaMenuMois: "Cambiar mes", ariaMenuAnnee: "Cambiar año",
-                sansGroupe: "Otros eventos", titreGroupes: "Temas", 
-                aucunEvent: "No hay eventos programados este mes.",
-                ariaOuvrirMenu: "Abrir el menú de temas", ariaFermerMenu: "Cerrar le menú de temas",
-                ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura",
-                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
-                ariaEventSpecial: "Evento especial:"
-            },
-            'it': { 
-                aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
-                chargement: "Caricamento",
-                ariaPrecedent: "Mese precedente", ariaSuivant: "Mese successivo",
-                ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo",
-                ariaMenuMois: "Cambia mese", ariaMenuAnnee: "Cambia anno",
-                sansGroupe: "Altri eventi", titreGroupes: "Temi", 
-                aucunEvent: "Nessun evento in programma questo mese.",
-                ariaOuvrirMenu: "Apri il menu dei temi", ariaFermerMenu: "Chiudi il menu dei temi",
-                ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura",
-                ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri evento",
-                ariaEventSpecial: "Evento speciale:"
-            },
-            'de': { 
-                aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
-                chargement: "Wird geladen",
-                ariaPrecedent: "Vorheriger Monat", ariaSuivant: "Nächster Monat",
-                ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr",
-                ariaMenuMois: "Monat ändern", ariaMenuAnnee: "Jahr ändern",
-                sansGroupe: "Andere Ereignisse", titreGroupes: "Themen", 
-                aucunEvent: "Diesen Monat sind keine Ereignisse geplant.",
-                ariaOuvrirMenu: "Themenmenü öffnen", ariaFermerMenu: "Themenmenü schließen",
-                ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt",
-                ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Ereignis öffnen",
-                ariaEventSpecial: "Besonderes Ereignis:"
-            },
-            'pt': { 
-                aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
-                chargement: "Carregando",
-                ariaPrecedent: "Mês anterior", ariaSuivant: "Mês seguinte",
-                ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte",
-                ariaMenuMois: "Mudar mês", ariaMenuAnnee: "Mudar ano",
-                sansGroupe: "Outros eventos", titreGroupes: "Temas", 
-                aucunEvent: "Nenhum evento programado para este mês.",
-                ariaOuvrirMenu: "Abrir o menu de temas", ariaFermerMenu: "Fechar o menu de temas",
-                ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura",
-                ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
-                ariaEventSpecial: "Evento especial:"
-            }
-        };
-
-        if(DICT_TRADUCTION[LANGUE])
-            this.trad.set(DICT_TRADUCTION[LANGUE]);
     }
 
     ngOnDestroy(): void 
@@ -545,7 +548,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         if (!_date) 
             return '';
         
-        return new Intl.DateTimeFormat(this.langueNavigateur, { day: '2-digit', month: 'short' }).format(_date);
+        return new Intl.DateTimeFormat(this.langue(), { day: '2-digit', month: 'short' }).format(_date);
     }
 
     protected ClickEvent(_event: EventCalandar): void 
@@ -648,12 +651,12 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
 
     protected FormatDateAria(date: Date): string 
     {
-        return date.toLocaleDateString(this.langueNavigateur, { weekday: 'long', day: 'numeric', month: 'long' });
+        return date.toLocaleDateString(this.langue(), { weekday: 'long', day: 'numeric', month: 'long' });
     }
 
     protected FormatTime(_date: Date): string 
     {
-        return _date.toLocaleTimeString(this.langueNavigateur, { hour: '2-digit', minute: '2-digit', hour12: this.useAmPm() });
+        return _date.toLocaleTimeString(this.langue(), { hour: '2-digit', minute: '2-digit', hour12: this.useAmPm() });
     }
 
     protected FormaterJourMois(_date: Date): string 
@@ -661,7 +664,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         // Septembre à decembre
         const formatMois = _date.getMonth() >= 8 ? 'short' : 'long';
 
-        return _date.toLocaleDateString(this.langueNavigateur, { 
+        return _date.toLocaleDateString(this.langue(), { 
             day: 'numeric', 
             month: formatMois 
         });
