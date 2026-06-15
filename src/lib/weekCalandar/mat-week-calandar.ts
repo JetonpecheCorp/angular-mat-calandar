@@ -816,7 +816,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         if (this.readonly() || ev.readonly) 
             return;
 
-        // Ignore le clic droit
         if (_e instanceof MouseEvent && _e.button !== 0) 
             return; 
 
@@ -826,19 +825,12 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         let clientXDebut = _e instanceof MouseEvent ? _e.clientX : _e.touches[0].clientX;
         let clientYDebut = _e instanceof MouseEvent ? _e.clientY : _e.touches[0].clientY;
 
-        const targetElement = (_e.target as HTMLElement).closest('.event-block') as HTMLElement;
-        if (!targetElement) return;
-
-        const rect = targetElement.getBoundingClientRect();
-        const offsetX = clientXDebut - rect.left;
-        const offsetY = clientYDebut - rect.top;
-
+        // On détecte la colonne d'origine
         let elementsDebut = document.elementsFromPoint(clientXDebut, clientYDebut);
         let colOrigine = elementsDebut.find(el => el.classList.contains('day-column')) as HTMLElement | undefined;
 
         if (!colOrigine || !colOrigine.dataset['date']) return;
 
-        // Calcul du temps cliqué au départ
         const colRectDebut = colOrigine.getBoundingClientRect();
         let yDebutStr = clientYDebut - colRectDebut.top;
         if (yDebutStr < 0) yDebutStr = 0;
@@ -852,12 +844,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         let dateTrouvee = false;
         let finalStartDate = new Date(ev.startDate);
         let finalEndDate = new Date(ev.endDate);
-        
-        let elementFantome: HTMLElement | null = null;
-
-        const wrapperClass = this.el.nativeElement.querySelector('.week-calendar-container') ? '.week-calendar-container' : '.calendar-wrapper';
-        const wrapper = this.el.nativeElement.querySelector(wrapperClass) as HTMLElement;
-        const wrapperRect = wrapper.getBoundingClientRect();
 
         const onMouseMove = (_moveEvent: MouseEvent | TouchEvent) => 
         {
@@ -870,26 +856,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             if (!aBouge && (Math.abs(clientX - clientXDebut) > 5 || Math.abs(clientY - clientYDebut) > 5)) 
             {
                 aBouge = true;
-
-                elementFantome = targetElement.cloneNode(true) as HTMLElement;
-                elementFantome.classList.add('event-ghost-preview');
-                elementFantome.style.width = rect.width + 'px';
-                elementFantome.style.height = rect.height + 'px';
-                
-                wrapper.appendChild(elementFantome);
             }
 
             if (aBouge) 
             {
-                if (elementFantome) 
-                {
-                    let localX = clientX - wrapperRect.left;
-                    let localY = clientY - wrapperRect.top;
-
-                    elementFantome.style.left = (localX - offsetX) + 'px';
-                    elementFantome.style.top = (localY - offsetY) + 'px';
-                }
-
                 this.pointerX = clientX;
                 this.pointerY = clientY;
                 this.DemarrerAutoScrollContinu();
@@ -912,7 +882,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                     let dateSurvolee = new Date(colTimestamp);
                     dateSurvolee.setHours(Math.floor(totalMins / 60), totalMins % 60, 0, 0);
 
-                    // On applique le décalage calculé à l'événement
                     const diffMs = dateSurvolee.getTime() - dateOrigine.getTime();
                     let nouvelleDateDebut = new Date(ev.startDate.getTime() + diffMs);
                     let nouvelleDateFin = new Date(ev.endDate.getTime() + diffMs);
@@ -924,7 +893,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                     finalEndDate = nouvelleDateFin;
                     dateTrouvee = true;
 
-                    // Mise à jour magique de l'aperçu
+                    // 🆕 L'aperçu met à jour l'événement sur la grille (heure incluse !)
                     this.previewResize.set({
                         eventId: ev.id,
                         startDate: finalStartDate,
@@ -941,16 +910,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
 
-            if (elementFantome) {
-                elementFantome.remove();
-                elementFantome = null;
-            }
-
             this.previewResize.set(null);
             this.NettoyerNavigationBulle();
             this.ArreterAutoScroll();
 
-            // Validation de la nouvelle date
             if (aBouge && dateTrouvee && (finalStartDate.getTime() != ev.startDate.getTime() || finalEndDate.getTime() != ev.endDate.getTime())) 
             {
                 this.eventUpdated.emit({

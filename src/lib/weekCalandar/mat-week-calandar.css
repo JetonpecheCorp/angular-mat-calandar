@@ -429,24 +429,27 @@ mat-sidenav-content {
     cursor: grabbing;
 }
 
-.event-block.is-dragging {
-    opacity: 0.5;
-    border: 1px dashed var(--event-text, var(--mat-sys-primary)) !important;
+.event-block.is-dragging 
+{
+    opacity: 0.95;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    transform: scale(1.02);
+    z-index: 100 !important;
+    cursor: grabbing !important;
+    border: 1px solid var(--event-text, var(--mat-sys-primary)) !important;
+    pointer-events: none !important;
 }
 
-/* --- FANTÔME DU DRAG & DROP CUSTOM --- */
-.event-ghost-preview 
+.event-block.is-dragging .event-time
 {
-    position: absolute !important;
-    margin: 0 !important;
-    pointer-events: none !important;
-    z-index: 90 !important;
-    opacity: 0.9 !important;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4) !important;
-    transform: scale(1.02) !important;
-    transition: none !important;
-    cursor: grabbing !important;
+    background-color: var(--mat-sys-surface);
+    color: var(--event-text, var(--mat-sys-primary));
+    padding: 2px 6px;
     border-radius: 4px;
+    font-weight: 900;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: inline-block;
+    margin-top: 2px;
 }
 
 .event-content {
