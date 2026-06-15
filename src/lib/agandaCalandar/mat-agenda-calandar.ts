@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EventCalandar } from '../../models/EventCalandar';
 import { EventGroup } from '../../models/EventGroup';
 import { DateSpecialEvent } from '../../models/DateSpecialEvent';
+import { DateCalandarDisabled } from '../../models/DateCalandarDisabled';
 import { SidebarConfigCalandar } from '../../models/SidebarConfigCalandar';
 import { ThemeConfigCalandar } from '../../models/ThemeConfigCalandar';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -39,6 +40,9 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     specialEvents = input<DateSpecialEvent[]>([]);
     groups = input<EventGroup[]>([]);
     customMatMenu = input<MatMenu | null>(null);
+    monthsDisabled = input<number[]>([]);
+    daysDisabled = input<Date[]>();
+    intervalsDisabled = input<DateCalandarDisabled[]>([]);
 
     /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
@@ -53,6 +57,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     loading = input(false, { transform: booleanAttribute });
     showBtnAdd = input(false, { transform: booleanAttribute });
     hideNavYearBtn = input(false, { transform: booleanAttribute });
+    matRippleDisabled = input(false, { transform: booleanAttribute });
+    weekendDisabled = input(false, { transform: booleanAttribute });
     
     themeConfig = input<ThemeConfigCalandar>();
     sidebarConfig = input<SidebarConfigCalandar>();
@@ -153,7 +159,13 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         const specialEvs = this.specialEvents();
         const annee = this.annee();
         const mois = this.mois(); 
-        const joursDesactives = this.daysOfWeekDisabled();
+        const joursDesactives = this.joursAExclure();
+
+        const moisDesactives = this.monthsDisabled();
+        const joursSpecifiquesDesactives = this.daysDisabled() || [];
+
+        if (moisDesactives.includes(mois)) 
+            return [];
 
         const debutMois = new Date(annee, mois - 1, 1).getTime();
         const finMois = new Date(annee, mois, 0, 23, 59, 59).getTime();
@@ -178,16 +190,68 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
             while (dateParcours.getTime() <= dateFinVisible.getTime()) 
             {
                 const t = dateParcours.getTime();
-                const dayOfWeek = dateParcours.getDay(); // 🆕 Identifie le jour de la semaine (0-6)
+                const dateCourante = new Date(t);
+                const dayOfWeek = dateCourante.getDay();
 
-                // 🆕 N'ajoute la journée que si elle ne fait pas partie des jours désactivés
-                if (!joursDesactives.includes(dayOfWeek)) 
+                const estBloqueParJourSemaine = joursDesactives.includes(dayOfWeek);
+                const estBloqueParDateSpecifique = joursSpecifiquesDesactives.some(d => this.EstMemeJour(d, dateCourante));
+
+                const estBloqueParIntervalle = this.intervalsDisabled().some(inter => 
+                {
+                    const startM = inter.start.month;
+                    const startD = inter.start.day;
+                    const startY = inter.start.year;
+
+                    const endM = inter.end.month;
+                    const endD = inter.end.day;
+                    const endY = inter.end.year;
+
+                    const M = dateCourante.getMonth() + 1;
+                    const D = dateCourante.getDate();
+                    const Y = dateCourante.getFullYear();
+
+                    // CAS 1 : C'est un événement ponctuel (les deux années sont définies)
+                    if (startY != undefined && startY != null && endY != undefined && endY != null) 
+                    {
+                        const tDate = new Date(Y, M - 1, D).getTime();
+                        const tStart = new Date(startY, startM - 1, startD).getTime();
+                        const tEnd = new Date(endY, endM - 1, endD).getTime();
+                        
+                        return tDate >= tStart && tDate <= tEnd;
+                    }
+
+                    // CAS 2 : C'est une période récurrente (ex: été, vacances scolaires)
+                    const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
+                    let estDansLaPeriode = false;
+
+                    if (isNormalInterval)
+                        estDansLaPeriode = (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
+                    else
+                        estDansLaPeriode = (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
+
+                    if (estDansLaPeriode) 
+                    {
+                        // Si l'intervalle a une année de début/fin limitée
+                        if (startY !== undefined && Y < startY) 
+                            return false;
+
+                        if (endY !== undefined && Y > endY) 
+                            return false;
+
+                        return true;
+                    }
+
+                    return false;
+                });
+
+                if (!estBloqueParJourSemaine && !estBloqueParDateSpecifique && !estBloqueParIntervalle) 
                 {
                     if (!groupsMap.has(t)) {
                         groupsMap.set(t, { dateObj: new Date(t), events: [], specialEvents: [] });
                     }
                     groupsMap.get(t)!.events.push(ev);
                 }
+
                 dateParcours.setDate(dateParcours.getDate() + 1);
             }
         });
@@ -264,6 +328,19 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
             resultat.push({ group: null, events: sansGroupe });
 
         return resultat;
+    });
+
+    private joursAExclure = computed(() => 
+    {
+        const A_MASQUER = new Set(this.daysOfWeekDisabled());
+
+        if (this.weekendDisabled())
+        {
+            A_MASQUER.add(0);
+            A_MASQUER.add(6);
+        }
+
+        return Array.from(A_MASQUER);
     });
 
     ngOnInit(): void
@@ -365,8 +442,73 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     {
         if (!date) return true;
         
-        return !this.daysOfWeekDisabled().includes(date.getDay());
+        return !this.EstBloque(date);
     };
+
+    protected EstBloque(date: Date): boolean 
+    {
+        const dayOfWeek = date.getDay();
+        const month = date.getMonth() + 1;
+
+        // 1. Check Jours désactivés (via signal combiné)
+        if (this.joursAExclure().includes(dayOfWeek)) 
+            return true;
+
+        // 2. Check Mois désactivés
+        if (this.monthsDisabled().includes(month)) 
+            return true;
+
+        // 3. Check Dates spécifiques désactivées
+        if (this.daysDisabled()?.some(d => this.EstMemeJour(d, date))) 
+            return true;
+
+        const estDansIntervalle = this.intervalsDisabled().some(inter => 
+        {
+            const startM = inter.start.month;
+            const startD = inter.start.day;
+            const startY = inter.start.year;
+
+            const endM = inter.end.month;
+            const endD = inter.end.day;
+            const endY = inter.end.year;
+
+            const M = date.getMonth() + 1;
+            const D = date.getDate();
+            const Y = date.getFullYear();
+
+            // CAS 1 : C'est un événement ponctuel (les deux années sont définies)
+            if (startY != undefined && startY != null && endY != undefined && endY != null) 
+            {
+                const tDate = new Date(Y, M - 1, D).getTime();
+                const tStart = new Date(startY, startM - 1, startD).getTime();
+                const tEnd = new Date(endY, endM - 1, endD).getTime();
+                
+                return tDate >= tStart && tDate <= tEnd;
+            }
+
+            // CAS 2 : C'est une période récurrente (ex: été, vacances scolaires)
+            const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
+            let estDansLaPeriode = false;
+
+            if (isNormalInterval)
+                estDansLaPeriode = (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
+            else
+                estDansLaPeriode = (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
+
+            if (estDansLaPeriode) 
+            {
+                // Si l'intervalle a une année de début/fin limitée
+                if (startY !== undefined && Y < startY) return false;
+                if (endY !== undefined && Y > endY) return false;
+
+                return true;
+            }
+
+            return false;
+        });
+
+        return estDansIntervalle;
+    }
 
     protected ScrollHorizontal(event: WheelEvent): void 
     {
@@ -544,6 +686,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     {
         const heureDebut = this.GetStartDisplay(ev, dateGroupe);
         const heureFin = this.GetEndDisplay(ev, dateGroupe);
+        
         const lectureSeule = (this.readonly() || ev.readonly) ? `, ${this.trad().ariaLectureSeule}` : '';
         
         return `${this.trad().ariaEvenement} ${ev.titre}, ${heureDebut} ${heureFin}${lectureSeule}`;

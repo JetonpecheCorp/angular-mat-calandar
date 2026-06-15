@@ -307,6 +307,7 @@
 
 /* --- CARTE D'ÉVÉNEMENT --- */
 .agenda-event-card {
+    position: relative;
     display: flex;
     flex-direction: row;
     background-color: var(--mat-sys-surface);
@@ -317,6 +318,10 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     min-height: 60px;
     border-left: 6px solid var(--event-bg, var(--mat-sys-primary));
+}
+
+.agenda-event-card.is-readonly {
+    cursor: pointer;
 }
 
 .agenda-event-card:focus-visible 
@@ -330,10 +335,6 @@
 .agenda-event-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.agenda-event-card.is-readonly {
-    opacity: 0.75;
 }
 
 .time-start {

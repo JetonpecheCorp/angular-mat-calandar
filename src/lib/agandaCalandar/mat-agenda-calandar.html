@@ -138,7 +138,9 @@
                             
                             <div class="agenda-day-header">
                                 <div class="day-dot" aria-hidden="true"></div>
-                                <h2 class="day-title">{{ FormatDateAria(dayGroup.dateObj) }}</h2>
+                                <h2 class="day-title" [attr.aria-label]="FormatDateAria(dayGroup.dateObj)">
+                                    {{ FormatDateAria(dayGroup.dateObj) }}
+                                </h2>
 
                                 @if (dayGroup.specialEvents && dayGroup.specialEvents.length > 0) 
                                 {
@@ -157,8 +159,10 @@
                                 @for (ev of dayGroup.events; track ev.id) 
                                 {    
                                     <div class="agenda-event-card"
-                                        role="button" 
+                                        matRipple
+                                        role="button"
                                         tabindex="0"
+                                        [matRippleDisabled]="matRippleDisabled()"
                                         [attr.aria-label]="GetEventAriaLabel(ev, dayGroup.dateObj)"
                                         (keydown)="OnEventKeydown($event, ev)"
                                         [class.is-readonly]="readonly() || ev.readonly"
