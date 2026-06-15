@@ -27,7 +27,7 @@
                                     (click)="$event.stopPropagation()"
                                     [checked]="!EstGroupeMasque(item.group?.id || null)"
                                     (change)="BasculerVisibiliteGroupe(item.group?.id || null)"
-                                    [attr.aria-label]="(EstGroupeMasque(item.group?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.group ? item.group.id : trad().sansGroupe)">
+                                    [aria-label]="(EstGroupeMasque(item.group?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.group ? item.group.id : trad().sansGroupe)">
                                 </mat-checkbox>
 
                                     <div class="group-title" 
@@ -104,17 +104,21 @@
                         </button>
                         
                         <div class="title-selector">
-                            <span class="month-title" 
+                            <span #btnMois 
+                                    class="month-title" 
                                     role="button" 
                                     tabindex="0"
+                                    (keydown.enter)="btnMois.click()"
                                     [matMenuTriggerFor]="menuMois" 
                                     [attr.aria-label]="trad().ariaMenuMois">
                                 {{ nomMois() }}
                             </span>
 
-                            <span class="year-title" 
+                            <span #btnAnnee
+                                    class="year-title" 
                                     role="button" 
                                     tabindex="0"
+                                    (keydown.enter)="btnAnnee.click()"
                                     [matMenuTriggerFor]="menuAnnee" 
                                     (menuOpened)="ScrollVersAnneeActive()" 
                                     [attr.aria-label]="trad().ariaMenuAnnee"> 
@@ -164,7 +168,7 @@
                 }
             </div>
 
-            <div cdkDropListGroup class="calendar-body">
+            <div class="calendar-body">
 
                 @if (loading()) 
                 {
@@ -184,14 +188,12 @@
                                         role="button"
                                         tabindex="0"
                                         [attr.aria-disabled]="element.estBloquer"
-                                        [attr.aria-label]="element.estBloquer ? 
+                                        [attr.aria-label]="(element.estAujourdhui ? trad().aujourdhui + ', ' : '') + (element.estBloquer ? 
                                             (FormatDateAria(element.date) + ', ' + trad().ariaBloque) : 
-                                            (trad().ariaCreer + ' ' + FormatDateAria(element.date) + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (element.listeEvent.length > 0 ? trad().aideDescendre : '') + trad().aideNavMois)"                                        (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer, element.listeEvent)"
+                                            (trad().ariaCreer + ' ' + FormatDateAria(element.date) + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (element.listeEvent.length > 0 ? trad().aideDescendre : '') + trad().aideNavMois))"
                                         matRipple
-                                        cdkDropList
                                         [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
-                                        [cdkDropListData]="element"
-                                        (cdkDropListDropped)="OnEventDropped($event)"
+                                        (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer, element.listeEvent)"
                                         (mousedown)="OnMouseDownCreation($event, element.date, element.estBloquer)"
                                         (touchstart)="OnMouseDownCreation($event, element.date, element.estBloquer)"
                                         [attr.data-date]="element.date.getTime()"
@@ -234,7 +236,7 @@
                             }
                         </div>
 
-                        <div cdkDropList cdkDropListSortingDisabled class="events-foreground-layer">
+                        <div class="events-foreground-layer">
                             @for (pos of semaine.eventsPositionnes; track pos.event.id) 
                             {
                                 @if (pos.ligne < maxLignesVisibles())
@@ -247,27 +249,22 @@
                                             ((readonly() || pos.event.readonly) ? ', ' + trad().ariaLectureSeule : 
                                             (previewResize()?.eventId === pos.event.id ? trad().aideEventModif : trad().aideEventNormal)) + 
                                             trad().aideNavMois"                                        (keydown)="OnEventKeydown($event, pos.event)"
+                                        (keydown)="OnEventKeydown($event, pos.event)"
                                         (blur)="OnEventBlur(pos.event)"
-                                        cdkDrag
-                                        [cdkDragData]="pos.event"
-                                        [cdkDragDisabled]="readonly() || pos.event.readonly"
+                                        
+                                        (mousedown)="OnMoveStart($event, pos.event)"
+                                        (touchstart)="OnMoveStart($event, pos.event)"
+                                        [class.is-dragging]="previewResize()?.eventId === pos.event.id"
+                                        
                                         [style.--pos-start]="pos.jourDebutIndex"
                                         [style.--pos-duree]="pos.dureeJours"
                                         [style.--pos-ligne]="pos.ligne"
                                         [style.--nb-cols]="nbColonnes()"
-                                        
-                                        (cdkDragStarted)="OnDragStarted()" 
-                                        (cdkDragEnded)="OnDragEnded()"
-                                        (cdkDragMoved)="OnEventDragMoved($event)"
                                         [title]="pos.event.description || pos.event.titre" 
                                         [class.is-hovered]="hoveredEvent() == pos.event"
                                         [ngStyle]="GetEventStyle(pos.event)"
                                         (mouseenter)="overrideRipple.set(true); hoveredEvent.set(pos.event)" 
                                         (mouseleave)="overrideRipple.set(false); hoveredEvent.set(null)"
-                                        (touchstart)="overrideRipple.set(true); hoveredEvent.set(pos.event)"
-                                        (touchend)="overrideRipple.set(false); hoveredEvent.set(null)"
-                                        (click)="$event.stopPropagation(); ClickEvent(pos.event)"
-
                                         [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
                                         [matContextMenuTriggerData]="{ eventCal: pos.event }">
                                         
@@ -306,6 +303,7 @@
     {
         <button mat-menu-item 
                 (click)="ChangerMois(element.id)"
+                [attr.aria-current]="element.id == mois() ? 'true' : null" 
                 [class.active-item]="element.id === mois()"
                 class="capitalize">
             {{ element.nom }}
@@ -318,13 +316,15 @@
 </mat-menu>
 
 <mat-menu #menuAnnee="matMenu">
-    <div class="year-grid" (click)="$event.stopPropagation()">
+    <div class="year-grid" (click)="$event.stopPropagation()" (keydown)="NaviguationClavierMatMenuAnnee($event)">
         @for (element of listeAnnee(); track element) 
         {
             <button [matButton]="element == annee() ? 'filled' : 'text'"
-                    class="year-chip" 
-                    [class.active-year]="element == annee()"
-                    (click)="ChangerAnnee(element)">
+                        class="year-chip" 
+                        role="menuitem" 
+                        [attr.aria-current]="element == annee() ? 'true' : null" 
+                        [class.active-year]="element == annee()"
+                        (click)="ChangerAnnee(element)">
                 {{ element }}
             </button>
         }
