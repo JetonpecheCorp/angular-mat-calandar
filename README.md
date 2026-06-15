@@ -39,6 +39,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `year`: Année du mois à afficher (REQUIS)
 
 ## Events
+- `contextClicked`: Event click mat menu contextuel par defaut
 - `eventClickJour`: Event click sur le jour
 - `eventClickEvent`: Event click sur un évènement
 - `eventCreated`: Event drag pour créer un event
@@ -79,6 +80,7 @@ Traduction automatique celons la **langue du navigateur.**
 - `hourMax`: Heure de fin du calandrier (0 - 23)
 
 ## Events
+- `contextClicked`: Event click mat menu contextuel par defaut
 - `timeSlotClicked`: Event click sur une heure du calendrier
 - `eventClicked`: Event click sur un évènement
 - `dayClicked`: Event click sur un jour, liste les events inclus dans le jour
@@ -110,6 +112,17 @@ Traduction automatique celons la **langue du navigateur.**
 
 <jp-mat-week-calandar [dateReference]="date" useAmPm hourMin="9" />
 ```
+
+# Agenda
+
+## Attributs
+- `month`: mois à afficher (REQUIS) (1 - 12)
+- `year`: Année du mois à afficher (REQUIS)
+
+## Events
+- `eventClicked`: Event click sur un évènement
+- `contextClicked`: Event click mat menu contextuel par defaut
+- `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
 
 # Menu contextuel et directive
 
