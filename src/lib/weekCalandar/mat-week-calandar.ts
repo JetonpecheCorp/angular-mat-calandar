@@ -1,4 +1,4 @@
-import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, HostListener, numberAttribute, output, ChangeDetectionStrategy, inject, ElementRef } from '@angular/core';
+import { Component, computed, signal, OnInit, input, booleanAttribute, model, OnDestroy, HostListener, numberAttribute, output, ChangeDetectionStrategy, inject, ElementRef, effect } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,6 +14,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { SidebarConfigCalandar } from '../../models/SidebarConfigCalandar';
 import { NgStyle } from '@angular/common';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideNativeDateAdapter, DateAdapter } from '@angular/material/core';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -27,9 +29,10 @@ interface PositionedEvent extends EventCalandar
 @Component({
     selector: 'jp-mat-week-calandar',
     standalone: true,
-    imports: [MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, MatRippleModule, MatMenuModule, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],  
+    imports: [MatDatepickerModule, MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, MatRippleModule, MatMenuModule, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],  
     templateUrl: './mat-week-calandar.html',
     styleUrls: ['./mat-week-calandar.css'],
+    providers: [provideNativeDateAdapter()],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MatWeekCalendar implements OnInit, OnDestroy
@@ -84,6 +87,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     private themeObserver: MutationObserver | null = null;
     private el = inject(ElementRef);
+    private dateAdapter = inject(DateAdapter);
     private timerInterval: any;
     private heureActuelle = signal(new Date());
     private dernierTouchTime = 0;
@@ -203,6 +207,14 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected zoneNavigationActive = signal<'left' | 'right' | null>(null);
     protected bulleSurvolee = signal<'left' | 'right' | null>(null);
     protected slotRetourFocus = signal<string | null>(null);
+
+    constructor() 
+    {
+        effect(() => {
+            if (this.langue)
+                this.dateAdapter.setLocale(this.langue());
+        });
+    }
 
     protected trad = computed(() => 
     {
@@ -334,44 +346,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         return liste;
     });
 
-    protected listeToutesSemaines = computed(() => 
-    {
-        const ref = this.dateReference();
-        const ANNEE = ref.getFullYear();
-        const weeks = [];
-        
-        let d = new Date(ANNEE, 0, 1);
-        const targetDay = this.mondayFirst() ? 1 : 0;
-        
-        while (d.getDay() != targetDay) 
-        {
-            d.setDate(d.getDate() - 1);
-        }
-
-        for (let i = 0; i < 53; i++) 
-        {
-            const start = new Date(d);
-            start.setDate(d.getDate() + (i * 7));
-            
-            if (i > 0 && start.getFullYear() > ANNEE && start.getMonth() > 0) 
-                break;
-
-            // On calcule le dimanche (ou samedi) de la même semaine
-            const end = new Date(start);
-            end.setDate(start.getDate() + 6);
-
-            weeks.push({
-                numero: this.RecupererNumeroSemaine(start),
-                date: start,
-                // On prépare les deux labels
-                labelDebut: start.toLocaleDateString(this.langue(), { day: '2-digit', month: 'short' }),
-                labelFin: end.toLocaleDateString(this.langue(), { day: '2-digit', month: 'short' })
-            });
-        }
-
-        return weeks;
-    });
-
     protected positionBarreRouge = computed(() => 
     {
         const maintenant = this.heureActuelle();
@@ -460,6 +434,12 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         if (this.themeObserver) 
             this.themeObserver.disconnect();
+    }
+
+    protected OnDateSelectionnee(event: any): void 
+    {
+        if (event.value) 
+            this.dateReference.set(event.value);
     }
 
     protected EstJourPasse(jourDate: Date, heureLabel: string): boolean 
@@ -645,12 +625,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     { 
         this.dateReference.set(new Date()); 
     }
-
-    protected ChoisirSemaine(_date: Date): void
-    {
-        this.dateReference.set(_date);
-    }
-
+    
     protected ClickTimeSlot(_dateJour: Date, _heureLabel: string): void 
     {
         let dateDebut = new Date(_dateJour);
@@ -1650,24 +1625,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         const langue = this.langue() || 'fr-FR'; 
         return date.toLocaleDateString(langue, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    }
-
-    protected ScrollVersSemaineActive(): void 
-    {
-        setTimeout(() => 
-        {
-            const boutonActif = document.querySelector('.menu-scroll-container .active-week') as HTMLElement;
-            
-            if (boutonActif) 
-            {
-                boutonActif.scrollIntoView({
-                    behavior: "instant",
-                    block: "center"
-                });
-                
-                boutonActif.focus(); 
-            }
-        }, 50);
     }
 
     private VerifierTheme(): void 

@@ -94,16 +94,28 @@
                                 <mat-icon aria-hidden="true">chevron_left</mat-icon>
                             </button>
 
-                            <span #btnPeriode
-                                    class="period-title" 
-                                    role="button" 
-                                    tabindex="0" 
-                                    [attr.aria-label]="trad().ariaMenu"
-                                    [matMenuTriggerFor]="menuSemaine"
-                                    (menuOpened)="ScrollVersSemaineActive()"
-                                    (keydown.enter)="btnPeriode.click()">
-                                {{ titrePeriode() }}
-                            </span>
+                            <div style="position: relative; display: inline-flex; justify-content: center; align-items: center;">
+    
+                                <input matInput 
+                                        [matDatepicker]="picker" 
+                                        [value]="dateReference()" 
+                                        (dateChange)="OnDateSelectionnee($event)"
+                                        style="width: 0; height: 0; border: none; padding: 0; margin: 0; position: absolute; opacity: 0; pointer-events: none;"
+                                        tabindex="-1"
+                                        aria-hidden="true">
+                                
+                                <span #btnPeriode
+                                        class="period-title" 
+                                        role="button" 
+                                        tabindex="0" 
+                                        [attr.aria-label]="trad().ariaMenu"
+                                        (click)="picker.open()"
+                                        (keydown.enter)="picker.open()">
+                                    {{ titrePeriode() }}
+                                </span>
+                                
+                                <mat-datepicker #picker [restoreFocus]="false" [touchUi]="estPetitEcran()"></mat-datepicker>
+                            </div>
                             
                             <button mat-icon-button (click)="Suivant()" [attr.aria-label]="trad().ariaSuivant">
                                 <mat-icon aria-hidden="true">chevron_right</mat-icon>
@@ -275,23 +287,6 @@
         </div>
     </mat-sidenav-content>
 </mat-sidenav-container>
-
-<mat-menu #menuSemaine="matMenu">
-    <div class="menu-scroll-container" >
-        @for (w of listeToutesSemaines(); track w.date.getTime()) 
-        {
-            <button mat-menu-item 
-                        (click)="ChoisirSemaine(w.date)" 
-                        [attr.aria-current]="w.numero == numeroSemaine() ? 'true' : null"
-                        [class.active-week]="w.numero == numeroSemaine()">
-                <div class="week-row" [class.current-week-tag]="w.numero == numeroSemaine()">
-                    <span class="week-label">{{ trad().semaine }}{{ w.numero }} —</span>
-                    <span>{{ w.labelDebut }} au {{ w.labelFin }}</span>
-                </div>
-            </button>
-        }
-    </div>
-</mat-menu>
 
 <mat-menu #defaultMenu="matMenu">
     <ng-template matMenuContent let-ev="eventCal">

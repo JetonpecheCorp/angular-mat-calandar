@@ -211,34 +211,6 @@ mat-sidenav-content {
     box-sizing: border-box;
 }
 
-/* MENU SEMAINE */
-.menu-scroll-container {
-    max-height: 400px;
-    min-width: 280px;
-    overflow-y: auto;
-}
-
-.week-label {
-    font-weight: bold;
-}
-
-.week-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 16px;
-    width: 100%;
-    box-sizing: border-box;
-    transition: all 0.2s ease;
-}
-
-.current-week-tag {
-    background-color: var(--mat-sys-primary-container);
-    color: var(--mat-sys-on-primary-container);
-    border-radius: 20px;
-    font-weight: 700;
-}
-
 /* --- ÉVÉNEMENTS SPÉCIAUX (VACANCES / FÉRIÉS) --- */
 .special-events-container {
     display: flex;
