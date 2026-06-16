@@ -74,7 +74,7 @@ Traduction automatique celons la **langue du navigateur.**.
 <jp-mat-month-calandar [month]="date.getMonth() + 1" [year]="date.getFullYear()" useAmPm hourMin="9" />
 ```
 
-# Par semaine
+# Par semaine et par jour
 
 ## Attributs
 - `dateReference`: Affiche la semaine entière a partir de cette date (REQUIS)
@@ -93,7 +93,7 @@ Traduction automatique celons la **langue du navigateur.**.
 ## Navigation via clavier
 - `TAB`: parcourir le composant
 - `FLECHES`: Parcourir les heures et jours du composant 
-- `N / P`: Avancer ou reculer d'une semaine
+- `N / P`: Avancer ou reculer d'une semaine (un jour pour le composant par jour)
 - `SHIFT + N / P`: Avancer ou reculer d'un mois
 
 ### Creation
@@ -113,6 +113,7 @@ Traduction automatique celons la **langue du navigateur.**.
 </script>
 
 <jp-mat-week-calandar [dateReference]="date" useAmPm hourMin="9" />
+<jp-mat-day-calandar [dateReference]="date" useAmPm hourMin="9" />
 ```
 
 # Agenda
