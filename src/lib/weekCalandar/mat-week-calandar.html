@@ -202,7 +202,7 @@
                                             (previewResize()?.eventId === ev.id ? trad().aideEventModif : (!readonly() && !ev.readonly ? trad().aideEventNormal : '')) + trad().aideNavMois"
                                         (keydown)="OnEventKeydown($event, ev)"
                                         (blur)="OnEventBlur(ev)"
-                                        
+                                        (click)="(readonly() || ev.readonly) && ClickEvent(ev)"
                                         [class.is-dragging]="previewResize()?.eventId === ev.id"
                                         (mousedown)="OnMoveStart($event, ev)"
                                         (touchstart)="OnMoveStart($event, ev)"
