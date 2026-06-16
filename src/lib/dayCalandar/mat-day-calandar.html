@@ -79,7 +79,11 @@
                             </button>
 
                             <div style="position: relative; display: inline-flex; justify-content: center; align-items: center;">
-                                <input matInput [matDatepicker]="picker" [value]="dateReference()" (dateChange)="OnDateSelectionnee($event)"
+                                <input matInput 
+                                          [matDatepicker]="picker" 
+                                          (dateChange)="OnDateSelectionnee($event)"
+                                          [matDatepickerFilter]="dateFilter"
+                                          [value]="dateReference()" (dateChange)="OnDateSelectionnee($event)"
                                        style="width: 0; height: 0; border: none; padding: 0; margin: 0; position: absolute; opacity: 0; pointer-events: none;"
                                        tabindex="-1" aria-hidden="true">
 
@@ -119,6 +123,7 @@
                         
                         <div class="day-label" 
                                 [class.today]="element.estAujourdhui" 
+                                [class.day-disabled]="element.estBloquer"
                                 role="button" 
                                 tabindex="0" 
                                 [attr.aria-label]="(element.estAujourdhui ? trad().aujourdhui + ', ' : '') + element.normal" 
@@ -169,6 +174,7 @@
                                         [attr.aria-label]="trad().ariaEvenement + ' ' +  ev.titre + ' ' + FormatDateAria(ev.startDate) + ' ' + ev.formatHeure + (previewResize()?.eventId === ev.id ? trad().aideEventModif : (!readonly() && !ev.readonly ? trad().aideEventNormal : '')) + trad().aideNavMois"
                                         (keydown)="OnEventKeydown($event, ev)"
                                         (blur)="OnEventBlur(ev)"
+                                        (click)="(readonly() || ev.readonly) && ClickEvent(ev)"
                                         [class.is-dragging]="previewResize()?.eventId === ev.id"
                                         (mousedown)="OnMoveStart($event, ev)"
                                         (touchstart)="OnMoveStart($event, ev)"
@@ -220,18 +226,23 @@
                             
                             @for (h of heures(); track h) 
                             {
+                                @let slotBloque = jour.estBloquer || EstJourPasse(jour.date, h);
+
                                 <div class="hour-slot" 
                                         [id]="'slot-' + jour.date.getTime() + '-' + h.replace(' ', '')"
-                                        [class.slot-disabled]="EstJourPasse(jour.date, h)"
+                                        [class.slot-disabled]="slotBloque"
                                         role="button"
                                         tabindex="0"
-                                        [attr.aria-disabled]="EstJourPasse(jour.date, h)"
-                                        [attr.aria-label]="(jour.estAujourdhui ? trad().aujourdhui + ', ' : '') + (EstJourPasse(jour.date, h) ? (FormatDateAria(jour.date) + ' ' + h + ', ' + trad().ariaBloque) : (trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois))"
+                                        [attr.aria-disabled]="slotBloque"
+                                        [attr.aria-label]="(jour.estAujourdhui ? trad().aujourdhui + ', ' : '') + 
+                                            (slotBloque ? 
+                                            (FormatDateAria(jour.date) + ' ' + h + ', ' + trad().ariaBloque) : 
+                                            (trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois))"
                                         (keydown)="OnTimeSlotKeydown($event, jour.date, h, getPositionedEvents(jour.date))"
                                         matRipple 
-                                        [matRippleDisabled]="matRippleDisabled() || EstJourPasse(jour.date, h)" 
-                                        (mousedown)="!EstJourPasse(jour.date, h) && OnMouseDownHoraire(jour.date, $event)"
-                                        (touchstart)="!EstJourPasse(jour.date, h) && OnMouseDownHoraire(jour.date, $event)">
+                                        [matRippleDisabled]="matRippleDisabled() || slotBloque" 
+                                        (mousedown)="!slotBloque && OnMouseDownHoraire(jour.date, $event)"
+                                        (touchstart)="!slotBloque && OnMouseDownHoraire(jour.date, $event)">
                                 </div>
                             }
                         </div>

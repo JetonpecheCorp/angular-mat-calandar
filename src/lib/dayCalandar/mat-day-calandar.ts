@@ -43,6 +43,8 @@ export class MatDayCalendar implements OnInit, OnDestroy
     hourMax = input(23, { transform: numberAttribute });
     langue = input<string>(typeof navigator !== 'undefined' ? navigator.language : 'en');
     daysOfWeekDisabled = input<number[]>([]);
+    monthsDisabled = input<number[]>([]);
+    daysDisabled = input<Date[]>();
     themeConfig = input<ThemeConfigCalandar>();
     sidebarConfig = input<SidebarConfigCalandar>();
 
@@ -252,6 +254,7 @@ export class MatDayCalendar implements OnInit, OnDestroy
         return {
             date: DATE,
             estAujourdhui: this.EstAujourdhui(DATE),
+            estBloquer: this.EstBloque(DATE),
             reduit: DATE.toLocaleString(this.langue(), { weekday: 'short' }).replace('.', ''),
             normal: DATE.toLocaleString(this.langue(), { weekday: 'long' }),
             specialEvents: eventsSpeciauxDuJour
@@ -292,6 +295,18 @@ export class MatDayCalendar implements OnInit, OnDestroy
         return !debut || !fin ? "" : this.GenererFormatHeure(debut, fin, this.useAmPm());
     });
 
+    private joursAExclure = computed(() => 
+    {
+        const A_MASQUER = new Set(this.daysOfWeekDisabled());
+        if (this.weekendDisabled()) 
+        {
+            A_MASQUER.add(0);
+            A_MASQUER.add(6);
+        }
+
+        return Array.from(A_MASQUER);
+    });
+
     ngOnInit(): void 
     {   
         if(this.sidebarConfig()?.defaultOpen === true) 
@@ -312,6 +327,34 @@ export class MatDayCalendar implements OnInit, OnDestroy
 
         if (this.themeObserver) 
             this.themeObserver.disconnect();
+    }
+
+    protected dateFilter = (date: Date | null): boolean => 
+    {
+        if (!date) 
+            return true;
+
+        return !this.EstBloque(date);
+    };
+
+    protected EstBloque(date: Date): boolean 
+    {
+        if (!date) 
+            return false;
+        
+        const dayOfWeek = date.getDay();
+        const month = date.getMonth() + 1;
+
+        if (this.joursAExclure().includes(dayOfWeek)) 
+            return true;
+
+        if (this.monthsDisabled().includes(month)) 
+            return true;
+
+        if (this.daysDisabled()?.some(d => this.EstMemeJour(d, date))) 
+            return true;
+
+        return false;
     }
 
     protected OnDateSelectionnee(event: any): void 
@@ -525,28 +568,28 @@ export class MatDayCalendar implements OnInit, OnDestroy
     {
         const DATE = new Date(this.dateReference());
         DATE.setMonth(DATE.getMonth() - 1);
-        this.dateReference.set(DATE);
+        this.dateReference.set(this.TrouverJourValide(DATE, -1));
     }
 
     protected MoisSuivant(): void 
     {
         const DATE = new Date(this.dateReference());
         DATE.setMonth(DATE.getMonth() + 1);
-        this.dateReference.set(DATE);
+        this.dateReference.set(this.TrouverJourValide(DATE, 1));
     }
 
     protected Precedent(): void 
     {
         const DATE = new Date(this.dateReference());
         DATE.setDate(DATE.getDate() - 1);
-        this.dateReference.set(DATE);
+        this.dateReference.set(this.TrouverJourValide(DATE, -1));
     }
 
     protected Suivant(): void 
     {
         const DATE = new Date(this.dateReference());
         DATE.setDate(DATE.getDate() + 1);
-        this.dateReference.set(DATE);
+        this.dateReference.set(this.TrouverJourValide(DATE, 1));
     }
 
     protected styleApercuCreation(colDate: Date): any 
@@ -1518,6 +1561,20 @@ export class MatDayCalendar implements OnInit, OnDestroy
         const preview = this.previewResize();
         if (preview && preview.eventId === ev.id) 
             this.previewResize.set(null);
+    }
+
+    private TrouverJourValide(dateDepart: Date, direction: 1 | -1): Date 
+    {
+        let d = new Date(dateDepart);
+        let safety = 0;
+
+        while (this.EstBloque(d) && safety < 366) 
+        {
+            d.setDate(d.getDate() + direction);
+            safety++;
+        }
+
+        return d;
     }
 
     private VerifierTheme(): void 
