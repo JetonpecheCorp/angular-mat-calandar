@@ -254,7 +254,7 @@
                                             trad().aideNavMois"                                        (keydown)="OnEventKeydown($event, pos.event)"
                                         (keydown)="OnEventKeydown($event, pos.event)"
                                         (blur)="OnEventBlur(pos.event)"
-                                        
+                                        (click)="(readonly() || pos.event.readonly) && ClickEvent(pos.event)"
                                         (mousedown)="OnMoveStart($event, pos.event)"
                                         (touchstart)="OnMoveStart($event, pos.event)"
                                         [class.is-dragging]="previewResize()?.eventId === pos.event.id"
