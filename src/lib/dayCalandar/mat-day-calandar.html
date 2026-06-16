@@ -1,0 +1,256 @@
+<mat-sidenav-container class="day-calendar-root mat-elevation-z2" [hasBackdrop]="estPetitEcran()">
+
+    <mat-sidenav #sidenav class="side-panel" [mode]="estPetitEcran() ? 'over' : 'side'" [opened]="panneauOuvert()" (openedChange)="panneauOuvert.set($event)">
+        <div class="side-panel-header">
+            <h3>{{ sidebarConfig()?.title || trad().titreGroupes }}</h3>
+            <button mat-icon-button (click)="sidenav.close()" [attr.aria-label]="trad().ariaFermerMenu">
+                <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+        </div>
+        
+        <div class="side-panel-content">
+            <mat-accordion class="side-panel-accordion" [multi]="sidebarConfig()?.multi ?? true">
+                @for (item of listeEvenementGroupe(); track item.groupe?.id || 'sans-groupe') 
+                {
+                    <mat-expansion-panel class="group-expansion-panel" [hideToggle]="sidebarConfig()?.hideToggle ?? false">
+                        <mat-expansion-panel-header collapsedHeight="48px" expandedHeight="48px">
+                            <mat-panel-title>
+                                <mat-checkbox 
+                                    (click)="$event.stopPropagation()"
+                                    [checked]="!EstGroupeMasque(item.groupe?.id || null)"
+                                    (change)="BasculerVisibiliteGroupe(item.groupe?.id || null)"
+                                    [aria-label]="(EstGroupeMasque(item.groupe?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.groupe ? item.groupe.id : trad().sansGroupe)">
+                                </mat-checkbox>
+
+                                <div class="group-title" [ngStyle]="{'--g-color': item.groupe ? (isDarkModeActive() ? (item.groupe.bgColorDark || item.groupe.bgColorLight) : item.groupe.bgColorLight) : 'var(--mat-sys-primary)'}">
+                                    <div class="group-color-indicator" aria-hidden="true"></div>
+                                    <span class="group-name">{{ item.groupe ? item.groupe.id : (trad().sansGroupe || 'Autres') }}</span>
+                                </div>
+                            </mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <div class="group-events-list">
+                            @for (ev of item.events; track ev.id) 
+                            {
+                                <button class="side-event-card-clean" 
+                                     (click)="ClickEvent(ev); estPetitEcran() ? sidenav.close() : null"
+                                     matRipple
+                                     [attr.aria-label]="trad().ariaOuvrirEvent + ' ' + ev.titre + ' le ' + FormaterDateCourte(ev.startDate)">
+                                    <span class="side-event-date">{{ FormaterDateCourte(ev.startDate) }}</span>
+                                    <span class="side-event-title">{{ ev.titre }}</span>
+                                </button>
+                            }
+                        </div>
+                    </mat-expansion-panel>
+                }
+            </mat-accordion>
+        </div>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+        <div class="day-calendar-container" [class.is-resizing-calendar]="previewResize() !== null || dragCreationEnCours()"
+                                            [class.nav-hover-left]="zoneNavigationActive() == 'left'"
+                                            [class.nav-hover-right]="zoneNavigationActive() == 'right'">
+            
+            <div class="nav-edge-indicator left" aria-hidden="true">
+                <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'left'"><mat-icon>chevron_left</mat-icon></div>
+            </div>
+
+            <div class="nav-edge-indicator right" aria-hidden="true">
+                <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'right'"><mat-icon>chevron_right</mat-icon></div>
+            </div>
+
+            <div class="main-scroll-viewport">
+                <mat-toolbar class="calendar-header">
+                    <button mat-icon-button class="burger-menu-btn" [class.is-hidden]="panneauOuvert()" [attr.aria-label]="trad().ariaOuvrirMenu" (click)="sidenav.open()">
+                        <mat-icon aria-hidden="true">menu</mat-icon>
+                    </button>
+
+                    <div class="header-main-container">
+                        <div class="header-nav-row">
+                            @if(!hideNavMonthBtn()) 
+                            {
+                                <button mat-icon-button (click)="MoisPrecedent()" [attr.aria-label]="trad().ariaMoisPrecedent">
+                                    <mat-icon aria-hidden="true">keyboard_double_arrow_left</mat-icon>
+                                </button>
+                            }
+
+                            <button mat-icon-button (click)="Precedent()" [attr.aria-label]="trad().ariaPrecedent">
+                                <mat-icon aria-hidden="true">chevron_left</mat-icon>
+                            </button>
+
+                            <div style="position: relative; display: inline-flex; justify-content: center; align-items: center;">
+                                <input matInput [matDatepicker]="picker" [value]="dateReference()" (dateChange)="OnDateSelectionnee($event)"
+                                       style="width: 0; height: 0; border: none; padding: 0; margin: 0; position: absolute; opacity: 0; pointer-events: none;"
+                                       tabindex="-1" aria-hidden="true">
+
+                                <span #btnPeriode class="period-title" role="button" tabindex="0" [attr.aria-label]="trad().ariaMenu" (click)="picker.open()" (keydown.enter)="picker.open()">
+                                    {{ titrePeriode() }}
+                                </span>
+                                <mat-datepicker #picker [restoreFocus]="false" [touchUi]="estPetitEcran()"></mat-datepicker>
+                            </div>
+                            
+                            <button mat-icon-button (click)="Suivant()" [attr.aria-label]="trad().ariaSuivant">
+                                <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                            </button>
+
+                            @if(!hideNavMonthBtn()) 
+                            {
+                                <button mat-icon-button (click)="MoisSuivant()" [attr.aria-label]="trad().ariaMoisSuivant">
+                                    <mat-icon aria-hidden="true">keyboard_double_arrow_right</mat-icon>
+                                </button>
+                            }
+                        </div>
+                        <div>
+                            <button matButton="filled" class="today-btn-flat" (click)="AllerAujourdhui()">
+                                {{ trad().aujourdhui }}
+                            </button>
+
+                            @if(showBtnAdd()) { <button matButton="filled" class="today-btn-flat" (click)="BtnAjouterClicker()">{{ trad().ajouter }}</button> }
+                        </div>
+                    </div>
+                </mat-toolbar>
+
+                <div class="days-header-sticky">
+                    <div class="time-gutter" aria-hidden="true"></div> 
+                    
+                    <div class="days-labels-grid">
+                        
+                        @let element = jourActuel();
+                        
+                        <div class="day-label" 
+                                [class.today]="element.estAujourdhui" 
+                                role="button" 
+                                tabindex="0" 
+                                [attr.aria-label]="(element.estAujourdhui ? trad().aujourdhui + ', ' : '') + element.normal" 
+                                (click)="ClickJour(element.date)" 
+                                (keydown.enter)="ClickJour(element.date)">
+
+                            <span class="name long">{{ element.normal }}</span>
+                            <span class="name short">{{ element.reduit }}</span>
+                            <span class="number">{{ element.date.getDate() }}</span>
+
+                            @if (element.specialEvents && element.specialEvents.length > 0) 
+                            {
+                                <div class="special-events-container">
+                                    @for (sp of element.specialEvents; track sp.title) 
+                                    {
+                                        <div class="special-event-badge"><span>{{ sp.title }}</span></div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calendar-body">
+                    @if (loading()) 
+                    { 
+                        <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
+                            <mat-spinner diameter="48"></mat-spinner>
+                        </div> 
+                    }
+
+                    <div class="time-column" aria-hidden="true">
+                        @for (h of heures(); track h) { <div class="hour-label"><span>{{ h }}</span></div> }
+                    </div>
+
+                    <div class="days-grid">
+                        
+                        @let jour = jourActuel();
+                        
+                        <div class="day-column" [attr.data-date]="jour.date.getTime()">
+                            
+                            @for (ev of getPositionedEvents(jour.date); track ev.id) 
+                            {
+                                <div class="event-block"
+                                        role="button"
+                                        tabindex="0"
+                                        [id]="'event-' + ev.id"
+                                        [attr.aria-label]="trad().ariaEvenement + ' ' +  ev.titre + ' ' + FormatDateAria(ev.startDate) + ' ' + ev.formatHeure + (previewResize()?.eventId === ev.id ? trad().aideEventModif : (!readonly() && !ev.readonly ? trad().aideEventNormal : '')) + trad().aideNavMois"
+                                        (keydown)="OnEventKeydown($event, ev)"
+                                        (blur)="OnEventBlur(ev)"
+                                        [class.is-dragging]="previewResize()?.eventId === ev.id"
+                                        (mousedown)="OnMoveStart($event, ev)"
+                                        (touchstart)="OnMoveStart($event, ev)"
+                                        [ngStyle]="CalculerStyleEvent(ev, jour.date)"
+                                        [style.width]="'calc((100% - 16px) / ' + ev.nbColonneTotal + ')'"
+                                        [style.left]="'calc(((100% - 16px) / ' + ev.nbColonneTotal + ') * ' + ev.colonne + ')'"
+                                        [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
+                                        [matContextMenuTriggerData]="{ eventCal: ev }"
+                                        [matContextMenuTriggerRestoreFocus]="false">
+
+                                    @if (!ev.continueAvant && !readonly() && !ev.readonly) 
+                                    {
+                                        <div class="resize-handle top" aria-hidden="true" (mousedown)="InitialiserResize($event, ev, 'top')" (touchstart)="InitialiserResize($event, ev, 'top')">
+                                            <div class="resize-line"></div>
+                                        </div>
+                                    }
+                                        
+                                    <div class="event-content">
+                                        @if (ev.continueAvant) { <mat-icon class="continue-icon top" aria-hidden="true">keyboard_arrow_up</mat-icon> }
+                                        <span class="event-title">{{ ev.titre }}</span>
+                                        <span class="event-time">{{ ev.formatHeure }}</span>
+                                        @if (ev.continueApres) { <mat-icon class="continue-icon bottom" aria-hidden="true">keyboard_arrow_down</mat-icon> }
+                                    </div>
+
+                                    @if (!ev.continueApres && !readonly() && !ev.readonly) 
+                                    {
+                                        <div class="resize-handle bottom" aria-hidden="true" (mousedown)="InitialiserResize($event, ev, 'bottom')" (touchstart)="InitialiserResize($event, ev, 'bottom')">
+                                            <div class="resize-line"></div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            @if (jour.estAujourdhui && positionBarreRouge() >= 0) 
+                            {
+                                <div class="current-time-line" [style.top.px]="positionBarreRouge()" aria-hidden="true">
+                                    <div class="time-circle"></div>
+                                </div>
+                            }
+                            @if (styleApercuCreation(jour.date); as styleApercu) 
+                            {
+                                <div class="creation-preview-block" [ngStyle]="styleApercu" aria-hidden="true">
+                                    <div class="event-content">
+                                        <span class="event-title">({{ trad().nouveau }})</span>
+                                        <span class="event-time">{{ formatHeureCreation() }}</span>
+                                    </div>
+                                </div>
+                            }
+                            
+                            @for (h of heures(); track h) 
+                            {
+                                <div class="hour-slot" 
+                                        [id]="'slot-' + jour.date.getTime() + '-' + h.replace(' ', '')"
+                                        [class.slot-disabled]="EstJourPasse(jour.date, h)"
+                                        role="button"
+                                        tabindex="0"
+                                        [attr.aria-disabled]="EstJourPasse(jour.date, h)"
+                                        [attr.aria-label]="(jour.estAujourdhui ? trad().aujourdhui + ', ' : '') + (EstJourPasse(jour.date, h) ? (FormatDateAria(jour.date) + ' ' + h + ', ' + trad().ariaBloque) : (trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois))"
+                                        (keydown)="OnTimeSlotKeydown($event, jour.date, h, getPositionedEvents(jour.date))"
+                                        matRipple 
+                                        [matRippleDisabled]="matRippleDisabled() || EstJourPasse(jour.date, h)" 
+                                        (mousedown)="!EstJourPasse(jour.date, h) && OnMouseDownHoraire(jour.date, $event)"
+                                        (touchstart)="!EstJourPasse(jour.date, h) && OnMouseDownHoraire(jour.date, $event)">
+                                </div>
+                            }
+                        </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </mat-sidenav-content>
+</mat-sidenav-container>
+
+<mat-menu #defaultMenu="matMenu">
+    <ng-template matMenuContent let-ev="eventCal">
+        <button mat-menu-item [disabled]="readonly() || ev?.readonly" [attr.aria-label]="trad().modifier + ' ' + ev?.titre" (click)="OnContextMenuAction('edit', ev)">
+            <mat-icon aria-hidden="true">edit</mat-icon>
+            <span>{{ trad().modifier }}</span>
+        </button>
+        <button mat-menu-item [disabled]="readonly() || ev?.readonly" [attr.aria-label]="trad().supprimer + ' ' + ev?.titre" (click)="OnContextMenuAction('delete', ev)">
+            <mat-icon aria-hidden="true">delete</mat-icon>
+            <span>{{ trad().supprimer }}</span>
+        </button>
+    </ng-template>
+</mat-menu>
