@@ -3,6 +3,8 @@
  */
 export * from './lib/monthCalandar/mat-month-calandar';
 export * from './lib/weekCalandar/mat-week-calandar';
+export * from './lib/agandaCalandar/mat-agenda-calandar';
+export * from './lib/dayCalandar/mat-day-calandar';
 export * from './models/EventCalandar';
 export * from './models/DateCalandar';
 export * from './models/DateSpecialEvent';
