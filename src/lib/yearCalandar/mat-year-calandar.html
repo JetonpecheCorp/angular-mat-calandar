@@ -1,0 +1,226 @@
+<mat-sidenav-container class="year-calendar-root mat-elevation-z2" [hasBackdrop]="estPetitEcran()">
+
+    <mat-sidenav #sidenav class="side-panel" [mode]="estPetitEcran() ? 'over' : 'side'" [opened]="panneauOuvert()" (openedChange)="panneauOuvert.set($event)">
+        <div class="side-panel-header">
+            <h3>{{ sidebarConfig()?.title || trad().titreGroupes }}</h3>
+            <button mat-icon-button (click)="sidenav.close()" [attr.aria-label]="trad().ariaFermerMenu">
+                <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+        </div>
+        
+        <div class="side-panel-content">
+            <mat-accordion class="side-panel-accordion" [multi]="sidebarConfig()?.multi ?? true">
+                @for (item of listeEvenementGroupe(); track item.group?.id || 'sans-groupe') 
+                {
+                    <mat-expansion-panel class="group-expansion-panel" [expanded]="true" [hideToggle]="sidebarConfig()?.hideToggle ?? false">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                <mat-checkbox (click)="$event.stopPropagation()" 
+                                                        [checked]="!EstGroupeMasque(item.group?.id || null)" 
+                                                        (change)="BasculerVisibiliteGroupe(item.group?.id || null)"
+                                                        [aria-label]="(EstGroupeMasque(item.group?.id || null) ? trad().ariaAfficherGroupe : trad().ariaMasquerGroupe) + ' ' + (item.group ? item.group.id : trad().sansGroupe)"></mat-checkbox>
+
+                                <div class="group-title" [ngStyle]="{'--g-color': item.group ? (darkModeActif() ? (item.group.bgColorDark || item.group.bgColorLight) : item.group.bgColorLight) : 'var(--mat-sys-primary)'}">
+                                    <div class="group-color-indicator" aria-hidden="true"></div>
+                                    <span class="group-name">{{ item.group ? item.group.id : (trad().sansGroupe || 'Autres') }}</span>
+                                </div>
+                            </mat-panel-title>
+                        </mat-expansion-panel-header>
+
+                        <div class="group-events-list">
+                            @for (ev of item.events; track ev.id) 
+                            {
+                                <button class="side-event-card-clean" 
+                                     (click)="ClickEvent(ev); estPetitEcran() ? sidenav.close() : null"
+                                     matRipple
+                                     [attr.aria-label]="trad().ariaOuvrirEvent + ' ' + ev.titre + ' le ' + FormaterDateCourte(ev.startDate)">
+                                    <span class="side-event-date">{{ FormaterDateCourte(ev.startDate) }}</span>
+                                    <span class="side-event-title">{{ ev.titre }}</span>
+                                </button>
+                            }
+                        </div>
+                        </mat-expansion-panel>
+                }
+            </mat-accordion>
+        </div>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+        <div class="calendar-wrapper">
+
+            <mat-toolbar class="calendar-header">
+                <button mat-icon-button class="burger-menu-btn" 
+                            [class.is-hidden]="panneauOuvert()" 
+                            [attr.aria-expanded]="panneauOuvert()"
+                            [attr.aria-label]="trad().ariaOuvrirMenu"
+                            (click)="sidenav.open()">
+                    <mat-icon aria-hidden="true">menu</mat-icon>
+                </button>
+
+                <div class="header-main-container">
+                    <div class="header-nav-row">
+                        <button mat-icon-button (click)="AnneePrecedente()" [attr.aria-label]="trad().ariaAnneePrecedente">
+                            <mat-icon aria-hidden="true">chevron_left</mat-icon>
+                        </button>
+                        
+                        <div class="title-selector">
+                            <input matInput [matDatepicker]="picker" [value]="dateReference()" style="width: 0; height: 0; position: absolute; opacity: 0;" tabindex="-1" aria-hidden="true">
+                            <span #btnPeriode class="period-title" role="button" tabindex="0" (click)="picker.open()" (keydown.enter)="picker.open()" [attr.aria-label]="trad().ariaMenuAnnee">
+                                {{ anneeTexte() }}
+                            </span>
+                            <mat-datepicker #picker [restoreFocus]="false" [touchUi]="estPetitEcran()" startView="multi-year" (yearSelected)="OnYearSelected($event, picker)"></mat-datepicker>
+                        </div>
+
+                        <button mat-icon-button (click)="AnneeSuivante()" [attr.aria-label]="trad().ariaAnneeSuivante">
+                            <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                        </button>
+                    </div>
+
+                    <div class="header-action-row">
+                        <button matButton="filled" class="today-btn" (click)="AllerAujourdhui()">{{ trad().aujourdhui }}</button>
+                    </div>
+                </div>
+            </mat-toolbar>
+
+            <div class="calendar-body continuous-layout">
+                @if (loading()) 
+                { 
+                    <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
+                        <mat-spinner diameter="48"></mat-spinner>
+                    </div>
+                }
+
+                <div class="global-weekdays-header">
+                    <div class="month-name-spacer" aria-hidden="true"></div>
+                    <div class="weekdays-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
+                        @for (nomJour of listeNomSemaine(); track $index) 
+                        {
+                            <div class="weekday-label">
+                                <span class="long-name">{{ nomJour.long }}</span>
+                                <span class="short-name">{{ nomJour.short }}</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="vertical-months-list">
+                    @for (mois of listeMoisAnnee(); track mois.numero) 
+                    {    
+                        <div class="month-row" [class.month-disabled]="mois.estDesactive">
+                            
+                            <div class="month-sidebar">
+                                <h2>{{ mois.nom }}</h2>
+                            </div>
+
+                            @if (!mois.estDesactive) 
+                            {
+                                <div class="calendar-body-mini">
+                                    @for (semaine of mois.semaines; track $index) 
+                                    {
+                                        <div class="week-row">
+                                            
+                                            <div class="days-background-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
+                                                @for (jour of semaine.jours; track $index) 
+                                                {
+                                                    <div   class="day-cell"
+                                                            matRipple
+                                                            [matRippleDisabled]="matRippleDisabled() || jour.estBloquer"
+                                                            [class.hors-mois]="!jour.estMoisCourant"
+                                                            [class.today]="jour.estAujourdhui"
+                                                            [class.day-disabled]="jour.estBloquer && jour.estMoisCourant"
+                                                            [class.is-creating]="jour.estMoisCourant && EstEnCreation(jour.date)"
+                                                            [attr.data-date]="jour.date.getTime()"
+                                                            
+                                                            role="button"
+                                                            [attr.tabindex]="!jour.estMoisCourant ? -1 : 0"
+                                                            [attr.aria-disabled]="jour.estBloquer"
+                                                            [attr.aria-label]="
+                                                                (jour.estAujourdhui ? trad().ceJour + ', ' : '') + 
+                                                                (!jour.estMoisCourant ? '' : 
+                                                                    FormatDateAria(jour.date) + 
+                                                                    (jour.estBloquer ? ', ' + trad().ariaBloque : 
+                                                                        (jour.listeEvent.length > 0 ? ', ' + jour.listeEvent.length + ' ' + trad().ariaEvenement : '')
+                                                                    )
+                                                                )
+                                                            "
+                                                            
+                                                            (click)="jour.estMoisCourant && ClickJour(jour)"
+                                                            (keydown)="jour.estMoisCourant && OnDayCellKeydown($event, jour)"
+                                                            (mousedown)="OnMouseDownCreation($event, jour.date, jour.estBloquer)"
+                                                            (touchstart)="OnMouseDownCreation($event, jour.date, jour.estBloquer)">
+                                                        
+                                                        <div class="day-cell-header">
+                                                            <span class="day-number-text">{{ !jour.estMoisCourant ? '' : jour.date.getDate() }}</span>
+                                                        </div>
+                                                        
+                                                        <div class="day-cell-footer">
+                                                            @if (jour.listeEvent.length > 3) 
+                                                            {
+                                                                <div class="more-indicator">+{{ jour.listeEvent.length - 3 }}</div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div class="events-foreground-layer">
+                                                @for (pos of semaine.eventsPositionnes; track pos.event.id) 
+                                                {
+                                                    @if (pos.ligne < 3) 
+                                                    {
+                                                        <div class="event-item absolute-event" 
+                                                            [id]="'event-' + pos.event.id"
+                                                            role="button"
+                                                            tabindex="0"
+                                                            [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre"
+                                                            
+                                                            (keydown)="OnEventKeydown($event, pos.event)"
+                                                            (blur)="OnEventBlur(pos.event)"
+                                                            (click)="(readonly() || pos.event.readonly) && ClickEvent(pos.event)"
+                                                            
+                                                            (mousedown)="OnMoveStart($event, pos.event)"
+                                                            (touchstart)="OnMoveStart($event, pos.event)"
+                                                            [class.is-dragging]="previewResize()?.eventId === pos.event.id"
+                                                            [style.--pos-start]="pos.jourDebutIndex"
+                                                            [style.--pos-duree]="pos.dureeJours"
+                                                            [style.--pos-ligne]="pos.ligne"
+                                                            [style.--nb-cols]="nbColonnes()"
+                                                            [title]="pos.event.titre" 
+                                                            [ngStyle]="GetEventStyle(pos.event)">
+                                                            
+                                                            @if (!readonly() && !pos.event.readonly) 
+                                                            {
+                                                                <div class="resize-handle left" 
+                                                                       aria-hidden="true" 
+                                                                       (mousedown)="OnResizeStart($event, pos.event, 'left')" 
+                                                                       (touchstart)="OnResizeStart($event, pos.event, 'left')">
+                                                                </div>
+                                                            }
+
+                                                            <span class="event-time">{{ pos.event.startDate | date:(useAmPm() ? 'h:mm a' : 'HH:mm') }}</span>
+                                                            <span class="event-title">{{ pos.event.titre }}</span>
+
+                                                            @if (!readonly() && !pos.event.readonly) 
+                                                            {
+                                                                <div class="resize-handle right" 
+                                                                       aria-hidden="true" 
+                                                                       (mousedown)="OnResizeStart($event, pos.event, 'right')" 
+                                                                       (touchstart)="OnResizeStart($event, pos.event, 'right')">
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </mat-sidenav-content>
+</mat-sidenav-container>
