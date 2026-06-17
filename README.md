@@ -33,6 +33,45 @@ Traduction automatique celons la **langue du navigateur.**.
 - `hideNavYearBtn`: Masquer les boutons pour naviguer d'une année
 - `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
 
+# Par année
+
+## Attributs
+- `month`: mois à afficher (REQUIS) (1 - 12)
+
+## Events
+- `contextClicked`: Event click mat menu contextuel par defaut
+- `eventClickJour`: Event click sur le jour
+- `eventClickEvent`: Event click sur un évènement
+- `eventCreated`: Event drag pour créer un event
+- `eventUpdated`: Event drag and drop ou resize d'un event
+- `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
+
+## Navigation via clavier
+- `TAB`: parcourir le composant
+- `FLECHES`: Parcourir les jours du composant 
+- `ALT + FLECHE BAS`: parcourir les events d'un jour
+- `CTRL + FLECHE HAUT`: Revenir sur le jour
+- `N / P`: Avancer ou reculer d'un an
+
+### Creation
+- `SHIFT + fleches clavier` puis `Entrer` pour valider
+
+### Modifier date interval
+- `CTRL + FLECHE DROITE`: modifier date fin
+- `CTRL + SHIFT + FLECHE GAUCHE`: modifier date de début
+
+### Déplacer l'event
+- `SHIFT + FLECHE DROITE ou GAUCHE`: deplacer l'event
+
+## Exemple
+```html
+<script>
+    let date = new Date();
+</script>
+
+<jp-mat-year-calandar [year]="date.getFullYear()" useAmPm />
+```
+
 # Par mois
 
 ## Attributs
