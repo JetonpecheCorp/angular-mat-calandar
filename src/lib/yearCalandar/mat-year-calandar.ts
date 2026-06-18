@@ -117,7 +117,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "Non disponible",
             ariaSelectionEtendue: "Sélection étendue jusqu'au ", ariaEventDeplace: "Événement déplacé du ",
             ariaEventRedimensionne: "Événement redimensionné du ", ariaAu: " au ",
-            choisirMois: "Mois affichés", ariaMasquerMois: "Filtrer les mois à afficher",
+            choisirMois: "Mois à masquer", ariaMasquerMois: "Sélectionner les mois à masquer",
             ariaMoisLectureSeul: "Mois en lecture seule",
             ariaEventMasques: "événements supplémentaires non affichés"
         },
@@ -132,7 +132,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "Unavailable",
             ariaSelectionEtendue: "Selection extended to ", ariaEventDeplace: "Event moved from ",
             ariaEventRedimensionne: "Event resized from ", ariaAu: " to ",
-            choisirMois: "Displayed months", ariaMasquerMois: "Filter months to display",
+            choisirMois: "Months to hide", ariaMasquerMois: "Select months to hide",
             ariaMoisLectureSeul: "Read-only month",
             ariaEventMasques: "additional hidden events"
         },
@@ -147,7 +147,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "No disponible",
             ariaSelectionEtendue: "Selección extendida hasta el ", ariaEventDeplace: "Evento movido del ",
             ariaEventRedimensionne: "Evento redimensionado del ", ariaAu: " al ",
-            choisirMois: "Meses mostrados", ariaMasquerMois: "Filtrar meses a mostrar",
+            choisirMois: "Meses a ocultar", ariaMasquerMois: "Seleccionar meses para ocultar",
             ariaMoisLectureSeul: "Mes de solo lectura",
             ariaEventMasques: "eventos adicionales ocultos"
         },
@@ -162,7 +162,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "Non disponibile",
             ariaSelectionEtendue: "Selezione estesa fino al ", ariaEventDeplace: "Evento spostato dal ",
             ariaEventRedimensionne: "Evento ridimensionato dal ", ariaAu: " al ",
-            choisirMois: "Mesi visualizzati", ariaMasquerMois: "Filtra i mesi da visualizzare",
+            choisirMois: "Mesi da nascondere", ariaMasquerMois: "Seleziona i mesi da nascondere",
             ariaMoisLectureSeul: "Mese in sola lettura",
             ariaEventMasques: "eventi aggiuntivi nascosti"
         },
@@ -177,7 +177,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "Nicht verfügbar",
             ariaSelectionEtendue: "Auswahl erweitert bis ", ariaEventDeplace: "Ereignis verschoben vom ",
             ariaEventRedimensionne: "Ereignis in der Größe geändert vom ", ariaAu: " bis ",
-            choisirMois: "Anzeigemonate", ariaMasquerMois: "Monate zum Anzeigen filtern",
+            choisirMois: "Monate ausblenden", ariaMasquerMois: "Monate zum Ausblenden auswählen",
             ariaMoisLectureSeul: "Schreibgeschützter Monat",
             ariaEventMasques: "weitere ausgeblendete Ereignisse"
         },
@@ -192,12 +192,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "Indisponível",
             ariaSelectionEtendue: "Seleção estendida até ", ariaEventDeplace: "Evento movido de ",
             ariaEventRedimensionne: "Evento redimensionado de ", ariaAu: " para ",
-            choisirMois: "Meses exibidos", ariaMasquerMois: "Filtrar meses para exibir",
+            choisirMois: "Meses para ocultar", ariaMasquerMois: "Selecione os meses para ocultar",
             ariaMoisLectureSeul: "Mês somente leitura",
             ariaEventMasques: "eventos adicionais ocultos"
         }
     };
-
+    
     constructor() { effect(() => this.dateAdapter.setLocale(this.langue())); }
 
     protected trad = computed(() => 
