@@ -72,7 +72,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     protected groupesMasques = signal<Set<string | number>>(new Set());
     protected estPetitEcran = signal(false);
     protected darkModeActif = signal(false);
-    protected langueNavigateur = navigator.language || "fr-FR";
+    protected messageAriaLive = signal<string>('');
 
     private themeObserver: MutationObserver | null = null;
     private pendingScrollTime = signal<number | null>(null);
@@ -174,7 +174,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         effect(() => {
             this.dateAdapter.setLocale(this.langue());
         });
-        
+
         effect(() => 
         {
             const isLoading = this.loading();
@@ -450,6 +450,12 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         return !this.EstBloque(date);
     };
 
+    protected AnnoncerActionVocalement(message: string): void 
+    {
+        this.messageAriaLive.set('');
+        setTimeout(() => this.messageAriaLive.set(message), 50);
+    }
+
     protected EstBloque(date: Date): boolean 
     {
         const dayOfWeek = date.getDay();
@@ -613,6 +619,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
             this.annee.set(this.annee() - 1);
 
         this.mois.set(n);
+
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected Suivant() 
@@ -622,16 +630,22 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         if (n === 1) 
             this.annee.set(this.annee() + 1);
         this.mois.set(n);
+
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected AnneePrecedente(): void 
     {
         this.annee.set(this.annee() - 1);
+
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected AnneeSuivante(): void 
     {
         this.annee.set(this.annee() + 1);
+
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected AllerAujourdhui(): void
@@ -642,6 +656,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         this.annee.set(date.getFullYear());
 
         this.pendingScrollTime.set(new Date(this.annee(), this.mois() -1, date.getDate()).setHours(0, 0, 0, 0));
+
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected EstMemeJour(date1: Date, date2: Date): boolean 

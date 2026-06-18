@@ -3,6 +3,25 @@
     height: 100%;
 }
 
+/* --- ACCESSIBILITÉ --- */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Empêcher la sélection de texte native pour un effet "Application Native" */
+.calendar-header, .agenda-day-header {
+    user-select: none; 
+    -webkit-user-select: none;
+}
+
 .agenda-calendar-root {
     display: block; width: 100%; height: 100%; 
     border-radius: 8px; background-color: var(--mat-sys-surface);

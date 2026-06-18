@@ -123,7 +123,12 @@
             </div>
         </mat-toolbar>
 
-        <div class="content-wrapper">
+        <div class="content-wrapper" role="region" [attr.aria-label]="nomMois() + ' ' + annee()">
+
+            <div class="sr-only" aria-live="polite" aria-atomic="true">
+                {{ messageAriaLive() }}
+            </div>
+
             @if (loading()) 
             {
                 <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
