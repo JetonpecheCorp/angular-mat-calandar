@@ -21,6 +21,7 @@ Traduction automatique celons la **langue du navigateur.**.
 - `customMatMenu`: Permet d'utiliser un menu contextuel personnalisé
 - `langue`: Permet de definir une traduction (defaut la langue du naviguateur, si pas de traduction langue anglais)
     - Langue disponible (en, fr, es, it, de, pt)
+
 ## Attributs boolean
 - `matRippleDisabled`: désactiver l'effet ripple
 - `weekendDisabled`: Masquer le weekend (samedi et dimanche)
@@ -36,7 +37,9 @@ Traduction automatique celons la **langue du navigateur.**.
 # Par année
 
 ## Attributs
-- `year`: REQUIS
+- `month`: mois à afficher (REQUIS) (1 - 12)
+- `defaultHiddenMonths`: Liste des mois à masquer par defaut
+- `hideSelectMonth`: Masquer le select des mois
 
 ## Events
 - `contextClicked`: Event click mat menu contextuel par defaut
