@@ -686,6 +686,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     protected AllerAujourdhui(): void
     { 
         this.dateReference.set(new Date()); 
+        this.AnnoncerActionVocalement(`${this.trad().aujourdhui}, ${this.titrePeriode()}`);
     }
     
     protected ClickTimeSlot(_dateJour: Date, _heureLabel: string): void 
@@ -718,6 +719,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const DATE = new Date(this.dateReference());
         DATE.setMonth(DATE.getMonth() - 1);
         this.dateReference.set(DATE);
+
+        this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
     protected MoisSuivant(): void
@@ -725,6 +728,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const DATE = new Date(this.dateReference());
         DATE.setMonth(DATE.getMonth() + 1);
         this.dateReference.set(DATE);
+
+        this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
     protected Precedent(): void
@@ -732,6 +737,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const DATE = new Date(this.dateReference());
         DATE.setDate(DATE.getDate() - 7);
         this.dateReference.set(DATE);
+
+        this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
     protected Suivant(): void
@@ -739,6 +746,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         const DATE = new Date(this.dateReference());
         DATE.setDate(DATE.getDate() + 7);
         this.dateReference.set(DATE);
+
+        this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
     protected InitialiserResize(mouseEvent: MouseEvent | TouchEvent, ev: PositionedEvent, direction: 'top' | 'bottom'): void 
