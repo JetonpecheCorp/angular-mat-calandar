@@ -539,6 +539,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
         this.annee.set(nouvelleAnnee);
         this.mois.set(nouveauMois);
+
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected Suivant(): void 
@@ -556,16 +558,20 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
         this.annee.set(nouvelleAnnee);
         this.mois.set(nouveauMois);
+
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected AnneePrecedente(): void 
     {
         this.annee.set(this.annee() - 1);
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected AnneeSuivante(): void 
     {
         this.annee.set(this.annee() + 1);
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected AllerAujourdhui(): void 
@@ -573,6 +579,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         let dateJour = new Date();
         this.mois.set(dateJour.getMonth() + 1);
         this.annee.set(dateJour.getFullYear());
+        this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected ScrollHorizontal(event: WheelEvent): void 
