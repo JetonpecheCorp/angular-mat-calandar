@@ -354,6 +354,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
     }
 
     protected ClickEvent(_event: EventCalandar): void { this.eventClickEvent.emit(_event); }
+
+    protected BtnAjouterClicker()
+    {
+        this.btnAddClicked.emit();
+    }
+
     protected AnneePrecedente(): void 
     { 
         this.annee.set(this.annee() - 1); 

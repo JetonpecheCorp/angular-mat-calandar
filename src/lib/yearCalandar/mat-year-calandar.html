@@ -78,6 +78,15 @@
 
                     <div class="header-action-row">
                         <button matButton="filled" class="today-btn" (click)="AllerAujourdhui()">{{ trad().aujourdhui }}</button>
+
+                        @if(showBtnAdd())
+                        {
+                            <button matButton="filled"
+                                class="today-btn" 
+                                (click)="BtnAjouterClicker()">
+                                {{ trad().ajouter }}
+                            </button>
+                        }
                     </div>
                 </div>
             </mat-toolbar>
