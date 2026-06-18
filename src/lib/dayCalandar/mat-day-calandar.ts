@@ -97,7 +97,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour fin. Ctrl plus Majuscule plus flèches pour début)",
             aideNavMois: ". Touches P et N pour changer de jour. Majuscule plus P et N pour changer de mois",
             ariaBloque: "Non disponible", ariaFermerMenu: "Fermer le menu", ariaLectureSeule: "Lecture seule",
-            sansGroupe: "Autres événements", titreGroupes: "Thèmes", ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher"
+            sansGroupe: "Autres événements", titreGroupes: "Thèmes", ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher",
+            ariaSelectionEtendue: "Sélection étendue jusqu'au ", ariaEventDeplace: "Événement déplacé du ",
+            ariaEventRedimensionne: "Événement redimensionné du ", ariaAu: " au ", ariaEventSpecial: "Événement spécial :"
         },
         'en': {
             aujourdhui: "Today", nouveau: "new", ajouter: "Add new", modifier: "Edit", supprimer: "Delete",
@@ -110,7 +112,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Shift plus arrows to move. Ctrl plus arrows for end. Ctrl plus Shift plus arrows for start)",
             aideNavMois: ". P or N to change day. Add SHIFT to change month",
             ariaBloque: "Unavailable", ariaFermerMenu: "Close menu", ariaLectureSeule: "Read-only",
-            sansGroupe: "Other events", titreGroupes: "Themes", ariaMasquerGroupe: "Hide", ariaAfficherGroupe: "Show"
+            sansGroupe: "Other events", titreGroupes: "Themes", ariaMasquerGroupe: "Hide", ariaAfficherGroupe: "Show",
+            ariaSelectionEtendue: "Selection extended to ", ariaEventDeplace: "Event moved from ", 
+            ariaEventRedimensionne: "Event resized from ", ariaAu: " to "
         },
         'es': { 
             aujourdhui: "Hoy", nouveau: "nuevo", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
@@ -123,7 +127,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para fin. Ctrl más Mayús más flechas para inicio)",
             aideNavMois: ". Teclas P y N para cambiar de día. Añade MAYÚS para cambiar de mes",
             ariaBloque: "No disponible", ariaFermerMenu: "Cerrar menú", ariaLectureSeule: "Solo lectura",
-            sansGroupe: "Otros eventos", titreGroupes: "Temas", ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar"
+            sansGroupe: "Otros eventos", titreGroupes: "Temas", ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar",
+            ariaSelectionEtendue: "Selección extendida hasta el ", 
+            ariaEventDeplace: "Evento movido del ", ariaEventRedimensionne: "Evento redimensionado del ", ariaAu: " al "
         },
         'it': { 
             aujourdhui: "Oggi", nouveau: "nuovo", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
@@ -136,7 +142,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per fine. Ctrl più Maiusc più frecce per inizio)",
             aideNavMois: ". Tasti P e N per cambiare giorno. Aggiungi MAIUSC per cambiare mese",
             ariaBloque: "Non disponibile", ariaFermerMenu: "Chiudi menu", ariaLectureSeule: "Sola lettura",
-            sansGroupe: "Altri eventi", titreGroupes: "Temi", ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra"
+            sansGroupe: "Altri eventi", titreGroupes: "Temi", ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra",
+            ariaSelectionEtendue: "Selezione estesa fino al ", 
+            ariaEventDeplace: "Evento spostato dal ", ariaEventRedimensionne: "Evento ridimensionato dal ", ariaAu: " al "
         },
         'de': { 
             aujourdhui: "Heute", nouveau: "neu", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
@@ -149,7 +157,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten für Ende. Ctrl plus Umschalt plus Pfeiltasten für Start)",
             aideNavMois: ". Tasten P und N, um den Tag zu ändern. Umschalt hinzufügen, um den Monat zu ändern",
             ariaBloque: "Nicht verfügbar", ariaFermerMenu: "Menü schließen", ariaLectureSeule: "Schreibgeschützt",
-            sansGroupe: "Andere Ereignisse", titreGroupes: "Themen", ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen"
+            sansGroupe: "Andere Ereignisse", titreGroupes: "Themen", ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen",
+            ariaSelectionEtendue: "Auswahl erweitert bis ", 
+            ariaEventDeplace: "Ereignis verschoben vom ", ariaEventRedimensionne: "Ereignis in der Größe geändert vom ", ariaAu: " bis "
         },
         'pt': { 
             aujourdhui: "Hoje", nouveau: "novo", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
@@ -162,7 +172,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para fim. Ctrl mais Shift mais setas para início)",
             aideNavMois: ". Teclas P e N para mudar de dia. Adicione SHIFT para mudar de mês",
             ariaBloque: "Indisponível", ariaFermerMenu: "Fechar menu", ariaLectureSeule: "Somente leitura",
-            sansGroupe: "Outros eventos", titreGroupes: "Temas", ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar"
+            sansGroupe: "Outros eventos", titreGroupes: "Temas", ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar",
+            ariaSelectionEtendue: "Seleção estendida até ", 
+            ariaEventDeplace: "Evento movido de ", ariaEventRedimensionne: "Evento redimensionado de ", ariaAu: " para "
         }
     };
 
@@ -172,6 +184,7 @@ export class MatDayCalendar implements OnInit, OnDestroy
     protected zoneNavigationActive = signal<'left' | 'right' | null>(null);
     protected bulleSurvolee = signal<'left' | 'right' | null>(null);
     protected slotRetourFocus = signal<string | null>(null);
+    protected messageAriaLive = signal<string>('');
 
     constructor() 
     {
@@ -336,6 +349,57 @@ export class MatDayCalendar implements OnInit, OnDestroy
 
         return !this.EstBloque(date);
     };
+
+    protected GetDayHeaderAriaLabel(element: any): string 
+    {
+        let label = element.estAujourdhui ? this.trad().aujourdhui + ', ' : '';
+        label += element.normal;
+
+        if (element.specialEvents && element.specialEvents.length > 0) 
+        {
+            const titres = element.specialEvents.map((sp: any) => sp.title).join(', ');
+            label += ', ' + this.trad().ariaEventSpecial + ' ' + titres;
+        }
+
+        return label;
+    }
+
+    protected GetSlotAriaLabel(dateJour: Date, h: string, aDesEvents: boolean): string {
+        if (this.EstJourPasse(dateJour, h))
+            return this.FormatDateAria(dateJour) + ' ' + h + ', ' + this.trad().ariaBloque;
+
+        let label = this.EstAujourdhui(dateJour) ? this.trad().aujourdhui + ', ' : '';
+        label += this.FormatDateAria(dateJour) + ' ' + h;
+        
+        if (!this.dragCreationEnCours()) 
+            label += '. ' + this.trad().ariaCreer + ' ' + this.FormatDateAria(dateJour) + ' ' + h + this.trad().aideCreerEtendre + (aDesEvents ? this.trad().aideDescendre : '') + this.trad().aideNavMois;
+        else
+            label += '. ' + this.trad().aideCreerValider;
+
+        return label;
+    }
+
+    protected GetEventAriaLabel(ev: PositionedEvent): string 
+    {
+        let label = this.trad().ariaEvenement + ' ' + ev.titre + ' ' + this.FormatDateAria(ev.startDate) + ' ' + ev.formatHeure;
+        if (this.readonly() || ev.readonly) 
+            label += ', ' + this.trad().ariaLectureSeule;
+
+        else if (this.previewResize()?.eventId === ev.id) 
+            label += this.trad().aideEventModif;
+
+        else 
+            label += this.trad().aideEventNormal;
+        
+        label += this.trad().aideNavMois;
+        return label;
+    }
+
+    protected AnnoncerActionVocalement(message: string): void 
+    {
+        this.messageAriaLive.set('');
+        setTimeout(() => this.messageAriaLive.set(message), 50);
+    }
 
     protected EstBloque(date: Date): boolean 
     {
@@ -813,6 +877,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
 
             this.previewResize.set({ eventId: ev.id, startDate: newStart, endDate: newEnd });
 
+            const typeAction = estEnDeplacement ? this.trad().ariaEventDeplace : this.trad().ariaEventRedimensionne;
+            this.AnnoncerActionVocalement(`${typeAction}${this.FormatDateAria(newStart)} ${newStart.getHours()}h ${this.trad().ariaAu} ${this.FormatDateAria(newEnd)} ${newEnd.getHours()}h`);
+            
             let referenceDate: Date;
             if (estResizingDebut) 
                 referenceDate = newStart;
@@ -1015,6 +1082,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
+
+            if (window.getSelection) 
+                window.getSelection()?.removeAllRanges();
 
             this.dragCreationEnCours.set(false);
             this.NettoyerNavigationBulle();
@@ -1298,6 +1368,8 @@ export class MatDayCalendar implements OnInit, OnDestroy
             else
                 heureString = `${hCible}h`;
 
+            this.AnnoncerActionVocalement(this.trad().ariaSelectionEtendue + this.FormatDateAria(nouvelleDateFin) + ' - ' + heureString);
+
             this.focusTimeout = setTimeout(() => 
             {
                 const idCible = targetSlotDate.getTime() + "-" + heureString.replace(/\s+/g, "");
@@ -1412,6 +1484,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
 
+            if (window.getSelection) 
+                window.getSelection()?.removeAllRanges();
+
             this.previewResize.set(null);
             this.NettoyerNavigationBulle();
             this.ArreterAutoScroll();
@@ -1515,6 +1590,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
+
+            if (window.getSelection) 
+                window.getSelection()?.removeAllRanges();
 
             this.previewResize.set(null);
             this.NettoyerNavigationBulle();
