@@ -158,7 +158,7 @@
                                 }
                             </div>
 
-                            <div class="calendar-body-mini" role="region" [attr.aria-label]="trad().ariaMoisDe + ' ' + mois.nom">
+                            <div class="calendar-body-mini" role="region" [attr.aria-label]="(mois.estDesactive ? trad().ariaMoisLectureSeul + ' - ' : '') + trad().ariaMoisDe + ' ' + mois.nom">
                                 @for (semaine of mois.semaines; track $index) 
                                 {
                                     <div class="week-row">                            
@@ -178,7 +178,6 @@
                                                         role="button"
                                                         [attr.tabindex]="!jour.estMoisCourant ? -1 : 0"
                                                         [attr.aria-disabled]="jour.estBloquer"
-                                                        [attr.aria-readonly]="mois.estDesactive ? 'true' : null"
                                                         [attr.aria-current]="jour.estAujourdhui ? 'date' : null"
                                                         [attr.aria-pressed]="EstEnCreation(jour.date) ? 'true' : 'false'"
                                                         [attr.aria-label]="GetDayAriaLabel(jour, mois.estDesactive)"
@@ -203,6 +202,15 @@
                                                                 </div>
                                                             }
                                                         </div>
+
+                                                        @if (jour?.nbEventsMasques > 0) 
+                                                        {
+                                                            <div class="more-indicator" 
+                                                                [attr.aria-label]="jour['nbEventsMasques'] + ' ' + trad().ariaEventMasques" 
+                                                                title="{{ jour['nbEventsMasques'] }} {{ trad().ariaEventMasques }}">
+                                                                +{{ jour['nbEventsMasques'] }}
+                                                            </div>
+                                                        }
                                                 </div>
                                             }
                                         </div>

@@ -30,8 +30,12 @@ interface EventPositionne {
 }
 
 interface SemaineCalendrier {
-    jours: DateCalendrier[];
+    jours: InternalDateCalendrier[];
     eventsPositionnes: EventPositionne[];
+}
+
+interface InternalDateCalendrier extends DateCalendrier {
+    nbEventsMasques: number;
 }
 
 @Component({
@@ -114,7 +118,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaSelectionEtendue: "Sélection étendue jusqu'au ", ariaEventDeplace: "Événement déplacé du ",
             ariaEventRedimensionne: "Événement redimensionné du ", ariaAu: " au ",
             choisirMois: "Mois affichés", ariaMasquerMois: "Filtrer les mois à afficher",
-            ariaMoisLectureSeul: "Mois en lecture seule"
+            ariaMoisLectureSeul: "Mois en lecture seule",
+            ariaEventMasques: "événements supplémentaires non affichés"
         },
         'en': {
             aujourdhui: "This year", ajouter: "Add new", ceJour: "Today",
@@ -128,11 +133,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaSelectionEtendue: "Selection extended to ", ariaEventDeplace: "Event moved from ",
             ariaEventRedimensionne: "Event resized from ", ariaAu: " to ",
             choisirMois: "Displayed months", ariaMasquerMois: "Filter months to display",
-            ariaMoisLectureSeul: "Read-only month"
+            ariaMoisLectureSeul: "Read-only month",
+            ariaEventMasques: "additional hidden events"
         },
         'es': { 
             aujourdhui: "Este año", ajouter: "Añadir", ceJour: "Hoy",
-            modifier: "Editar", supprimer: "Eliminar", ariaMoisDe: "Mes ne",
+            modifier: "Editar", supprimer: "Eliminar", ariaMoisDe: "Mes de",
             ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente",
             ariaMenuAnnee: "Cambiar año", chargement: "Cargando",
             titreGroupes: "Temas", sansGroupe: "Otros", ariaEvenement: "evento(s)",
@@ -142,7 +148,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaSelectionEtendue: "Selección extendida hasta el ", ariaEventDeplace: "Evento movido del ",
             ariaEventRedimensionne: "Evento redimensionado del ", ariaAu: " al ",
             choisirMois: "Meses mostrados", ariaMasquerMois: "Filtrar meses a mostrar",
-            ariaMoisLectureSeul: "Mes de solo lectura"
+            ariaMoisLectureSeul: "Mes de solo lectura",
+            ariaEventMasques: "eventos adicionales ocultos"
         },
         'it': { 
             aujourdhui: "Quest'anno", ajouter: "Aggiungi", ceJour: "Oggi",
@@ -156,7 +163,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaSelectionEtendue: "Selezione estesa fino al ", ariaEventDeplace: "Evento spostato dal ",
             ariaEventRedimensionne: "Evento ridimensionato dal ", ariaAu: " al ",
             choisirMois: "Mesi visualizzati", ariaMasquerMois: "Filtra i mesi da visualizzare",
-            ariaMoisLectureSeul: "Mese in sola lettura"
+            ariaMoisLectureSeul: "Mese in sola lettura",
+            ariaEventMasques: "eventi aggiuntivi nascosti"
         },
         'de': { 
             aujourdhui: "Dieses Jahr", ajouter: "Hinzufügen", ceJour: "Heute",
@@ -164,13 +172,14 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr",
             ariaMenuAnnee: "Jahr ändern", chargement: "Wird geladen",
             titreGroupes: "Themen", sansGroupe: "Andere", ariaEvenement: "Ereignis(se)",
-            ariaOuvrirMenu: "Menü ouvrir", ariaFermerMenu: "Menü schließen",
+            ariaOuvrirMenu: "Menü öffnen", ariaFermerMenu: "Menü schließen",
             ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Öffnen",
             ariaBloque: "Nicht verfügbar",
             ariaSelectionEtendue: "Auswahl erweitert bis ", ariaEventDeplace: "Ereignis verschoben vom ",
             ariaEventRedimensionne: "Ereignis in der Größe geändert vom ", ariaAu: " bis ",
             choisirMois: "Anzeigemonate", ariaMasquerMois: "Monate zum Anzeigen filtern",
-            ariaMoisLectureSeul: "Schreibgeschützter Monat"
+            ariaMoisLectureSeul: "Schreibgeschützter Monat",
+            ariaEventMasques: "weitere ausgeblendete Ereignisse"
         },
         'pt': { 
             aujourdhui: "Este ano", ajouter: "Adicionar", ceJour: "Hoje",
@@ -184,7 +193,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaSelectionEtendue: "Seleção estendida até ", ariaEventDeplace: "Evento movido de ",
             ariaEventRedimensionne: "Evento redimensionado de ", ariaAu: " para ",
             choisirMois: "Meses exibidos", ariaMasquerMois: "Filtrar meses para exibir",
-            ariaMoisLectureSeul: "Mês somente leitura"
+            ariaMoisLectureSeul: "Mês somente leitura",
+            ariaEventMasques: "eventos adicionais ocultos"
         }
     };
 
@@ -1317,7 +1327,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
 
         DATE_DEBUT.setDate(DATE_DEBUT.getDate() - offset); 
 
-        let joursPlats: DateCalendrier[] = [];
+        let joursPlats: InternalDateCalendrier[] = [];
 
         // 1. GÉNÉRATION DES 42 CASES DU MOIS
         for (let i = 0; i < 42; i++) 
@@ -1399,7 +1409,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
                 estMoisCourant: estMoisCourant, 
                 estWeekend: date.getDay() == 0 || date.getDay() == 6,
                 listeEvent: eventsDuJour, 
-                listeEventSpecial: eventsSpeciauxDuJour
+                listeEventSpecial: eventsSpeciauxDuJour,
+                nbEventsMasques: 0
             });
         }
 
@@ -1409,7 +1420,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
         // DÉCOUPAGE EN SEMAINES ET CALCUL DES BARRES
         for (let i = 0; i < joursPlats.length; i += nbCols) 
         {
-            const joursSemaine = joursPlats.slice(i, i + nbCols);
+            const joursSemaine: InternalDateCalendrier[] = joursPlats.slice(i, i + nbCols);
             let eventsPositionnes: EventPositionne[] = [];
             let slotsOccuppes: { [jour: number]: number[] } = {};
 
@@ -1483,6 +1494,18 @@ export class MatYearCalandar implements OnInit, OnDestroy
                     });
                 }
             });
+
+            for (let j = 0; j < joursSemaine.length; j++) 
+            {
+                let nbMasques = 0;
+                eventsPositionnes.forEach(pos => {
+                    // Si l'événement traverse ce jour et qu'il est sur une ligne invisible (>= 4)
+                    if (j >= pos.jourDebutIndex && j < pos.jourDebutIndex + pos.dureeJours && pos.ligne >= 4) 
+                        nbMasques++;
+                });
+                // On ajoute dynamiquement la propriété (à ajouter aussi dans ton interface DateCalendrier si besoin)
+                joursSemaine[j].nbEventsMasques = nbMasques;
+            }
 
             semaines.push({ jours: joursSemaine, eventsPositionnes });
         }
