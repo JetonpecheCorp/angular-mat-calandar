@@ -364,7 +364,8 @@ export class MatDayCalendar implements OnInit, OnDestroy
         return label;
     }
 
-    protected GetSlotAriaLabel(dateJour: Date, h: string, aDesEvents: boolean): string {
+    protected GetSlotAriaLabel(dateJour: Date, h: string, aDesEvents: boolean): string 
+    {
         if (this.EstJourPasse(dateJour, h))
             return this.FormatDateAria(dateJour) + ' ' + h + ', ' + this.trad().ariaBloque;
 
@@ -604,6 +605,7 @@ export class MatDayCalendar implements OnInit, OnDestroy
     protected AllerAujourdhui(): void 
     { 
         this.dateReference.set(new Date()); 
+        this.AnnoncerActionVocalement(`${this.trad().aujourdhui} ${this.titrePeriode()}`);
     }
 
     protected ClickTimeSlot(_dateJour: Date, _heureLabel: string): void 
@@ -633,6 +635,8 @@ export class MatDayCalendar implements OnInit, OnDestroy
         const DATE = new Date(this.dateReference());
         DATE.setMonth(DATE.getMonth() - 1);
         this.dateReference.set(this.TrouverJourValide(DATE, -1));
+
+        this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
     protected MoisSuivant(): void 
@@ -640,6 +644,8 @@ export class MatDayCalendar implements OnInit, OnDestroy
         const DATE = new Date(this.dateReference());
         DATE.setMonth(DATE.getMonth() + 1);
         this.dateReference.set(this.TrouverJourValide(DATE, 1));
+
+        this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
     protected Precedent(): void 
@@ -647,6 +653,8 @@ export class MatDayCalendar implements OnInit, OnDestroy
         const DATE = new Date(this.dateReference());
         DATE.setDate(DATE.getDate() - 1);
         this.dateReference.set(this.TrouverJourValide(DATE, -1));
+
+        this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
     protected Suivant(): void 
@@ -654,6 +662,8 @@ export class MatDayCalendar implements OnInit, OnDestroy
         const DATE = new Date(this.dateReference());
         DATE.setDate(DATE.getDate() + 1);
         this.dateReference.set(this.TrouverJourValide(DATE, 1));
+
+        this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
     protected styleApercuCreation(colDate: Date): any 
