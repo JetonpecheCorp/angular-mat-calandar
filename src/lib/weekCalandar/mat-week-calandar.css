@@ -574,6 +574,25 @@ mat-sidenav-content {
     background-color: #ea4335;
 }
 
+/* --- ACCESSIBILITÉ --- */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Empêcher la sélection de texte native lors des glissements */
+.calendar-body, .days-header-sticky {
+    user-select: none; 
+    -webkit-user-select: none;
+}
+
 /* --- RESPONSIVE --- */
 .name { text-transform: capitalize; }
 

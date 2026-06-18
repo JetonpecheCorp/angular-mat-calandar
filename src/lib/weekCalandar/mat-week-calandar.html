@@ -53,9 +53,14 @@
         </div>
     </mat-sidenav>
     <mat-sidenav-content>
-        <div class="week-calendar-container" [class.is-resizing-calendar]="previewResize() !== null || dragCreationEnCours()"
-                                                                [class.nav-hover-left]="zoneNavigationActive() === 'left'"
-                                                                [class.nav-hover-right]="zoneNavigationActive() === 'right'">
+        <div class="week-calendar-container" role="region" [attr.aria-label]="titrePeriode()"
+                [class.is-resizing-calendar]="previewResize() !== null || dragCreationEnCours()"
+                [class.nav-hover-left]="zoneNavigationActive() === 'left'"
+                [class.nav-hover-right]="zoneNavigationActive() === 'right'">
+
+            <div class="sr-only" aria-live="assertive" aria-atomic="true">
+                {{ messageAriaLive() }}
+            </div>
             
             <div class="nav-edge-indicator left" aria-hidden="true">
                 <div class="nav-bubble" [class.is-hovered]="bulleSurvolee() == 'left'">
@@ -147,7 +152,8 @@
                                     [class.today]="element.estAujourdhui" 
                                     role="button"
                                     tabindex="0"
-                                    [attr.aria-label]="(element.estAujourdhui ? trad().aujourdhui + ', ' : '') + element.normal"
+                                    [attr.aria-current]="element.estAujourdhui ? 'date' : null"
+                                    [attr.aria-label]="GetDayHeaderAriaLabel(element)"
                                     (click)="ClickJour(element.date)"
                                     (keydown.enter)="ClickJour(element.date)">
 
@@ -198,8 +204,7 @@
                                         role="button"
                                         tabindex="0"
                                         [id]="'event-' + ev.id"
-                                        [attr.aria-label]="trad().ariaEvenement + ' ' +  ev.titre + ' ' + FormatDateAria(ev.startDate) + ' ' + ev.formatHeure + 
-                                            (previewResize()?.eventId === ev.id ? trad().aideEventModif : (!readonly() && !ev.readonly ? trad().aideEventNormal : '')) + trad().aideNavMois"
+                                        [attr.aria-label]="GetEventAriaLabel(ev)"
                                         (keydown)="OnEventKeydown($event, ev)"
                                         (blur)="OnEventBlur(ev)"
                                         (click)="(readonly() || ev.readonly) && ClickEvent(ev)"
@@ -270,9 +275,8 @@
                                             role="button"
                                             tabindex="0"
                                             [attr.aria-disabled]="EstJourPasse(jour.date, h)"
-                                           [attr.aria-label]="(jour.estAujourdhui ? trad().aujourdhui + ', ' : '') + (EstJourPasse(jour.date, h) ? 
-                                                (FormatDateAria(jour.date) + ' ' + h + ', ' + trad().ariaBloque) : 
-                                                (trad().ariaCreer + ' ' + FormatDateAria(jour.date) + ' ' + h + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (getPositionedEvents(jour.date).length > 0 ? trad().aideDescendre : '') + trad().aideNavMois))"
+                                            [attr.aria-pressed]="dragCreationEnCours() ? 'true' : 'false'"
+                                            [attr.aria-label]="GetSlotAriaLabel(jour.date, h, getPositionedEvents(jour.date).length > 0)"
                                             (keydown)="OnTimeSlotKeydown($event, jour.date, h, getPositionedEvents(jour.date))"
                                             matRipple 
                                             [matRippleDisabled]="matRippleDisabled() || EstJourPasse(jour.date, h)" 

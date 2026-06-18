@@ -84,6 +84,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
     protected isDarkModeActive = signal(false);
+    protected messageAriaLive = signal<string>('');
 
     private themeObserver: MutationObserver | null = null;
     private el = inject(ElementRef);
@@ -99,7 +100,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     private autoScrollInterval: any = null;
     private ignoreBlur = false;
     private focusTimeout: any = null;
-    private DICT_TRADUCTION: Record<string, any> = 
+    private readonly DICT_TRADUCTION: Record<string, any> = 
     {
         'fr': { 
             aujourdhui: "Aujourd'hui", semaine: "S", nouveau: "nouveau", ajouter: "Ajouter", 
@@ -114,7 +115,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Majuscule plus flèches pour déplacer. Ctrl plus flèches pour redimensionner la fin. Ctrl plus Majuscule plus flèches pour redimensionner le début. Alt plus flèche haut pour retourner au créneau horaire)",
             aideNavMois: ". Touches P et N pour changer de semaine. Majuscule plus P et N pour changer de mois",
             ariaBloque: "Non disponible", ariaFermerMenu: "Fermer le menu des thèmes",
-            ariaLectureSeule: "Lecture seule"
+            ariaLectureSeule: "Lecture seule", ariaSelectionEtendue: "Sélection étendue jusqu'au ", 
+            ariaEventDeplace: "Événement déplacé du ", ariaEventRedimensionne: "Événement redimensionné du ", ariaAu: " au ", 
+            ariaEventSpecial: "Événement spécial :"
         },
         'en': {
             aujourdhui: "Today", semaine: "W", nouveau: "new", ajouter: "Add new",
@@ -137,7 +140,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             ariaOuvrirMenu: "Open themes menu",
             ariaFermerMenu: "Close themes menu",
             ariaBloque: "Unavailable",
-            ariaLectureSeule: "Read-only"
+            ariaLectureSeule: "Read-only",
+            ariaSelectionEtendue: "Selection extended to ", ariaEventDeplace: "Event moved from ", 
+            ariaEventRedimensionne: "Event resized from ", ariaAu: " to "
         },
         'es': { 
             aujourdhui: "Hoy", semaine: "S", nouveau: "nuevo", ajouter: "Añadir", 
@@ -152,7 +157,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Mayús más flechas para mover. Ctrl más flechas para cambiar el final. Ctrl más Mayús más flechas para cambiar el inicio. Alt más flecha arriba para volver al tramo horario)",
             aideNavMois: ". Teclas P y N para cambiar de semana. Añade MAYÚS para cambiar de mes",
             ariaBloque: "No disponible", ariaLectureSeule: "Solo lectura",
-            ariaFermerMenu: "Cerrar el menú de temas",
+            ariaFermerMenu: "Cerrar el menú de temas", ariaSelectionEtendue: "Selección extendida hasta el ", 
+            ariaEventDeplace: "Evento movido del ", ariaEventRedimensionne: "Evento redimensionado del ", ariaAu: " al "
         },
         'it': { 
             aujourdhui: "Oggi", semaine: "S", nouveau: "nuovo", ajouter: "Aggiungi", 
@@ -167,7 +173,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Maiusc più frecce per spostare. Ctrl più frecce per ridimensionare la fine. Ctrl più Maiusc più frecce per ridimensionare l'inizio. Alt più freccia su per tornare alla fascia oraria)",
             aideNavMois: ". Tasti P e N per cambiare settimana. Aggiungi MAIUSC per cambiare mese",
             ariaBloque: "Non disponibile", ariaLectureSeule: "Sola lettura",
-            ariaFermerMenu: "Chiudi il menu dei temi",
+            ariaFermerMenu: "Chiudi il menu dei temi", ariaSelectionEtendue: "Selezione estesa fino al ", 
+            ariaEventDeplace: "Evento spostato dal ", ariaEventRedimensionne: "Evento ridimensionato dal ", ariaAu: " al "
         },
         'de': { 
             aujourdhui: "Heute", semaine: "W", nouveau: "neu", ajouter: "Hinzufügen", 
@@ -182,7 +189,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Umschalt plus Pfeiltasten zum Verschieben. Ctrl plus Pfeiltasten zum Ändern des Endes. Ctrl plus Umschalt plus Pfeiltasten zum Ändern des Starts. Alt plus Pfeiltaste nach oben, um zum Zeitfenster zurückzukehren)",
             aideNavMois: ". Tasten P und N, um die Woche zu ändern. Umschalt hinzufügen, um den Monat zu ändern",
             ariaBloque: "Nicht verfügbar", ariaLectureSeule: "Schreibgeschützt",
-            ariaFermerMenu: "Themenmenü schließen",
+            ariaFermerMenu: "Themenmenü schließen", ariaSelectionEtendue: "Auswahl erweitert bis ", 
+            ariaEventDeplace: "Ereignis verschoben vom ", ariaEventRedimensionne: "Ereignis in der Größe geändert vom ", ariaAu: " bis "
         },
         'pt': { 
             aujourdhui: "Hoje", semaine: "S", nouveau: "novo", ajouter: "Adicionar", 
@@ -197,7 +205,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             aideEventNormal: " (Shift mais setas para mover. Ctrl mais setas para redimensionar o fim. Ctrl mais Shift mais setas para redimensionar o início. Alt mais seta para cima para voltar ao horário)",
             aideNavMois: ". Teclas P e N para mudar de semana. Adicione SHIFT para mudar de mês",
             ariaBloque: "Indisponível", ariaLectureSeule: "Somente leitura",
-            ariaFermerMenu: "Fechar o menu de temas",
+            ariaFermerMenu: "Fechar o menu de temas", ariaSelectionEtendue: "Seleção estendida até ", 
+            ariaEventDeplace: "Evento movido de ", ariaEventRedimensionne: "Evento redimensionado de ", ariaAu: " para "
         }
     };
 
@@ -440,6 +449,59 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     {
         if (event.value) 
             this.dateReference.set(event.value);
+    }
+
+    protected AnnoncerActionVocalement(message: string): void 
+    {
+        this.messageAriaLive.set('');
+        setTimeout(() => this.messageAriaLive.set(message), 50);
+    }
+
+    protected GetDayHeaderAriaLabel(element: any): string 
+    {
+        let label = element.estAujourdhui ? this.trad().aujourdhui + ', ' : '';
+        label += element.normal;
+        if (element.specialEvents && element.specialEvents.length > 0) 
+        {
+            const titres = element.specialEvents.map((sp: any) => sp.title).join(', ');
+            label += ', ' + this.trad().ariaEventSpecial + ' ' + titres;
+        }
+
+        return label;
+    }
+
+    protected GetSlotAriaLabel(dateJour: Date, h: string, aDesEvents: boolean): string 
+    {
+        if (this.EstJourPasse(dateJour, h))
+            return this.FormatDateAria(dateJour) + ' ' + h + ', ' + this.trad().ariaBloque;
+
+        let label = this.EstAujourdhui(dateJour) ? this.trad().aujourdhui + ', ' : '';
+        label += this.FormatDateAria(dateJour) + ' ' + h;
+        
+        if (!this.dragCreationEnCours()) 
+            label += '. ' + this.trad().ariaCreer + ' ' + this.FormatDateAria(dateJour) + ' ' + h + this.trad().aideCreerEtendre + (aDesEvents ? this.trad().aideDescendre : '') + this.trad().aideNavMois;
+
+        else
+            label += '. ' + this.trad().aideCreerValider;
+
+        return label;
+    }
+
+    protected GetEventAriaLabel(ev: PositionedEvent): string 
+    {
+        let label = this.trad().ariaEvenement + ' ' + ev.titre + ' ' + this.FormatDateAria(ev.startDate) + ' ' + ev.formatHeure;
+        if (this.readonly() || ev.readonly) 
+            label += ', ' + this.trad().ariaLectureSeule;
+
+        else if (this.previewResize()?.eventId === ev.id) 
+            label += this.trad().aideEventModif;
+
+        else 
+            label += this.trad().aideEventNormal;
+        
+        label += this.trad().aideNavMois;
+
+        return label;
     }
 
     protected EstJourPasse(jourDate: Date, heureLabel: string): boolean 
@@ -757,6 +819,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
 
+            if (window.getSelection) 
+                window.getSelection()?.removeAllRanges();
+
             this.previewResize.set(null);
             this.NettoyerNavigationBulle();
             this.ArreterAutoScroll();
@@ -871,7 +936,6 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                     finalEndDate = nouvelleDateFin;
                     dateTrouvee = true;
 
-                    // 🆕 L'aperçu met à jour l'événement sur la grille (heure incluse !)
                     this.previewResize.set({
                         eventId: ev.id,
                         startDate: finalStartDate,
@@ -887,6 +951,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
+
+            if (window.getSelection) 
+                window.getSelection()?.removeAllRanges();
 
             this.previewResize.set(null);
             this.NettoyerNavigationBulle();
@@ -1066,6 +1133,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
+
+            if (window.getSelection) 
+                window.getSelection()?.removeAllRanges();
 
             this.dragCreationEnCours.set(false);
             this.NettoyerNavigationBulle();
@@ -1328,17 +1398,20 @@ export class MatWeekCalendar implements OnInit, OnDestroy
                 aTournePage = true; 
             }
 
-            // 🆕 3. Formatage de l'heure cible pour coller à l'ID HTML
+            // Formatage de l'heure cible pour coller à l'ID HTML
             let hCible = nouvelleDateFin.getHours();
             let strHour = '';
             
-            if (this.useAmPm()) {
+            if (this.useAmPm()) 
+            {
                 const period = hCible >= 12 ? 'PM' : 'AM';
                 const displayHour = hCible % 12 || 12;
                 strHour = `${displayHour} ${period}`;
-            } else {
+            } 
+            else 
                 strHour = `${hCible}h`;
-            }
+
+            this.AnnoncerActionVocalement(this.trad().ariaSelectionEtendue + this.FormatDateAria(nouvelleDateFin) + ' - ' + strHour);
 
             this.focusTimeout = setTimeout(() => 
             {
@@ -1490,7 +1563,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             event.stopPropagation();
             if (this.readonly() || ev.readonly) return;
 
-            // 🆕 ON BLOQUE LE BLUR AVANT LE CHANGEMENT DU DOM
+            // ON BLOQUE LE BLUR AVANT LE CHANGEMENT DU DOM
             this.ignoreBlur = true;
             if (this.focusTimeout) clearTimeout(this.focusTimeout);
 
@@ -1505,7 +1578,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             else if (event.key === 'ArrowDown') decMinutes = 15;
             else if (event.key === 'ArrowUp') decMinutes = -15;
 
-            // 🆕 On ajoute maintenant bien "decJours" ET "decMinutes" dans tous les cas
+            // On ajoute maintenant bien "decJours" ET "decMinutes" dans tous les cas
             if (estEnDeplacement) 
             {
                 newStart.setDate(newStart.getDate() + decJours);
@@ -1532,6 +1605,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
             this.previewResize.set({ eventId: ev.id, startDate: newStart, endDate: newEnd });
 
+            const typeAction = estEnDeplacement ? this.trad().ariaEventDeplace : this.trad().ariaEventRedimensionne;
+            this.AnnoncerActionVocalement(`${typeAction}${this.FormatDateAria(newStart)} ${newStart.getHours()}h ${this.trad().ariaAu} ${this.FormatDateAria(newEnd)} ${newEnd.getHours()}h`);
+            
             let referenceDate: Date;
 
             if (estResizingDebut) 
