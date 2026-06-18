@@ -378,10 +378,8 @@ display: flex;
 }
 
 .weekday {
-    padding: 8px 4px;
-    font-size: 0.8rem;
-    text-transform: lowercase;
-    font-weight: 300;
+    font-size: 1rem;
+    text-transform: capitalize;
     text-align: center;
     background-color: var(--mat-sys-primary); 
     color: var(--mat-sys-on-primary);
@@ -767,7 +765,7 @@ display: flex;
 
     .weekday {
         padding: 4px 0;
-        font-size: 0.65rem;
+        font-size: .85rem;
     }
     .week-row {
         min-height: 65px;
