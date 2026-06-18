@@ -98,6 +98,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     protected zoneNavigationActive = signal<'left' | 'right' | null>(null);
     protected bulleSurvolee = signal<'left' | 'right' | null>(null);
     protected darkModeActif = signal(false);
+    protected messageAriaLive = signal<string>('');
 
     private themeObserver: MutationObserver | null = null;
     private el = inject(ElementRef);
@@ -118,7 +119,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             ariaEvenement: "Événement :", ariaLectureSeule: "Lecture seule",
             ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir l'événement",
             ariaEventSpecial: "Événement spécial :",
-            aideNavMois: ". Touches P et N pour changer de mois. Majuscule plus P et N pour changer d'année"
+            aideNavMois: ". Touches P et N pour changer de mois. Majuscule plus P et N pour changer d'année",
+            ariaSelectionEtendue: "Sélection étendue jusqu'au ", ariaEventDeplace: "Événement déplacé du ", 
+            ariaEventRedimensionne: "Événement redimensionné du ", ariaAu: " au "
         },
         'en': {
             plus: "more", 
@@ -149,7 +152,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             ariaOuvrirMenu: "Open themes menu",
             ariaFermerMenu: "Close themes menu",
             ariaBloque: "Unavailable",
-            ariaLectureSeule: "Read-only"
+            ariaLectureSeule: "Read-only",
+            ariaSelectionEtendue: "Selection extended to ", ariaEventDeplace: "Event moved from ", 
+            ariaEventRedimensionne: "Event resized from ", ariaAu: " to "
         },
         'es': {
             aujourdhui: "Hoy", ajouter: "Añadir", modifier: "Editar", supprimer: "Eliminar",
@@ -163,7 +168,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             ariaEvenement: "Evento:", ariaLectureSeule: "Solo lectura",
             ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
             ariaEventSpecial: "Evento especial:",
-            aideNavMois: ". Teclas P y N para cambiar de mes. Añade MAYÚS para cambiar de año"
+            aideNavMois: ". Teclas P y N para cambiar de mes. Añade MAYÚS para cambiar de año",
+            ariaSelectionEtendue: "Selección extendida hasta el ", ariaEventDeplace: "Evento movido del ", 
+            ariaEventRedimensionne: "Evento redimensionado del ", ariaAu: " al "
         },
         'it': { 
             aujourdhui: "Oggi", ajouter: "Aggiungi", modifier: "Modifica", supprimer: "Elimina",
@@ -177,7 +184,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             ariaEvenement: "Evento:", ariaLectureSeule: "Sola lettura",
             ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri evento",
             ariaEventSpecial: "Evento speciale:",
-            aideNavMois: ". Tasti P e N per cambiare mese. Aggiungi MAIUSC per cambiare anno"
+            aideNavMois: ". Tasti P e N per cambiare mese. Aggiungi MAIUSC per cambiare anno",
+            ariaSelectionEtendue: "Selezione estesa fino al ", ariaEventDeplace: "Evento spostato dal ", 
+            ariaEventRedimensionne: "Evento ridimensionato dal ", ariaAu: " al "
         },
         'de': { 
             aujourdhui: "Heute", ajouter: "Hinzufügen", modifier: "Bearbeiten", supprimer: "Löschen",
@@ -191,7 +200,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             ariaEvenement: "Ereignis:", ariaLectureSeule: "Schreibgeschützt",
             ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Ereignis öffnen",
             ariaEventSpecial: "Besonderes Ereignis:",
-            aideNavMois: ". Tasten P und N, um den Monat zu ändern. Umschalt hinzufügen, um das Jahr zu ändern"
+            aideNavMois: ". Tasten P und N, um den Monat zu ändern. Umschalt hinzufügen, um das Jahr zu ändern",
+            ariaSelectionEtendue: "Auswahl erweitert bis ", ariaEventDeplace: "Ereignis verschoben vom ", 
+            ariaEventRedimensionne: "Ereignis in der Größe geändert vom ", ariaAu: " bis "
         },
         'pt': { 
             aujourdhui: "Hoje", ajouter: "Adicionar", modifier: "Editar", supprimer: "Excluir",
@@ -205,7 +216,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             ariaEvenement: "Evento:", ariaLectureSeule: "Somente leitura",
             ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir evento",
             ariaEventSpecial: "Evento especial:",
-            aideNavMois: ". Teclas P e N para mudar de mês. Adicione SHIFT para mudar de ano"
+            aideNavMois: ". Teclas P e N para mudar de mês. Adicione SHIFT para mudar de ano",
+            ariaSelectionEtendue: "Seleção estendida até ", ariaEventDeplace: "Evento movido de ", 
+            ariaEventRedimensionne: "Evento redimensionado de ", ariaAu: " para "
         }
     };
 
@@ -438,6 +451,44 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         this.mois.set(date.getMonth() + 1);
         this.annee.set(date.getFullYear());
         datepicker.close();
+    }
+
+    protected AnnoncerActionVocalement(message: string): void 
+    {
+        this.messageAriaLive.set('');
+        setTimeout(() => this.messageAriaLive.set(message), 50);
+    }
+
+    protected GetDayAriaLabel(jour: DateCalendrier): string 
+    {
+        let label = '';
+        if (jour.estAujourdhui) 
+            label += this.trad().aujourdhui + ', ';
+
+        label += this.FormatDateAria(jour.date);
+        
+        if (jour.estBloquer)
+            label += ', ' + this.trad().ariaBloque;
+
+        else 
+        {
+            if (jour.listeEvent.length > 0) 
+                label += ', ' + jour.listeEvent.length + ' ' + this.trad().ariaEvenement;
+            
+            if (jour.listeEventSpecial && jour.listeEventSpecial.length > 0) 
+            {
+                const titresSpeciaux = jour.listeEventSpecial.map(sp => sp.title).join(', ');
+                label += ', ' + this.trad().ariaEventSpecial + ' ' + titresSpeciaux;
+            }
+
+            if (!this.dragCreationEnCours())
+                label += '. ' + this.trad().ariaCreer + ' ' + this.FormatDateAria(jour.date) + this.trad().aideCreerEtendre + (jour.listeEvent.length > 0 ? this.trad().aideDescendre : '') + this.trad().aideNavMois;
+
+            else
+                label += '. ' + this.trad().aideCreerValider;
+        }
+
+        return label;
     }
 
     protected GetEventStyle(eventObj: EventCalandar): any 
@@ -685,6 +736,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
 
+            if (window.getSelection) 
+                window.getSelection()?.removeAllRanges();
+
             // CLIC SIMPLE
             if (!intentionScroll) 
             {
@@ -771,10 +825,10 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 aBouge = true;
                 this.overrideRipple.set(true);
 
-                // 🆕 CRÉATION DU FANTÔME au premier mouvement
+                // CRÉATION DU FANTÔME au premier mouvement
                 elementFantome = targetElement.cloneNode(true) as HTMLElement;
-                elementFantome.classList.add('event-ghost-preview'); // Classe CSS dédiée
-                elementFantome.style.width = rect.width + 'px';      // On fige sa taille
+                elementFantome.classList.add('event-ghost-preview');
+                elementFantome.style.width = rect.width + 'px';
                 elementFantome.style.height = rect.height + 'px';
                 
                 // On l'ajoute directement au body pour qu'il ne soit pas bloqué par les overflow
@@ -783,8 +837,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
             if (aBouge) 
             {
-                // 🆕 DÉPLACEMENT DU FANTÔME fluide avec la souris
-                if (elementFantome) {
+                if (elementFantome) 
+                {
                     elementFantome.style.left = (clientX - offsetX) + 'px';
                     elementFantome.style.top = (clientY - offsetY) + 'px';
                 }
@@ -834,8 +888,11 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
 
-            // 🆕 DESTRUCTION DU FANTÔME
-            if (elementFantome) {
+            if (window.getSelection) 
+                window.getSelection()?.removeAllRanges();
+
+            if (elementFantome) 
+            {
                 elementFantome.remove();
                 elementFantome = null;
             }
@@ -933,6 +990,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
             
+            if (window.getSelection) 
+                window.getSelection()?.removeAllRanges();
+
             // supprime le fantôme
             this.previewResize.set(null);
             this.NettoyerNavigationBulle();
@@ -1143,6 +1203,8 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 this.annee.set(nouvelleAnnee);
             }
 
+            this.AnnoncerActionVocalement(this.trad().ariaSelectionEtendue + this.FormatDateAria(nouvelleDateFin));
+
             setTimeout(() => 
             {
                 const targetCell = this.el.nativeElement.querySelector(`.day-cell[data-date="${nouvelleDateFin.getTime()}"]`) as HTMLElement;
@@ -1337,7 +1399,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             return;
         }
 
-// 5. Déplacement et Redimensionnement
+        // Déplacement et Redimensionnement
         let estEnDeplacement = _event.shiftKey && !_event.ctrlKey && !_event.metaKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(_event.key);
         let estRedimensionnementFin = (_event.ctrlKey || _event.metaKey) && !_event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(_event.key);
         let estRedimensionnementDebut = (_event.ctrlKey || _event.metaKey) && _event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(_event.key);
@@ -1349,7 +1411,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
             if (this.readonly() || _eventObj.readonly) return;
 
-            // 🆕 ON BLOQUE LE BLUR AVANT TOUT CHANGEMENT DE DOM
+            // ON BLOQUE LE BLUR AVANT TOUT CHANGEMENT DE DOM
             this.ignoreBlur = true;
             if (this.focusTimeout) clearTimeout(this.focusTimeout);
 
@@ -1394,6 +1456,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 endDate: nouvelleFin
             });
 
+            const typeAction = estEnDeplacement ? this.trad().ariaEventDeplace : this.trad().ariaEventRedimensionne;
+            this.AnnoncerActionVocalement(`${typeAction}${this.FormatDateAria(nouveauDebut)}${this.trad().ariaAu}${this.FormatDateAria(nouvelleFin)}`);
+
             const dateCible = estRedimensionnementDebut ? nouveauDebut : nouvelleFin;
             const nouveauMois = dateCible.getMonth() + 1;
             const nouvelleAnnee = dateCible.getFullYear();
@@ -1405,7 +1470,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 this.annee.set(nouvelleAnnee);
             }
 
-            // 🆕 On réassigne le focus proprement
+            // On réassigne le focus proprement
             this.focusTimeout = setTimeout(() => 
             {
                 // Un événement sur plusieurs semaines génère plusieurs segments HTML.
@@ -1421,7 +1486,6 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                         (elementsEvenement[0] as HTMLElement).focus();
                 }
 
-                // 🆕 On réautorise le Blur
                 this.ignoreBlur = false; 
 
             }, moisAChange ? 120 : 30);

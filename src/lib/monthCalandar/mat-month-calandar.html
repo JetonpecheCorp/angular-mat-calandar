@@ -171,7 +171,11 @@
                 }
             </div>
 
-            <div class="calendar-body">
+            <div class="calendar-body" role="region" [attr.aria-label]="nomMois() + ' ' + annee()">
+
+                <div class="sr-only" aria-live="assertive" aria-atomic="true">
+                    {{ messageAriaLive() }}
+                </div>
 
                 @if (loading()) 
                 {
@@ -191,9 +195,9 @@
                                         role="button"
                                         tabindex="0"
                                         [attr.aria-disabled]="element.estBloquer"
-                                        [attr.aria-label]="(element.estAujourdhui ? trad().aujourdhui + ', ' : '') + (element.estBloquer ? 
-                                            (FormatDateAria(element.date) + ', ' + trad().ariaBloque) : 
-                                            (trad().ariaCreer + ' ' + FormatDateAria(element.date) + (!dragCreationEnCours() ? trad().aideCreerEtendre : trad().aideCreerValider) + (element.listeEvent.length > 0 ? trad().aideDescendre : '') + trad().aideNavMois))"
+                                        [attr.aria-current]="element.estAujourdhui ? 'date' : null"
+                                        [attr.aria-pressed]="EstEnCreation(element.date) ? 'true' : 'false'"
+                                        [attr.aria-label]="GetDayAriaLabel(element)"
                                         matRipple
                                         [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
                                         (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer, element.listeEvent)"
@@ -214,8 +218,8 @@
                                             <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
                                                 @for (sp of element.listeEventSpecial; track $index) 
                                                 {
-                                                    <div class="special-badge" [title]="sp.title">
-                                                        <span class="special-text">{{ sp.title }}</span>
+                                                    <div class="special-badge" [title]="sp.title" [attr.aria-label]="sp.title" role="note">
+                                                        <span class="special-text" aria-hidden="true">{{ sp.title }}</span>
                                                     </div>
                                                 }
                                             </div>
