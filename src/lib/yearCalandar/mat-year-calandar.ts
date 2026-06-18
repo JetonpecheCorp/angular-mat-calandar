@@ -90,6 +90,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
     private dernierTouchTime = 0;
     protected dateRetourFocus = signal<number | null>(null);
     protected listeEventIdsFocus = signal<any[]>([]);
+    protected messageAriaLive = signal<string>("");
     
     private ignoreBlur = false;
     private focusTimeout: any = null;
@@ -105,7 +106,9 @@ export class MatYearCalandar implements OnInit, OnDestroy
             titreGroupes: "Thèmes", sansGroupe: "Autres", ariaEvenement: "événement(s)",
             ariaOuvrirMenu: "Ouvrir le menu", ariaFermerMenu: "Fermer le menu",
             ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir",
-            ariaBloque: "Non disponible"
+            ariaBloque: "Non disponible",
+            ariaSelectionEtendue: "Sélection étendue jusqu'au ", ariaEventDeplace: "Événement déplacé du ",
+            ariaEventRedimensionne: "Événement redimensionné du ", ariaAu: " au "
         },
         'en': {
             aujourdhui: "This year", ajouter: "Add new", ceJour: "Today",
@@ -114,7 +117,9 @@ export class MatYearCalandar implements OnInit, OnDestroy
             titreGroupes: "Themes", sansGroupe: "Other", ariaEvenement: "event(s)",
             ariaOuvrirMenu: "Open menu", ariaFermerMenu: "Close menu",
             ariaMasquerGroupe: "Hide", ariaAfficherGroupe: "Show", ariaOuvrirEvent: "Open",
-            ariaBloque: "Unavailable"
+            ariaBloque: "Unavailable",
+            ariaSelectionEtendue: "Selection extended to ", ariaEventDeplace: "Event moved from ",
+            ariaEventRedimensionne: "Event resized from ", ariaAu: " to "
         },
         'es': { 
             aujourdhui: "Este año", ajouter: "Añadir", ceJour: "Hoy",
@@ -123,7 +128,9 @@ export class MatYearCalandar implements OnInit, OnDestroy
             titreGroupes: "Temas", sansGroupe: "Otros", ariaEvenement: "evento(s)",
             ariaOuvrirMenu: "Abrir menú", ariaFermerMenu: "Cerrar menú",
             ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir",
-            ariaBloque: "No disponible"
+            ariaBloque: "No disponible",
+            ariaSelectionEtendue: "Selección extendida hasta el ", ariaEventDeplace: "Evento movido del ",
+            ariaEventRedimensionne: "Evento redimensionado del ", ariaAu: " al "
         },
         'it': { 
             aujourdhui: "Quest'anno", ajouter: "Aggiungi", ceJour: "Oggi",
@@ -132,7 +139,9 @@ export class MatYearCalandar implements OnInit, OnDestroy
             titreGroupes: "Temi", sansGroupe: "Altri", ariaEvenement: "evento(i)",
             ariaOuvrirMenu: "Apri menu", ariaFermerMenu: "Chiudi menu",
             ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri",
-            ariaBloque: "Non disponibile"
+            ariaBloque: "Non disponibile",
+            ariaSelectionEtendue: "Selezione estesa fino al ", ariaEventDeplace: "Evento spostato dal ",
+            ariaEventRedimensionne: "Evento ridimensionato dal ", ariaAu: " al "
         },
         'de': { 
             aujourdhui: "Dieses Jahr", ajouter: "Hinzufügen", ceJour: "Heute",
@@ -141,7 +150,9 @@ export class MatYearCalandar implements OnInit, OnDestroy
             titreGroupes: "Themen", sansGroupe: "Andere", ariaEvenement: "Ereignis(se)",
             ariaOuvrirMenu: "Menü öffnen", ariaFermerMenu: "Menü schließen",
             ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Öffnen",
-            ariaBloque: "Nicht verfügbar"
+            ariaBloque: "Nicht verfügbar",
+            ariaSelectionEtendue: "Auswahl erweitert bis ", ariaEventDeplace: "Ereignis verschoben vom ",
+            ariaEventRedimensionne: "Ereignis in der Größe geändert vom ", ariaAu: " bis "
         },
         'pt': { 
             aujourdhui: "Este ano", ajouter: "Adicionar", ceJour: "Hoje",
@@ -150,7 +161,9 @@ export class MatYearCalandar implements OnInit, OnDestroy
             titreGroupes: "Temas", sansGroupe: "Outros", ariaEvenement: "evento(s)",
             ariaOuvrirMenu: "Abrir menu", ariaFermerMenu: "Fechar menu",
             ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir",
-            ariaBloque: "Indisponível"
+            ariaBloque: "Indisponível",
+            ariaSelectionEtendue: "Seleção estendida até ", ariaEventDeplace: "Evento movido de ",
+            ariaEventRedimensionne: "Evento redimensionado de ", ariaAu: " para "
         }
     };
 
@@ -162,10 +175,17 @@ export class MatYearCalandar implements OnInit, OnDestroy
         return this.DICT_TRADUCTION[codeLangue] || this.DICT_TRADUCTION['en'];
     });
 
+    protected AnnoncerActionVocalement(message: string): void 
+    {
+        this.messageAriaLive.set('');
+        setTimeout(() => this.messageAriaLive.set(message), 50);
+    }
+
     protected dateReference = computed(() => new Date(this.annee(), 0, 1));
     protected anneeTexte = computed(() => this.annee().toString());
     protected nbColonnes = computed(() => 7 - this.joursAExclure().length);
 
+    
     protected listeEvenementGroupe = computed(() => 
     {
         const tousLesEvents = this.events() || [];
@@ -286,6 +306,35 @@ export class MatYearCalandar implements OnInit, OnDestroy
         } else {
             return { '--event-bg': group.bgColorLight, '--event-text': group.textColorLight };
         }
+    }
+
+    protected GetDayAriaLabel(jour: DateCalendrier): string 
+    {
+        if (!jour.estMoisCourant) 
+            return '';
+        
+        let label = '';
+        if (jour.estAujourdhui) 
+            label += this.trad().ceJour + ', ';
+        
+        label += this.FormatDateAria(jour.date);
+        
+        if (jour.estBloquer)
+            label += ', ' + this.trad().ariaBloque;
+ 
+        else 
+        {
+            if (jour.listeEvent.length > 0)
+                label += ', ' + jour.listeEvent.length + ' ' + this.trad().ariaEvenement;
+
+            if (jour.listeEventSpecial && jour.listeEventSpecial.length > 0) 
+            {
+                const titresSpeciaux = jour.listeEventSpecial.map(sp => sp.title).join(', ');
+                label += ', ' + titresSpeciaux;
+            }
+        }
+        
+        return label;
     }
 
     protected FormaterDateCourte(date: Date): string { 
@@ -492,6 +541,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
 
             if (nouvelleDateFin.getFullYear() !== this.annee())
                 this.annee.set(nouvelleDateFin.getFullYear());
+
+            this.AnnoncerActionVocalement(this.trad().ariaSelectionEtendue + this.FormatDateAria(nouvelleDateFin));
 
             setTimeout(() => {
                 const targetCell = this.el.nativeElement.querySelector(`.day-cell:not(.hors-mois)[data-date="${nouvelleDateFin.getTime()}"]`) as HTMLElement;
@@ -751,19 +802,23 @@ export class MatYearCalandar implements OnInit, OnDestroy
 
             this.previewResize.set({ eventId: _eventObj.id, startDate: nouveauDebut, endDate: nouvelleFin });
 
+            const typeAction = estEnDeplacement ? this.trad().ariaEventDeplace : this.trad().ariaEventRedimensionne;
+            this.AnnoncerActionVocalement(`${typeAction}${this.FormatDateAria(nouveauDebut)}${this.trad().ariaAu}${this.FormatDateAria(nouvelleFin)}`);
+
             const dateCible = estRedimensionnementDebut ? nouveauDebut : nouvelleFin;
-            if (dateCible.getFullYear() !== this.annee()) {
+            if (dateCible.getFullYear() !== this.annee())
                 this.annee.set(dateCible.getFullYear());
-            }
 
             this.focusTimeout = setTimeout(() => {
                 const elementsEvenement = this.el.nativeElement.querySelectorAll(`#event-${_eventObj.id}`);
-                if (elementsEvenement.length > 0) {
-                    if (estRedimensionnementFin || (estEnDeplacement && decalage > 0)) {
+                
+                if (elementsEvenement.length > 0) 
+                {
+                    if (estRedimensionnementFin || (estEnDeplacement && decalage > 0))
                         (elementsEvenement[elementsEvenement.length - 1] as HTMLElement).focus();
-                    } else {
+
+                    else
                         (elementsEvenement[0] as HTMLElement).focus();
-                    }
                 }
                 this.ignoreBlur = false; 
             }, 120);
@@ -1108,6 +1163,18 @@ export class MatYearCalandar implements OnInit, OnDestroy
         return tDate >= min && tDate <= max;
     }
 
+    protected ScrollHorizontal(event: WheelEvent): void 
+    {
+        const conteneur = event.currentTarget as HTMLElement;
+
+        // On vérifie il on peut scroller
+        if (conteneur.scrollWidth > conteneur.clientWidth)
+        {
+            event.preventDefault();  
+            conteneur.scrollLeft += event.deltaY; 
+        }
+    }
+
     private AnnulerCreationClavier(): void 
     {
         this.dragCreationEnCours.set(false);
@@ -1147,14 +1214,17 @@ export class MatYearCalandar implements OnInit, OnDestroy
             if (this.joursAExclure().includes(date.getDay())) 
                 continue;
 
-            const estMoisCourant = date.getMonth() === _de.getMonth();
-            
+            const M = date.getMonth() + 1;
+            const D = date.getDate();  
+            const Y = date.getFullYear();
+
+            const estMoisCourant = (date.getMonth() === _de.getMonth()) && (date.getFullYear() === _de.getFullYear());            
+
             let estBloquerDatePrecise = this.daysDisabled()?.some(x => this.EstMemeJour(x, date)) ?? false;
             let estBloquerIntervalle = this.intervalsDisabled().some(inter => 
             {
                 const startM = inter.start.month; const startD = inter.start.day; const startY = inter.start.year;
                 const endM = inter.end.month; const endD = inter.end.day; const endY = inter.end.year;
-                const M = date.getMonth() + 1; const D = date.getDate(); const Y = date.getFullYear();
 
                 if (startY != undefined && startY != null && endY !== undefined && endY != null) 
                 {
@@ -1190,10 +1260,32 @@ export class MatYearCalandar implements OnInit, OnDestroy
 
             const eventsDuJour = estMoisCourant ? eventsDuMois.filter(x => this.EstDansIntervalle(date, x.startDate, x.endDate)) : [];
 
+            // --- GESTION DES ÉVÉNEMENTS SPÉCIAUX (BADGES) ---
+            const eventsSpeciauxDuJour = estMoisCourant ? this.specialEvents().filter(sp => 
+            {
+                const startM = sp.dateStart.month;
+                const startD = sp.dateStart.day;
+                const endM = sp.dateEnd.month;
+                const endD = sp.dateEnd.day;
+
+                // Gere les intervalles normaux et ceux à cheval sur l'année
+                const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
+
+                if (isNormalInterval) 
+                    return (M > startM || (M === startM && D >= startD)) && (M < endM || (M === endM && D <= endD));
+                else 
+                    return (M > startM || (M === startM && D >= startD)) || (M < endM || (M === endM && D <= endD));
+
+            }) : [];
+
             joursPlats.push({
-                date: date, estBloquer: estBloquer, estAujourdhui: this.EstMemeJour(date, new Date()),
-                estMoisCourant: estMoisCourant, estWeekend: date.getDay() == 0 || date.getDay() == 6,
-                listeEvent: eventsDuJour, listeEventSpecial: [] 
+                date: date, 
+                estBloquer: estBloquer, 
+                estAujourdhui: this.EstMemeJour(date, new Date()),
+                estMoisCourant: estMoisCourant, 
+                estWeekend: date.getDay() == 0 || date.getDay() == 6,
+                listeEvent: eventsDuJour, 
+                listeEventSpecial: eventsSpeciauxDuJour
             });
         }
 
@@ -1277,6 +1369,28 @@ export class MatYearCalandar implements OnInit, OnDestroy
         }
 
         return semaines;
+    }
+
+    private EstDateDansSpecialEvent(date: Date, sp: DateSpecialEvent): boolean 
+    {
+        const M = date.getMonth() + 1;
+        const D = date.getDate();
+        
+        const startM = sp.dateStart.month;
+        const startD = sp.dateStart.day;
+        const endM = sp.dateEnd.month;
+        const endD = sp.dateEnd.day;
+
+        const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
+        
+        if (isNormalInterval) {
+            return (M > startM || (M === startM && D >= startD)) && 
+                   (M < endM || (M === endM && D <= endD));
+        } else {
+            // Cas où l'événement chevauche la fin de l'année (ex: Mois 12 à Mois 1)
+            return (M > startM || (M === startM && D >= startD)) || 
+                   (M < endM || (M === endM && D <= endD));
+        }
     }
 
     private EstDansIntervalle(_dateAChecker: Date, _debut: Date, _fin: Date): boolean 

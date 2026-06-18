@@ -83,6 +83,12 @@
             </mat-toolbar>
 
             <div class="calendar-body continuous-layout">
+
+                <!-- utiliser pour le voice lorsque on est en creation ou resize -->
+                <div class="sr-only" aria-live="assertive" aria-atomic="true">
+                    {{ messageAriaLive() }}
+                </div>
+
                 @if (loading()) 
                 { 
                     <div class="loading-overlay" aria-live="polite" aria-busy="true" [attr.aria-label]="trad().chargement">
@@ -90,8 +96,8 @@
                     </div>
                 }
 
-                <div class="global-weekdays-header">
-                    <div class="month-name-spacer" aria-hidden="true"></div>
+                <div class="global-weekdays-header" aria-hidden="true">
+                    <div class="month-name-spacer"></div>
                     <div class="weekdays-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
                         @for (nomJour of listeNomSemaine(); track $index) 
                         {
@@ -114,7 +120,7 @@
 
                             @if (!mois.estDesactive) 
                             {
-                                <div class="calendar-body-mini">
+                                <div class="calendar-body-mini" role="region" [attr.aria-label]="'Mois de ' + mois.nom">
                                     @for (semaine of mois.semaines; track $index) 
                                     {
                                         <div class="week-row">
@@ -134,29 +140,28 @@
                                                             role="button"
                                                             [attr.tabindex]="!jour.estMoisCourant ? -1 : 0"
                                                             [attr.aria-disabled]="jour.estBloquer"
-                                                            [attr.aria-label]="
-                                                                (jour.estAujourdhui ? trad().ceJour + ', ' : '') + 
-                                                                (!jour.estMoisCourant ? '' : 
-                                                                    FormatDateAria(jour.date) + 
-                                                                    (jour.estBloquer ? ', ' + trad().ariaBloque : 
-                                                                        (jour.listeEvent.length > 0 ? ', ' + jour.listeEvent.length + ' ' + trad().ariaEvenement : '')
-                                                                    )
-                                                                )
-                                                            "
+                                                            [attr.aria-current]="jour.estAujourdhui ? 'date' : null"
+                                                            [attr.aria-pressed]="EstEnCreation(jour.date) ? 'true' : 'false'"
+                                                            [attr.aria-label]="GetDayAriaLabel(jour)"
                                                             
                                                             (click)="jour.estMoisCourant && ClickJour(jour)"
                                                             (keydown)="jour.estMoisCourant && OnDayCellKeydown($event, jour)"
                                                             (mousedown)="OnMouseDownCreation($event, jour.date, jour.estBloquer)"
                                                             (touchstart)="OnMouseDownCreation($event, jour.date, jour.estBloquer)">
-                                                        
+
                                                         <div class="day-cell-header">
                                                             <span class="day-number-text">{{ !jour.estMoisCourant ? '' : jour.date.getDate() }}</span>
-                                                        </div>
-                                                        
-                                                        <div class="day-cell-footer">
-                                                            @if (jour.listeEvent.length > 3) 
+                                                            
+                                                            @if (jour.listeEventSpecial && jour.listeEventSpecial.length > 0) 
                                                             {
-                                                                <div class="more-indicator">+{{ jour.listeEvent.length - 3 }}</div>
+                                                                <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
+                                                                    @for (sp of jour.listeEventSpecial; track $index) 
+                                                                    {
+                                                                        <div class="special-badge" [title]="sp.title" [attr.aria-label]="sp.title" role="note">
+                                                                            <span class="special-text" aria-hidden="true">{{ sp.title }}</span>
+                                                                        </div>
+                                                                    }
+                                                                </div>
                                                             }
                                                         </div>
                                                     </div>
@@ -166,7 +171,7 @@
                                             <div class="events-foreground-layer">
                                                 @for (pos of semaine.eventsPositionnes; track pos.event.id) 
                                                 {
-                                                    @if (pos.ligne < 3) 
+                                                    @if (pos.ligne < 4) 
                                                     {
                                                         <div class="event-item absolute-event" 
                                                             [id]="'event-' + pos.event.id"
