@@ -36,7 +36,7 @@ Traduction automatique celons la **langue du navigateur.**.
 # Par année
 
 ## Attributs
-- `month`: mois à afficher (REQUIS) (1 - 12)
+- `year`: REQUIS
 
 ## Events
 - `contextClicked`: Event click mat menu contextuel par defaut
