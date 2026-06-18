@@ -354,9 +354,23 @@ export class MatYearCalandar implements OnInit, OnDestroy
     }
 
     protected ClickEvent(_event: EventCalandar): void { this.eventClickEvent.emit(_event); }
-    protected AnneePrecedente(): void { this.annee.set(this.annee() - 1); }
-    protected AnneeSuivante(): void { this.annee.set(this.annee() + 1); }
-    protected AllerAujourdhui(): void { this.annee.set(new Date().getFullYear()); }
+    protected AnneePrecedente(): void 
+    { 
+        this.annee.set(this.annee() - 1); 
+        this.AnnoncerActionVocalement(this.annee().toString());
+    }
+
+    protected AnneeSuivante(): void 
+    { 
+        this.annee.set(this.annee() + 1);
+        this.AnnoncerActionVocalement(this.annee().toString());
+    }
+
+    protected AllerAujourdhui(): void 
+    { 
+        this.annee.set(new Date().getFullYear()); 
+        this.AnnoncerActionVocalement(this.annee().toString());
+    }
 
     protected BasculerVisibiliteGroupe(idGroupe: string | number | null): void 
     {
