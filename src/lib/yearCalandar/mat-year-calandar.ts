@@ -19,6 +19,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideNativeDateAdapter, DateAdapter } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 
 interface EventPositionne {
     event: EventCalandar;
@@ -35,7 +37,7 @@ interface SemaineCalendrier {
 @Component({
   selector: 'jp-mat-year-calandar',
   standalone: true,
-  imports: [DatePipe, MatDatepickerModule, MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, MatMenuModule, MatRippleModule, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],
+  imports: [MatFormFieldModule, MatSelectModule, DatePipe, MatDatepickerModule, MatExpansionModule, MatCheckboxModule, MatSidenavModule, MatProgressSpinnerModule, MatMenuModule, MatRippleModule, MatToolbarModule, MatButtonModule, MatIconModule, NgStyle],
   templateUrl: './mat-year-calandar.html',
   styleUrl: './mat-year-calandar.css',
   providers: [provideNativeDateAdapter()],
@@ -58,9 +60,11 @@ export class MatYearCalandar implements OnInit, OnDestroy
     readonly = input(false, { transform: booleanAttribute });
     readonlyPast = input(false, { transform: booleanAttribute });
     loading = input(false, { transform: booleanAttribute });
+    hideSelectMonth = input(false, { transform: booleanAttribute });
 
     daysOfWeekDisabled = input<number[]>([]);
     monthsDisabled = input<number[]>([]);
+    defaultHiddenMonths = input<number[]>([]);
     daysDisabled = input<Date[]>();
     intervalsDisabled = input<DateCalandarDisabled[]>([]);
 
@@ -88,6 +92,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
     protected dateRetourFocus = signal<number | null>(null);
     protected listeEventIdsFocus = signal<any[]>([]);
     protected messageAriaLive = signal<string>("");
+    protected moisMasques = signal<number[]>([]);
+    protected moisMasquesSet = computed(() => new Set(this.moisMasques()));
     
     private ignoreBlur = false;
     private focusTimeout: any = null;
@@ -98,6 +104,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
     private readonly DICT_TRADUCTION: Record<string, any> = {
         'fr': { 
             aujourdhui: "Cette année", ajouter: "Ajouter", ceJour: "Aujourd'hui",
+            modifier: "Modifier", supprimer: "Supprimer", ariaMoisDe: "Mois de",
             ariaAnneePrecedente: "Année précédente", ariaAnneeSuivante: "Année suivante",
             ariaMenuAnnee: "Changer l'année", chargement: "Chargement en cours",
             titreGroupes: "Thèmes", sansGroupe: "Autres", ariaEvenement: "événement(s)",
@@ -106,10 +113,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "Non disponible",
             ariaSelectionEtendue: "Sélection étendue jusqu'au ", ariaEventDeplace: "Événement déplacé du ",
             ariaEventRedimensionne: "Événement redimensionné du ", ariaAu: " au ",
-            modifier: "Modifier", supprimer: "Supprimer"
+            choisirMois: "Mois affichés", ariaMasquerMois: "Filtrer les mois à afficher",
+            ariaMoisLectureSeul: "Mois en lecture seule"
         },
         'en': {
             aujourdhui: "This year", ajouter: "Add new", ceJour: "Today",
+            modifier: "Edit", supprimer: "Delete", ariaMoisDe: "Month of",
             ariaAnneePrecedente: "Previous year", ariaAnneeSuivante: "Next year",
             ariaMenuAnnee: "Change year", chargement: "Loading",
             titreGroupes: "Themes", sansGroupe: "Other", ariaEvenement: "event(s)",
@@ -118,10 +127,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "Unavailable",
             ariaSelectionEtendue: "Selection extended to ", ariaEventDeplace: "Event moved from ",
             ariaEventRedimensionne: "Event resized from ", ariaAu: " to ",
-            modifier: "Edit", supprimer: "Delete",
+            choisirMois: "Displayed months", ariaMasquerMois: "Filter months to display",
+            ariaMoisLectureSeul: "Read-only month"
         },
         'es': { 
             aujourdhui: "Este año", ajouter: "Añadir", ceJour: "Hoy",
+            modifier: "Editar", supprimer: "Eliminar", ariaMoisDe: "Mes ne",
             ariaAnneePrecedente: "Año anterior", ariaAnneeSuivante: "Año siguiente",
             ariaMenuAnnee: "Cambiar año", chargement: "Cargando",
             titreGroupes: "Temas", sansGroupe: "Otros", ariaEvenement: "evento(s)",
@@ -130,10 +141,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "No disponible",
             ariaSelectionEtendue: "Selección extendida hasta el ", ariaEventDeplace: "Evento movido del ",
             ariaEventRedimensionne: "Evento redimensionado del ", ariaAu: " al ",
-            modifier: "Editar", supprimer: "Eliminar",
+            choisirMois: "Meses mostrados", ariaMasquerMois: "Filtrar meses a mostrar",
+            ariaMoisLectureSeul: "Mes de solo lectura"
         },
         'it': { 
             aujourdhui: "Quest'anno", ajouter: "Aggiungi", ceJour: "Oggi",
+            modifier: "Modifica", supprimer: "Elimina", ariaMoisDe: "Mese di",
             ariaAnneePrecedente: "Anno precedente", ariaAnneeSuivante: "Anno successivo",
             ariaMenuAnnee: "Cambia anno", chargement: "Caricamento",
             titreGroupes: "Temi", sansGroupe: "Altri", ariaEvenement: "evento(i)",
@@ -142,22 +155,26 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "Non disponibile",
             ariaSelectionEtendue: "Selezione estesa fino al ", ariaEventDeplace: "Evento spostato dal ",
             ariaEventRedimensionne: "Evento ridimensionato dal ", ariaAu: " al ",
-            modifier: "Modifica", supprimer: "Elimina",
+            choisirMois: "Mesi visualizzati", ariaMasquerMois: "Filtra i mesi da visualizzare",
+            ariaMoisLectureSeul: "Mese in sola lettura"
         },
         'de': { 
             aujourdhui: "Dieses Jahr", ajouter: "Hinzufügen", ceJour: "Heute",
+            modifier: "Bearbeiten", supprimer: "Löschen", ariaMoisDe: "Monat",
             ariaAnneePrecedente: "Vorheriges Jahr", ariaAnneeSuivante: "Nächstes Jahr",
             ariaMenuAnnee: "Jahr ändern", chargement: "Wird geladen",
             titreGroupes: "Themen", sansGroupe: "Andere", ariaEvenement: "Ereignis(se)",
-            ariaOuvrirMenu: "Menü öffnen", ariaFermerMenu: "Menü schließen",
+            ariaOuvrirMenu: "Menü ouvrir", ariaFermerMenu: "Menü schließen",
             ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Öffnen",
             ariaBloque: "Nicht verfügbar",
             ariaSelectionEtendue: "Auswahl erweitert bis ", ariaEventDeplace: "Ereignis verschoben vom ",
             ariaEventRedimensionne: "Ereignis in der Größe geändert vom ", ariaAu: " bis ",
-            modifier: "Bearbeiten", supprimer: "Löschen",
+            choisirMois: "Anzeigemonate", ariaMasquerMois: "Monate zum Anzeigen filtern",
+            ariaMoisLectureSeul: "Schreibgeschützter Monat"
         },
         'pt': { 
             aujourdhui: "Este ano", ajouter: "Adicionar", ceJour: "Hoje",
+            modifier: "Editar", supprimer: "Excluir", ariaMoisDe: "Mês de",
             ariaAnneePrecedente: "Ano anterior", ariaAnneeSuivante: "Ano seguinte",
             ariaMenuAnnee: "Mudar ano", chargement: "Carregando",
             titreGroupes: "Temas", sansGroupe: "Outros", ariaEvenement: "evento(s)",
@@ -166,7 +183,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaBloque: "Indisponível",
             ariaSelectionEtendue: "Seleção estendida até ", ariaEventDeplace: "Evento movido de ",
             ariaEventRedimensionne: "Evento redimensionado de ", ariaAu: " para ",
-            modifier: "Editar", supprimer: "Excluir",
+            choisirMois: "Meses exibidos", ariaMasquerMois: "Filtrar meses para exibir",
+            ariaMoisLectureSeul: "Mês somente leitura"
         }
     };
 
@@ -188,7 +206,6 @@ export class MatYearCalandar implements OnInit, OnDestroy
     protected anneeTexte = computed(() => this.annee().toString());
     protected nbColonnes = computed(() => 7 - this.joursAExclure().length);
 
-    
     protected listeEvenementGroupe = computed(() => 
     {
         const tousLesEvents = this.events() || [];
@@ -258,19 +275,34 @@ export class MatYearCalandar implements OnInit, OnDestroy
 
         for (let m = 1; m <= 12; m++) 
         {
+            if (this.moisMasquesSet().has(m)) 
+                continue;
+
             const estDesactive = this.monthsDisabled().includes(m);
             moisData.push({
                 numero: m,
                 nom: formatMois.format(new Date(this.annee(), m - 1, 1)),
                 estDesactive: estDesactive,
-                semaines: estDesactive ? [] : this.GenererMiniMois(m)
+                semaines: this.GenererMiniMois(m)
             });
         }
         return moisData;
     });
 
+    protected listeTousLesMois = computed(() => 
+    {
+        const formatMois = new Intl.DateTimeFormat(this.langue(), { month: 'long' });
+
+        return Array.from({ length: 12 }, (_, i) => ({
+            numero: i + 1,
+            nom: formatMois.format(new Date(this.annee(), i, 1))
+        }));
+    });
+
     ngOnInit(): void 
     {
+        this.moisMasques.set(this.defaultHiddenMonths());
+
         if(this.sidebarConfig()?.defaultOpen === true) 
             this.panneauOuvert.set(true);
 
@@ -286,6 +318,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
     { 
         if (this.themeObserver) 
             this.themeObserver.disconnect(); 
+    }
+
+    protected OnMoisFilterChange(valeurs: number[]): void 
+    {
+        this.moisMasques.set(valeurs);
+        this.AnnoncerActionVocalement(this.trad().ariaMasquerMois);
     }
 
     protected OnYearSelected(date: Date, datepicker: any): void 
@@ -311,7 +349,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
         }
     }
 
-    protected GetDayAriaLabel(jour: DateCalendrier): string 
+    protected GetDayAriaLabel(jour: DateCalendrier, estLectureSeul: boolean): string 
     {
         if (!jour.estMoisCourant) 
             return '';
@@ -321,6 +359,9 @@ export class MatYearCalandar implements OnInit, OnDestroy
             label += this.trad().ceJour + ', ';
         
         label += this.FormatDateAria(jour.date);
+
+        if (estLectureSeul)
+            label += ', ' + this.trad().ariaMoisLectureSeul;
         
         if (jour.estBloquer)
             label += ', ' + this.trad().ariaBloque;
@@ -348,7 +389,24 @@ export class MatYearCalandar implements OnInit, OnDestroy
         });
     }
 
-    protected FormaterDateCourte(date: Date): string { 
+    protected EstDateDebutLectureSeul(dateDebut: Date): boolean 
+    {
+        if (!dateDebut) 
+            return false;
+
+        return this.monthsDisabled().includes(dateDebut.getMonth() + 1);
+    }
+
+    protected EstDateFinLectureSeul(dateFin: Date): boolean 
+    {
+        if (!dateFin) 
+            return false;
+
+        return this.monthsDisabled().includes(dateFin.getMonth() + 1);
+    }
+
+    protected FormaterDateCourte(date: Date): string 
+    { 
         if (!date) return '';
         return new Intl.DateTimeFormat(this.langue(), { day: '2-digit', month: 'short' }).format(date);
     }
@@ -412,7 +470,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             this.eventClickJour.emit(dateCalendrier);
     }
 
-    protected OnDayCellKeydown(event: KeyboardEvent, jour: DateCalendrier): void 
+    protected OnDayCellKeydown(event: KeyboardEvent, jour: DateCalendrier, estLectureSeul: boolean = false): void 
     {
         // Annuler la création
         if (event.key == 'Escape') 
@@ -430,7 +488,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
         if (event.key === 'Enter' || event.key === ' ') 
         {
             event.preventDefault();
-            if (this.readonly()) 
+            if (this.readonly() || estLectureSeul) 
                 return;
 
             if (this.dragCreationEnCours()) 
@@ -481,7 +539,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
         }
 
         // 4. Navigation au clavier (flèches simples)
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key) && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key) && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) 
+        {
             event.preventDefault();
             let nouvelleDate = new Date(jour.date);
             nouvelleDate.setHours(0, 0, 0, 0);
@@ -535,7 +594,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
         if (event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) 
         {
             event.preventDefault();
-            if (this.readonly()) 
+
+            if (this.readonly() || estLectureSeul) 
                 return;
 
             if (jour.estBloquer && !this.dragCreationEnCours()) 
@@ -797,7 +857,17 @@ export class MatYearCalandar implements OnInit, OnDestroy
         let estRedimensionnementFin = (_event.ctrlKey || _event.metaKey) && !_event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(_event.key);
         let estRedimensionnementDebut = (_event.ctrlKey || _event.metaKey) && _event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(_event.key);
 
-        if (estEnDeplacement || estRedimensionnementFin || estRedimensionnementDebut) {
+        if (estEnDeplacement && (this.EstDateDebutLectureSeul(_eventObj.startDate) || this.EstDateFinLectureSeul(_eventObj.endDate)))
+            return;
+        
+        if (estRedimensionnementDebut && this.EstDateDebutLectureSeul(_eventObj.startDate))
+            return;
+        
+        if (estRedimensionnementFin && this.EstDateFinLectureSeul(_eventObj.endDate))
+            return;
+
+        if (estEnDeplacement || estRedimensionnementFin || estRedimensionnementDebut) 
+        {
             _event.preventDefault();
             _event.stopPropagation();
             if (this.readonly() || _eventObj.readonly) return;
@@ -854,17 +924,6 @@ export class MatYearCalandar implements OnInit, OnDestroy
                 this.ignoreBlur = false; 
             }, 120);
         }
-    }
-
-    protected GetEventColor(eventObj: EventCalandar): string 
-    {
-        if (!eventObj.groupEventId) 
-            return 'var(--mat-sys-primary)';
-
-        const group = this.groups().find(g => g.id === eventObj.groupEventId);
-        if (!group) 
-            return 'var(--mat-sys-primary)';
-        return this.darkModeActif() ? (group.bgColorDark || group.bgColorLight) : group.bgColorLight;
     }
 
     protected OnMouseDownCreation(event: MouseEvent | TouchEvent | Event, dateJour: Date, estBloquer: boolean): void 
@@ -984,7 +1043,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
 
     protected OnMoveStart(_e: MouseEvent | TouchEvent, _eventObj: EventCalandar): void 
     {
-        if (this.readonly() || _eventObj.readonly) 
+        if (this.readonly() || _eventObj.readonly || this.EstDateDebutLectureSeul(_eventObj.startDate) || this.EstDateFinLectureSeul(_eventObj.endDate)) 
             return;
 
         if (_e instanceof MouseEvent && _e.button !== 0) 
@@ -1119,6 +1178,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
         _e.preventDefault();
         _e.stopPropagation();
 
+        if (_side == 'left' && this.EstDateDebutLectureSeul(_eventObj.startDate))
+            return;
+
+        if (_side == 'right' && this.EstDateFinLectureSeul(_eventObj.endDate))
+            return;
+
         let dateTrouvee = false;
         let finalStartDate = new Date(_eventObj.startDate);
         let finalEndDate = new Date(_eventObj.endDate);
@@ -1233,6 +1298,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
     private GenererMiniMois(mois: number): SemaineCalendrier[] 
     {
         const _de = new Date(this.annee(), mois - 1, 1);
+        const isMonthReadOnly = this.monthsDisabled().includes(mois);
 
         // On définit les limites exactes du vrai mois (du 1er au dernier jour)
         const debutVraiMois = new Date(this.annee(), mois - 1, 1).getTime();
@@ -1409,7 +1475,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
                         slotsOccuppes[j].push(ligne);
                     }
 
-                    eventsPositionnes.push({ event: ev, jourDebutIndex: startIdx, dureeJours: duree, ligne: ligne });
+                    eventsPositionnes.push({ 
+                        event: isMonthReadOnly ? { ...ev, readonly: true } : ev,
+                        jourDebutIndex: startIdx, 
+                        dureeJours: duree, 
+                        ligne: ligne 
+                    });
                 }
             });
 
@@ -1417,28 +1488,6 @@ export class MatYearCalandar implements OnInit, OnDestroy
         }
 
         return semaines;
-    }
-
-    private EstDateDansSpecialEvent(date: Date, sp: DateSpecialEvent): boolean 
-    {
-        const M = date.getMonth() + 1;
-        const D = date.getDate();
-        
-        const startM = sp.dateStart.month;
-        const startD = sp.dateStart.day;
-        const endM = sp.dateEnd.month;
-        const endD = sp.dateEnd.day;
-
-        const isNormalInterval = (startM < endM) || (startM === endM && startD <= endD);
-        
-        if (isNormalInterval) {
-            return (M > startM || (M === startM && D >= startD)) && 
-                   (M < endM || (M === endM && D <= endD));
-        } else {
-            // Cas où l'événement chevauche la fin de l'année (ex: Mois 12 à Mois 1)
-            return (M > startM || (M === startM && D >= startD)) || 
-                   (M < endM || (M === endM && D <= endD));
-        }
     }
 
     private EstDansIntervalle(_dateAChecker: Date, _debut: Date, _fin: Date): boolean 

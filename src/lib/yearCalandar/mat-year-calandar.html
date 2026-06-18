@@ -9,6 +9,28 @@
         </div>
         
         <div class="side-panel-content">
+
+            <!-- select mois a masquer -->
+            @if(!hideSelectMonth())
+            {
+                <div class="month-filter-container">
+                    <mat-form-field appearance="outline" class="month-filter-field">
+                        <mat-label>{{ trad().choisirMois }}</mat-label>
+                        <mat-select [value]="moisMasques()" 
+                                        (selectionChange)="OnMoisFilterChange($event.value)" 
+                                        multiple
+                                        [attr.aria-label]="trad().ariaMasquerMois">
+                            @for (m of listeTousLesMois(); track m.numero) 
+                            {
+                                <mat-option [value]="m.numero" class="month-filter-option">
+                                    {{ m.nom }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            }
+
             <mat-accordion class="side-panel-accordion" [multi]="sidebarConfig()?.multi ?? true">
                 @for (item of listeEvenementGroupe(); track item.group?.id || 'sans-groupe') 
                 {
@@ -39,7 +61,7 @@
                                 </button>
                             }
                         </div>
-                        </mat-expansion-panel>
+                    </mat-expansion-panel>
                 }
             </mat-accordion>
         </div>
@@ -125,39 +147,47 @@
                             
                             <div class="month-sidebar">
                                 <h2>{{ mois.nom }}</h2>
+                                @if (mois.estDesactive) 
+                                {
+                                    <mat-icon class="readonly-icon" 
+                                                    [attr.aria-label]="trad().ariaMoisLectureSeul" 
+                                                    [title]="trad().ariaMoisLectureSeul"
+                                                    aria-hidden="false">
+                                        lock
+                                    </mat-icon>
+                                }
                             </div>
 
-                            @if (!mois.estDesactive) 
-                            {
-                                <div class="calendar-body-mini" role="region" [attr.aria-label]="'Mois de ' + mois.nom">
-                                    @for (semaine of mois.semaines; track $index) 
-                                    {
-                                        <div class="week-row">
-                                            
-                                            <div class="days-background-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
-                                                @for (jour of semaine.jours; track $index) 
-                                                {
-                                                    <div   class="day-cell"
-                                                            matRipple
-                                                            [matRippleDisabled]="matRippleDisabled() || jour.estBloquer"
-                                                            [class.hors-mois]="!jour.estMoisCourant"
-                                                            [class.today]="jour.estAujourdhui"
-                                                            [class.day-disabled]="jour.estBloquer && jour.estMoisCourant"
-                                                            [class.is-creating]="jour.estMoisCourant && EstEnCreation(jour.date)"
-                                                            [attr.data-date]="jour.date.getTime()"
-                                                            
-                                                            role="button"
-                                                            [attr.tabindex]="!jour.estMoisCourant ? -1 : 0"
-                                                            [attr.aria-disabled]="jour.estBloquer"
-                                                            [attr.aria-current]="jour.estAujourdhui ? 'date' : null"
-                                                            [attr.aria-pressed]="EstEnCreation(jour.date) ? 'true' : 'false'"
-                                                            [attr.aria-label]="GetDayAriaLabel(jour)"
-                                                            
-                                                            (click)="jour.estMoisCourant && ClickJour(jour)"
-                                                            (keydown)="jour.estMoisCourant && OnDayCellKeydown($event, jour)"
-                                                            (mousedown)="OnMouseDownCreation($event, jour.date, jour.estBloquer)"
-                                                            (touchstart)="OnMouseDownCreation($event, jour.date, jour.estBloquer)">
-
+                            <div class="calendar-body-mini" role="region" [attr.aria-label]="trad().ariaMoisDe + ' ' + mois.nom">
+                                @for (semaine of mois.semaines; track $index) 
+                                {
+                                    <div class="week-row">                            
+                                        <div class="days-background-grid" [style.grid-template-columns]="'repeat(' + nbColonnes() + ', 1fr)'">
+                                            @for (jour of semaine.jours; track $index) 
+                                            {
+                                                <div class="day-cell"
+                                                        matRipple
+                                                        [matRippleDisabled]="matRippleDisabled() || jour.estBloquer || mois.estDesactive"
+                                                        [class.hors-mois]="!jour.estMoisCourant"
+                                                        [class.today]="jour.estAujourdhui"
+                                                        [class.day-disabled]="jour.estBloquer && jour.estMoisCourant"
+                                                        [class.day-readonly]="mois.estDesactive && !jour.estBloquer && jour.estMoisCourant"
+                                                        [class.is-creating]="jour.estMoisCourant && EstEnCreation(jour.date)"
+                                                        [attr.data-date]="jour.date.getTime()"
+                                                        
+                                                        role="button"
+                                                        [attr.tabindex]="!jour.estMoisCourant ? -1 : 0"
+                                                        [attr.aria-disabled]="jour.estBloquer"
+                                                        [attr.aria-readonly]="mois.estDesactive ? 'true' : null"
+                                                        [attr.aria-current]="jour.estAujourdhui ? 'date' : null"
+                                                        [attr.aria-pressed]="EstEnCreation(jour.date) ? 'true' : 'false'"
+                                                        [attr.aria-label]="GetDayAriaLabel(jour, mois.estDesactive)"
+                                                        
+                                                        (click)="jour.estMoisCourant && !mois.estDesactive && ClickJour(jour)"
+                                                        (keydown)="jour.estMoisCourant && OnDayCellKeydown($event, jour, mois.estDesactive)"
+                                                        (mousedown)="OnMouseDownCreation($event, jour.date, jour.estBloquer || mois.estDesactive)"
+                                                        (touchstart)="OnMouseDownCreation($event, jour.date, jour.estBloquer || mois.estDesactive)">
+                                                        
                                                         <div class="day-cell-header">
                                                             <span class="day-number-text">{{ !jour.estMoisCourant ? '' : jour.date.getDate() }}</span>
                                                             
@@ -173,66 +203,64 @@
                                                                 </div>
                                                             }
                                                         </div>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <div class="events-foreground-layer">
+                                            @for (pos of semaine.eventsPositionnes; track pos.event.id) 
+                                            {
+                                                @if (pos.ligne < 4) 
+                                                {
+                                                    <div class="event-item absolute-event" 
+                                                        [id]="'event-' + pos.event.id"
+                                                        role="button"
+                                                        tabindex="0"
+                                                        [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre + ((readonly() || pos.event.readonly || EstDateDebutLectureSeul(pos.event.startDate)) ? ', ' + trad().ariaMoisLectureSeul : '')"
+                                                        
+                                                        (keydown)="OnEventKeydown($event, pos.event)"
+                                                        (blur)="OnEventBlur(pos.event)"
+                                                        (click)="(readonly() || pos.event.readonly) && ClickEvent(pos.event)"
+                                                        
+                                                        (mousedown)="OnMoveStart($event, pos.event)"
+                                                        (touchstart)="OnMoveStart($event, pos.event)"
+                                                        [class.is-dragging]="previewResize()?.eventId === pos.event.id"
+                                                        [style.--pos-start]="pos.jourDebutIndex"
+                                                        [style.--pos-duree]="pos.dureeJours"
+                                                        [style.--pos-ligne]="pos.ligne"
+                                                        [style.--nb-cols]="nbColonnes()"
+                                                        [title]="pos.event.titre" 
+                                                        [ngStyle]="GetEventStyle(pos.event)"
+                                                        [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
+                                                        [matContextMenuTriggerData]="{ eventCal: pos.event }">
+                                                        
+                                                        @if (!readonly() && !pos.event.readonly && !EstDateDebutLectureSeul(pos.event.startDate)) 
+                                                        {
+                                                            <div class="resize-handle left" 
+                                                                    aria-hidden="true" 
+                                                                    (mousedown)="OnResizeStart($event, pos.event, 'left')" 
+                                                                    (touchstart)="OnResizeStart($event, pos.event, 'left')">
+                                                            </div>
+                                                        }
+
+                                                        <span class="event-time">{{ pos.event.startDate | date:(useAmPm() ? 'h:mm a' : 'HH:mm') }}</span>
+                                                        <span class="event-title">{{ pos.event.titre }}</span>
+
+                                                         @if (!readonly() && !pos.event.readonly && !EstDateFinLectureSeul(pos.event.startDate)) 
+                                                        {
+                                                            <div class="resize-handle right" 
+                                                                    aria-hidden="true" 
+                                                                    (mousedown)="OnResizeStart($event, pos.event, 'right')" 
+                                                                    (touchstart)="OnResizeStart($event, pos.event, 'right')">
+                                                            </div>
+                                                        }
                                                     </div>
                                                 }
-                                            </div>
-
-                                            <div class="events-foreground-layer">
-                                                @for (pos of semaine.eventsPositionnes; track pos.event.id) 
-                                                {
-                                                    @if (pos.ligne < 4) 
-                                                    {
-                                                        <div class="event-item absolute-event" 
-                                                            [id]="'event-' + pos.event.id"
-                                                            role="button"
-                                                            tabindex="0"
-                                                            [attr.aria-label]="trad().ariaEvenement + ' ' + pos.event.titre"
-                                                            
-                                                            (keydown)="OnEventKeydown($event, pos.event)"
-                                                            (blur)="OnEventBlur(pos.event)"
-                                                            (click)="(readonly() || pos.event.readonly) && ClickEvent(pos.event)"
-                                                            
-                                                            (mousedown)="OnMoveStart($event, pos.event)"
-                                                            (touchstart)="OnMoveStart($event, pos.event)"
-                                                            [class.is-dragging]="previewResize()?.eventId === pos.event.id"
-                                                            [style.--pos-start]="pos.jourDebutIndex"
-                                                            [style.--pos-duree]="pos.dureeJours"
-                                                            [style.--pos-ligne]="pos.ligne"
-                                                            [style.--nb-cols]="nbColonnes()"
-                                                            [title]="pos.event.titre" 
-                                                            [ngStyle]="GetEventStyle(pos.event)"
-                                                            [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
-                                                            [matContextMenuTriggerData]="{ eventCal: pos.event }">
-                                                            
-                                                            @if (!readonly() && !pos.event.readonly) 
-                                                            {
-                                                                <div class="resize-handle left" 
-                                                                       aria-hidden="true" 
-                                                                       (mousedown)="OnResizeStart($event, pos.event, 'left')" 
-                                                                       (touchstart)="OnResizeStart($event, pos.event, 'left')">
-                                                                </div>
-                                                            }
-
-                                                            <span class="event-time">{{ pos.event.startDate | date:(useAmPm() ? 'h:mm a' : 'HH:mm') }}</span>
-                                                            <span class="event-title">{{ pos.event.titre }}</span>
-
-                                                            @if (!readonly() && !pos.event.readonly) 
-                                                            {
-                                                                <div class="resize-handle right" 
-                                                                       aria-hidden="true" 
-                                                                       (mousedown)="OnResizeStart($event, pos.event, 'right')" 
-                                                                       (touchstart)="OnResizeStart($event, pos.event, 'right')">
-                                                                </div>
-                                                            }
-                                                        </div>
-                                                    }
-                                                }
-                                            </div>
-
+                                            }
                                         </div>
-                                    }
-                                </div>
-                            }
+                                    </div>
+                                }
+                            </div>
                         </div>
                     }
                 </div>

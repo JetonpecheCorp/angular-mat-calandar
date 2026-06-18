@@ -129,14 +129,27 @@
 
 .calendar-body-mini { position: relative; display: flex; flex-direction: column; background-color: var(--mat-sys-surface); flex: 1; }
 .month-row { display: flex; }
-.month-row.month-disabled {
-    opacity: 0.5;
-    pointer-events: none;
-    filter: grayscale(100%);
-}
 .month-sidebar { width: 140px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background-color: var(--mat-sys-surface-container-lowest); border-right: 1px solid var(--mat-sys-outline-variant); }
 .month-sidebar h2 { margin: 0; font-size: 1.2rem; font-weight: 500; color: var(--mat-sys-primary); text-transform: capitalize; }
-
+.month-row.month-readonly-mode {
+    background-color: var(--mat-sys-surface-container-lowest);
+}
+.readonly-icon {
+    font-size: 1.1rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-left: 8px;
+    vertical-align: middle;
+    color: var(--mat-sys-on-surface-variant);
+    opacity: 0.6;
+}
+.day-cell.day-readonly {
+    cursor: default;
+}
+/* Retire le background au survol pour les jours en lecture seule */
+.day-cell.day-readonly:hover:not(.hors-mois):not(.day-disabled) {
+    background-color: var(--mat-sys-surface);
+}
 .week-row { 
     position: relative; 
     min-height: 160px; 
@@ -326,6 +339,27 @@
     border-radius: 4px;
 }
 
+/* --- FILTRE DES MOIS DANS LE PANNEAU LATÉRAL --- */
+.month-filter-container {
+    width: 100%;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.month-filter-field {
+    width: 100%;
+}
+
+.month-filter-option 
+{
+    text-transform: capitalize;
+}
+
+/* Masque l'espace réservé aux messages d'erreur/indices pour gagner de la place */
+::ng-deep .month-filter-field .mat-mdc-form-field-subscript-wrapper {
+    display: none; 
+}
+
 /* --- RESPONSIVE MOBILE --- */
 @media (max-width: 800px) 
 {
@@ -335,12 +369,20 @@
     .weekday-label .long-name { display: none; }
     .weekday-label .short-name { display: inline; text-transform: uppercase; }
     .day-number-text { font-size: 0.9rem; }
+    .readonly-icon {
+        margin-left: 0;
+        margin-top: 8px;
+    }
 }
 
 @media (max-width: 600px) 
 {
     .month-row {
         flex-direction: column; 
+    }
+    .readonly-icon {
+        margin-left: 8px;
+        margin-top: 0;
     }
     .calendar-header { min-height: auto !important; padding: 4px 0 !important; align-items: center; }
     .header-main-container { flex-direction: row; justify-content: space-between; }
