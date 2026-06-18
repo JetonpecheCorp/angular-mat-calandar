@@ -191,7 +191,9 @@
                                                             [style.--pos-ligne]="pos.ligne"
                                                             [style.--nb-cols]="nbColonnes()"
                                                             [title]="pos.event.titre" 
-                                                            [ngStyle]="GetEventStyle(pos.event)">
+                                                            [ngStyle]="GetEventStyle(pos.event)"
+                                                            [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
+                                                            [matContextMenuTriggerData]="{ eventCal: pos.event }">
                                                             
                                                             @if (!readonly() && !pos.event.readonly) 
                                                             {
@@ -229,3 +231,23 @@
         </div>
     </mat-sidenav-content>
 </mat-sidenav-container>
+
+<mat-menu #defaultMenu="matMenu">
+    <ng-template matMenuContent let-ev="eventCal">
+        <button mat-menu-item 
+                    [disabled]="readonly() || ev?.readonly" 
+                    [attr.aria-label]="trad().modifier + ' ' + ev?.titre"
+                    (click)="OnContextMenuAction('edit', ev)">
+            <mat-icon aria-hidden="true">edit</mat-icon>
+            <span>{{ trad().modifier }}</span>
+        </button>
+
+        <button mat-menu-item 
+                    [disabled]="readonly() || ev?.readonly" 
+                    [attr.aria-label]="trad().supprimer + ' ' + ev?.titre"
+                    (click)="OnContextMenuAction('delete', ev)">
+            <mat-icon aria-hidden="true">delete</mat-icon>
+            <span>{{ trad().supprimer }}</span>
+        </button>
+    </ng-template>
+</mat-menu>

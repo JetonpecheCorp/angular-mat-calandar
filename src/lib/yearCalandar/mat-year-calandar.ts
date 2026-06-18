@@ -54,7 +54,6 @@ export class MatYearCalandar implements OnInit, OnDestroy
     weekendDisabled = input(false, { transform: booleanAttribute });
     mondayFirst = input(false, { transform: booleanAttribute });
     matRippleDisabled = input(false, { transform: booleanAttribute });
-    hideNavYearBtn = input(false, { transform: booleanAttribute });
     showBtnAdd = input(false, { transform: booleanAttribute });
     readonly = input(false, { transform: booleanAttribute });
     readonlyPast = input(false, { transform: booleanAttribute });
@@ -85,8 +84,6 @@ export class MatYearCalandar implements OnInit, OnDestroy
     protected dateDebutCreation = signal<Date | null>(null);
     protected dateFinCreation = signal<Date | null>(null);
     protected previewResize = signal<{ eventId: any, startDate: Date, endDate: Date } | null>(null);
-    protected overrideRipple = signal(false);
-    protected hoveredEvent = signal<EventCalandar | null>(null);
     private dernierTouchTime = 0;
     protected dateRetourFocus = signal<number | null>(null);
     protected listeEventIdsFocus = signal<any[]>([]);
@@ -108,7 +105,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaMasquerGroupe: "Masquer", ariaAfficherGroupe: "Afficher", ariaOuvrirEvent: "Ouvrir",
             ariaBloque: "Non disponible",
             ariaSelectionEtendue: "Sélection étendue jusqu'au ", ariaEventDeplace: "Événement déplacé du ",
-            ariaEventRedimensionne: "Événement redimensionné du ", ariaAu: " au "
+            ariaEventRedimensionne: "Événement redimensionné du ", ariaAu: " au ",
+            modifier: "Modifier", supprimer: "Supprimer"
         },
         'en': {
             aujourdhui: "This year", ajouter: "Add new", ceJour: "Today",
@@ -119,7 +117,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaMasquerGroupe: "Hide", ariaAfficherGroupe: "Show", ariaOuvrirEvent: "Open",
             ariaBloque: "Unavailable",
             ariaSelectionEtendue: "Selection extended to ", ariaEventDeplace: "Event moved from ",
-            ariaEventRedimensionne: "Event resized from ", ariaAu: " to "
+            ariaEventRedimensionne: "Event resized from ", ariaAu: " to ",
+            modifier: "Edit", supprimer: "Delete",
         },
         'es': { 
             aujourdhui: "Este año", ajouter: "Añadir", ceJour: "Hoy",
@@ -130,7 +129,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir",
             ariaBloque: "No disponible",
             ariaSelectionEtendue: "Selección extendida hasta el ", ariaEventDeplace: "Evento movido del ",
-            ariaEventRedimensionne: "Evento redimensionado del ", ariaAu: " al "
+            ariaEventRedimensionne: "Evento redimensionado del ", ariaAu: " al ",
+            modifier: "Editar", supprimer: "Eliminar",
         },
         'it': { 
             aujourdhui: "Quest'anno", ajouter: "Aggiungi", ceJour: "Oggi",
@@ -141,7 +141,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaMasquerGroupe: "Nascondi", ariaAfficherGroupe: "Mostra", ariaOuvrirEvent: "Apri",
             ariaBloque: "Non disponibile",
             ariaSelectionEtendue: "Selezione estesa fino al ", ariaEventDeplace: "Evento spostato dal ",
-            ariaEventRedimensionne: "Evento ridimensionato dal ", ariaAu: " al "
+            ariaEventRedimensionne: "Evento ridimensionato dal ", ariaAu: " al ",
+            modifier: "Modifica", supprimer: "Elimina",
         },
         'de': { 
             aujourdhui: "Dieses Jahr", ajouter: "Hinzufügen", ceJour: "Heute",
@@ -152,7 +153,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaMasquerGroupe: "Ausblenden", ariaAfficherGroupe: "Anzeigen", ariaOuvrirEvent: "Öffnen",
             ariaBloque: "Nicht verfügbar",
             ariaSelectionEtendue: "Auswahl erweitert bis ", ariaEventDeplace: "Ereignis verschoben vom ",
-            ariaEventRedimensionne: "Ereignis in der Größe geändert vom ", ariaAu: " bis "
+            ariaEventRedimensionne: "Ereignis in der Größe geändert vom ", ariaAu: " bis ",
+            modifier: "Bearbeiten", supprimer: "Löschen",
         },
         'pt': { 
             aujourdhui: "Este ano", ajouter: "Adicionar", ceJour: "Hoje",
@@ -163,7 +165,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaMasquerGroupe: "Ocultar", ariaAfficherGroupe: "Mostrar", ariaOuvrirEvent: "Abrir",
             ariaBloque: "Indisponível",
             ariaSelectionEtendue: "Seleção estendida até ", ariaEventDeplace: "Evento movido de ",
-            ariaEventRedimensionne: "Evento redimensionado de ", ariaAu: " para "
+            ariaEventRedimensionne: "Evento redimensionado de ", ariaAu: " para ",
+            modifier: "Editar", supprimer: "Excluir",
         }
     };
 
@@ -335,6 +338,14 @@ export class MatYearCalandar implements OnInit, OnDestroy
         }
         
         return label;
+    }
+
+    protected OnContextMenuAction(_action: string, _event: EventCalandar): void 
+    { 
+        this.contextClicked.emit({
+            action: _action,
+            event: _event
+        });
     }
 
     protected FormaterDateCourte(date: Date): string { 
@@ -811,7 +822,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
 
             this.focusTimeout = setTimeout(() => {
                 const elementsEvenement = this.el.nativeElement.querySelectorAll(`#event-${_eventObj.id}`);
-                
+
                 if (elementsEvenement.length > 0) 
                 {
                     if (estRedimensionnementFin || (estEnDeplacement && decalage > 0))
@@ -959,7 +970,6 @@ export class MatYearCalandar implements OnInit, OnDestroy
         let clientXDebut = _e instanceof MouseEvent ? _e.clientX : _e.touches[0].clientX;
         let clientYDebut = _e instanceof MouseEvent ? _e.clientY : _e.touches[0].clientY;
 
-        this.hoveredEvent.set(null); 
         const targetElement = (_e.target as HTMLElement).closest('.absolute-event') as HTMLElement;
         if (!targetElement) 
             return;
@@ -998,9 +1008,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             if (!aBouge && (Math.abs(clientX - clientXDebut) > 5 || Math.abs(clientY - clientYDebut) > 5)) 
             {
                 aBouge = true;
-                this.overrideRipple.set(true);
 
-                // 🆕 FIX : Création propre du fantôme avec la classe CSS native !
                 elementFantome = targetElement.cloneNode(true) as HTMLElement;
                 elementFantome.removeAttribute('id');
                 elementFantome.classList.add('event-ghost-preview'); 
@@ -1049,7 +1057,6 @@ export class MatYearCalandar implements OnInit, OnDestroy
             window.removeEventListener('touchend', onMouseUp);
 
             if (elementFantome) { elementFantome.remove(); elementFantome = null; }
-            this.overrideRipple.set(false);
             this.previewResize.set(null);
 
             if (aBouge && dateTrouvee && (finalStartDate.getTime() != _eventObj.startDate.getTime() || finalEndDate.getTime() != _eventObj.endDate.getTime())) {
