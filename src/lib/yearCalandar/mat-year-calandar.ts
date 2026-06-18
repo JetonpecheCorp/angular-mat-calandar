@@ -934,10 +934,16 @@ export class MatYearCalandar implements OnInit, OnDestroy
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
 
-            if (modeDragCreation && aBouge && this.dragCreationEnCours()) {
+            if (window.getSelection)
+                window.getSelection()?.removeAllRanges();
+
+            if (modeDragCreation && aBouge && this.dragCreationEnCours()) 
+            {
                 let debut = this.dateDebutCreation();
                 let fin = this.dateFinCreation();
-                if (debut && fin) {   
+
+                if (debut && fin) 
+                {   
                     this.eventCreated.emit({ 
                         start: new Date(Math.min(debut.getTime(), fin.getTime())), 
                         end: new Date(Math.max(debut.getTime(), fin.getTime()))
@@ -978,17 +984,16 @@ export class MatYearCalandar implements OnInit, OnDestroy
         const offsetX = clientXDebut - rect.left;
         const offsetY = clientYDebut - rect.top;
 
-        // 🆕 FIX : On cherche la case, mais on a un plan B infaillible si on ne la trouve pas !
         let elementsDebut = document.elementsFromPoint(clientXDebut, clientYDebut);
         let caseOrigine = elementsDebut.find(el => el.classList.contains('day-cell')) as HTMLElement | undefined;
         
         let dateOrigine: Date;
-        if (caseOrigine && caseOrigine.dataset['date']) {
+
+        if (caseOrigine && caseOrigine.dataset['date']) 
             dateOrigine = new Date(parseInt(caseOrigine.dataset['date'], 10));
-        } else {
-            // Sécurité absolue : on prend la date de l'événement comme origine
+        else 
             dateOrigine = new Date(_eventObj.startDate);
-        }
+
         dateOrigine.setHours(0, 0, 0, 0);
 
         let aBouge = false;
@@ -1018,7 +1023,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
                 document.body.appendChild(elementFantome);
             }
 
-            if (aBouge && elementFantome) {
+            if (aBouge && elementFantome) 
+            {
                 // Positionnement fluide au curseur
                 elementFantome.style.left = (clientX - offsetX) + 'px';
                 elementFantome.style.top = (clientY - offsetY) + 'px';
@@ -1026,9 +1032,11 @@ export class MatYearCalandar implements OnInit, OnDestroy
                 const elementsSurvoles = document.elementsFromPoint(clientX, clientY);
                 let hoveredCell = elementsSurvoles.find(el => el.classList.contains('day-cell')) as HTMLElement | undefined;
 
-                if (hoveredCell && hoveredCell.dataset['date']) {
+                if (hoveredCell && hoveredCell.dataset['date']) 
+                {
                     let timestampSurvole = parseInt(hoveredCell.dataset['date'], 10);
-                    if (!isNaN(timestampSurvole)) {
+                    if (!isNaN(timestampSurvole)) 
+                    {
                         let hoveredDate = new Date(timestampSurvole);
                         hoveredDate.setHours(0, 0, 0, 0);
 
@@ -1038,7 +1046,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
                         let nouvelleDateFin = new Date(_eventObj.endDate);
                         nouvelleDateFin.setDate(nouvelleDateFin.getDate() + diffJours);
 
-                        if ((this.readonlyPast() && nouvelleDateDebut.getTime() < new Date().setHours(0, 0, 0, 0)) || hoveredCell.classList.contains('day-disabled')) return;
+                        if ((this.readonlyPast() && nouvelleDateDebut.getTime() < new Date().setHours(0, 0, 0, 0)) || hoveredCell.classList.contains('day-disabled')) 
+                            return;
 
                         finalStartDate = nouvelleDateDebut;
                         finalEndDate = nouvelleDateFin;
@@ -1056,18 +1065,27 @@ export class MatYearCalandar implements OnInit, OnDestroy
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
 
-            if (elementFantome) { elementFantome.remove(); elementFantome = null; }
+            if (window.getSelection)
+                window.getSelection()?.removeAllRanges();
+
+            if (elementFantome) 
+            {
+                elementFantome.remove(); 
+                elementFantome = null; 
+            }
+
             this.previewResize.set(null);
 
-            if (aBouge && dateTrouvee && (finalStartDate.getTime() != _eventObj.startDate.getTime() || finalEndDate.getTime() != _eventObj.endDate.getTime())) {
+            if (aBouge && dateTrouvee && (finalStartDate.getTime() != _eventObj.startDate.getTime() || finalEndDate.getTime() != _eventObj.endDate.getTime())) 
+            {
                 this.eventUpdated.emit({
                     id: _eventObj.id, titre: _eventObj.titre, groupEventId: _eventObj.groupEventId,
                     description: _eventObj.description, readonly: _eventObj.readonly,
                     startDate: finalStartDate, endDate: finalEndDate
                 });
-            } else if (!aBouge) {
+            } 
+            else if (!aBouge)
                 this.ClickEvent(_eventObj);
-            }
         };
 
         window.addEventListener('mousemove', onMouseMove, { passive: false });
@@ -1133,6 +1151,9 @@ export class MatYearCalandar implements OnInit, OnDestroy
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('touchmove', onMouseMove);
             window.removeEventListener('touchend', onMouseUp);
+
+            if (window.getSelection)
+                window.getSelection()?.removeAllRanges();
             
             this.previewResize.set(null);
 

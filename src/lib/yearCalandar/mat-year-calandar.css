@@ -159,6 +159,8 @@
     box-sizing: border-box; 
     padding-top: 8px;
     padding-bottom: 4px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .day-cell:hover:not(.hors-mois):not(.day-disabled) { background-color: var(--mat-sys-surface-container-highest); }
@@ -295,6 +297,8 @@
     cursor: grab;
     box-sizing: border-box;
     touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .more-indicator {
