@@ -189,7 +189,7 @@
                                                         
                                                         <div class="day-cell-header">
                                                             <span class="day-number-text">{{ !jour.estMoisCourant ? '' : jour.date.getDate() }}</span>
-                                                            
+                        
                                                             @if (jour.listeEventSpecial && jour.listeEventSpecial.length > 0) 
                                                             {
                                                                 <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
@@ -210,6 +210,11 @@
                                                                 title="{{ jour['nbEventsMasques'] }} {{ trad().ariaEventMasques }}">
                                                                 +{{ jour['nbEventsMasques'] }}
                                                             </div>
+                                                        }
+                                                        
+                                                        @if (mois.estDesactive && jour.estMoisCourant) 
+                                                        {
+                                                            <mat-icon class="day-readonly-icon-corner" aria-hidden="true">lock</mat-icon>
                                                         }
                                                 </div>
                                             }
