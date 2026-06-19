@@ -602,6 +602,20 @@ display: flex;
     transform: none;
 }
 
+/* --- CADENAS DANS LA CASE DU JOUR --- */
+.day-readonly-icon-corner {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    font-size: 0.9rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--mat-sys-on-surface-variant);
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 1;
+}
+
 /* --- ÉVÉNEMENTS --- */
 .event-time {
     font-weight: 700;

@@ -238,6 +238,11 @@
                                                 }
                                             </div>
                                         }
+
+                                        @if (element.estBloquer) 
+                                        {
+                                            <mat-icon class="day-readonly-icon-corner" aria-hidden="true">lock</mat-icon>
+                                        }
                                     </div>
                                 </div>
                             }
