@@ -64,6 +64,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
     /** 1 => January, 12 => december */
     monthsDisabled = input<number[]>([]);
+
+    /** 1 => January, 12 => december */
+    hiddenMonths = input<number[]>([]);
     daysDisabled = input<Date[]>();
 
     /** Translate language (default navigator or en) */
@@ -227,6 +230,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         effect(() => this.dateAdapter.setLocale(this.langue()));
     }
 
+    protected estMoisCourantLectureSeule = computed(() => this.monthsDisabled().includes(this.mois()));
     protected dateReference = computed(() => new Date(this.annee(), this.mois() - 1, 1));
 
     protected trad = computed(() => {
@@ -270,10 +274,15 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             return !masques.has(idGroupe);
         }).map(ev => 
         {
-            if (bloquerPasse && ev.startDate.getTime() < minuitAujourdhui) 
-                return { ...ev, readonly: true };
+            let estLectureSeule = ev.readonly;
 
-            return ev;
+            if (bloquerPasse && ev.startDate.getTime() < minuitAujourdhui) 
+                estLectureSeule = true;
+            
+            if (this.estMoisCourantLectureSeule())
+                estLectureSeule = true;
+
+            return { ...ev, readonly: estLectureSeule };
         });
 
         if (!apercu)
@@ -446,10 +455,40 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             this.themeObserver.disconnect();
     }
 
+    protected filtreMoisDatepicker = (date: Date | null): boolean => 
+    {
+        if (!date) return true;
+        const mois = date.getMonth() + 1;
+
+        return !this.hiddenMonths().includes(mois);
+    };
+
+    protected EstDateLectureSeule(date: Date): boolean 
+    {
+        if (!date) 
+            return false;
+
+        return this.monthsDisabled().includes(date.getMonth() + 1);
+    }
+
     protected OnMonthSelected(date: Date, datepicker: any): void 
     {
-        this.mois.set(date.getMonth() + 1);
-        this.annee.set(date.getFullYear());
+        let moisChoisi = date.getMonth() + 1;
+        let anneeChoisi = date.getFullYear();
+
+        // Si l'utilisateur clique sur un mois caché depuis le datepicker, on glisse au suivant
+        let safety = 0;
+        while(this.hiddenMonths().includes(moisChoisi) && safety < 12) 
+        {
+            moisChoisi++;
+            if(moisChoisi > 12) 
+                moisChoisi = 1; anneeChoisi++;
+
+            safety++;
+        }
+
+        this.mois.set(moisChoisi);
+        this.annee.set(anneeChoisi);
         datepicker.close();
     }
 
@@ -528,18 +567,14 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         let nouveauMois = this.mois() == 1 ? 12 : this.mois() - 1;
         let nouvelleAnnee = this.mois() === 1 ? this.annee() - 1 : this.annee();
 
-        // on continue de reculer quand que le mois est désactivé
-        while (this.monthsDisabled().includes(nouveauMois)) 
+        while (this.hiddenMonths().includes(nouveauMois)) 
         {
             nouveauMois = nouveauMois == 1 ? 12 : nouveauMois - 1;
-
-            if (nouveauMois == 12) 
-                nouvelleAnnee--;
+            if (nouveauMois == 12) nouvelleAnnee--;
         }
 
         this.annee.set(nouvelleAnnee);
         this.mois.set(nouveauMois);
-
         this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
@@ -548,17 +583,14 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         let nouveauMois = this.mois() == 12 ? 1 : this.mois() + 1;
         let nouvelleAnnee = this.mois() == 12 ? this.annee() + 1 : this.annee();
 
-        // on continue d'avancer quand que le mois est désactivé
-        while (this.monthsDisabled().includes(nouveauMois)) 
+        while (this.hiddenMonths().includes(nouveauMois)) 
         {
             nouveauMois = nouveauMois == 12 ? 1 : nouveauMois + 1;
-            if (nouveauMois == 1) 
-                nouvelleAnnee++;
+            if (nouveauMois == 1) nouvelleAnnee++;
         }
 
         this.annee.set(nouvelleAnnee);
         this.mois.set(nouveauMois);
-
         this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
@@ -785,7 +817,12 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
     protected OnMoveStart(_e: MouseEvent | TouchEvent, _eventObj: EventCalandar): void 
     {
-        if (this.readonly() || _eventObj.readonly) return;
+        if (this.readonly() || _eventObj.readonly) 
+            return;
+
+        if (this.readonly() || _eventObj.readonly || this.EstDateLectureSeule(_eventObj.startDate) || this.EstDateLectureSeule(_eventObj.endDate)) 
+            return;
+
         if (_e instanceof MouseEvent && _e.button !== 0) return;
 
         _e.preventDefault();
@@ -936,6 +973,12 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     {
         _e.preventDefault();
         _e.stopPropagation();
+
+        if (_side == 'left' && this.EstDateLectureSeule(_eventObj.startDate)) 
+            return;
+
+        if (_side == 'right' && this.EstDateLectureSeule(_eventObj.endDate)) 
+            return;
 
         let dateTrouvee = false;
         let finalStartDate = new Date(_eventObj.startDate);
@@ -1411,6 +1454,15 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         let estRedimensionnementFin = (_event.ctrlKey || _event.metaKey) && !_event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(_event.key);
         let estRedimensionnementDebut = (_event.ctrlKey || _event.metaKey) && _event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(_event.key);
 
+        if (estEnDeplacement && (this.EstDateLectureSeule(_eventObj.startDate) || this.EstDateLectureSeule(_eventObj.endDate))) 
+            return;
+
+        if (estRedimensionnementDebut && this.EstDateLectureSeule(_eventObj.startDate)) 
+            return;
+
+        if (estRedimensionnementFin && this.EstDateLectureSeule(_eventObj.endDate)) 
+            return;
+
         if (estEnDeplacement || estRedimensionnementFin || estRedimensionnementDebut) 
         {
             _event.preventDefault();
@@ -1731,6 +1783,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             let isLocked = estBloquerDatePrecise || estBloquerIntervalle;
 
             if (this.readonlyPast() && date.getTime() < new Date().setHours(0, 0, 0, 0))
+                isLocked = true;
+
+            if (this.monthsDisabled().includes(M))
                 isLocked = true;
             
             // --- GESTION DES ÉVÉNEMENTS SPÉCIAUX (BADGES) ---

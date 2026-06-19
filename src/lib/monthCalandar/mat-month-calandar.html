@@ -106,6 +106,7 @@
                         <div class="title-selector">
                             <input matInput 
                                 [matDatepicker]="picker" 
+                                [matDatepickerFilter]="filtreMoisDatepicker"
                                 [value]="dateReference()"
                                 style="width: 0; height: 0; border: none; padding: 0; margin: 0; position: absolute; opacity: 0; pointer-events: none;"
                                 tabindex="-1"
@@ -119,6 +120,10 @@
                                     (keydown.enter)="picker.open()"
                                     [attr.aria-label]="trad().ariaMenuMois">
                                 {{ nomMois() }} {{ annee() }}
+                                @if(estMoisCourantLectureSeule()) 
+                                {
+                                    <mat-icon class="title-lock-icon" aria-hidden="true" [title]="trad().ariaLectureSeule">lock</mat-icon>
+                                }
                             </span>
 
                             <mat-datepicker #picker 
@@ -171,7 +176,7 @@
                 }
             </div>
 
-            <div class="calendar-body" role="region" [attr.aria-label]="nomMois() + ' ' + annee()">
+            <div class="calendar-body" role="region" [attr.aria-label]="(estMoisCourantLectureSeule() ? trad().ariaLectureSeule + ' - ' : '') + nomMois() + ' ' + annee()">
 
                 <div class="sr-only" aria-live="assertive" aria-atomic="true">
                     {{ messageAriaLive() }}
@@ -280,7 +285,7 @@
                                         [matContextMenuTriggerFor]="customMatMenu() ? customMatMenu()! : defaultMenu"
                                         [matContextMenuTriggerData]="{ eventCal: pos.event }">
                                         
-                                        @if (!readonly() && !pos.event.readonly) 
+                                        @if (!readonly() && !pos.event.readonly && !EstDateLectureSeule(pos.event.startDate)) 
                                         {
                                             <div class="resize-handle left" aria-hidden="true"
                                                 (mousedown)="OnResizeStart($event, pos.event, 'left')" 
@@ -291,7 +296,7 @@
                                         <span class="event-time">{{ pos.event.startDate | date:(useAmPm() ? 'h:mm a' : 'HH:mm') }}</span>
                                         <span class="event-title">{{ pos.event.titre }}</span>
 
-                                        @if (!readonly() && !pos.event.readonly) 
+                                        @if (!readonly() && !pos.event.readonly && !EstDateLectureSeule(pos.event.endDate)) 
                                         {
                                             <div class="resize-handle right" aria-hidden="true"
                                                 (mousedown)="OnResizeStart($event, pos.event, 'right')" 
