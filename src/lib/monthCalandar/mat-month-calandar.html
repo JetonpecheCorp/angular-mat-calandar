@@ -194,29 +194,29 @@
                                 <div class="day-cell" 
                                         role="button"
                                         tabindex="0"
-                                        [attr.aria-disabled]="element.estBloquer"
-                                        [attr.aria-current]="element.estAujourdhui ? 'date' : null"
+                                        [attr.aria-disabled]="element.isLocked"
+                                        [attr.aria-current]="element.isToday ? 'date' : null"
                                         [attr.aria-pressed]="EstEnCreation(element.date) ? 'true' : 'false'"
                                         [attr.aria-label]="GetDayAriaLabel(element)"
                                         matRipple
-                                        [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.estBloquer || (element.estWeekend && weekendDisabled())" 
-                                        (keydown)="OnDayCellKeydown($event, element.date, element.estBloquer, element.listeEvent)"
-                                        (mousedown)="OnMouseDownCreation($event, element.date, element.estBloquer)"
-                                        (touchstart)="OnMouseDownCreation($event, element.date, element.estBloquer)"
+                                        [matRippleDisabled]="matRippleDisabled() || overrideRipple() || element.isLocked || (element.isWeekend && weekendDisabled())" 
+                                        (keydown)="OnDayCellKeydown($event, element.date, element.isLocked, element.eventList)"
+                                        (mousedown)="OnMouseDownCreation($event, element.date, element.isLocked)"
+                                        (touchstart)="OnMouseDownCreation($event, element.date, element.isLocked)"
                                         [attr.data-date]="element.date.getTime()"
                                         [class.last-column]="($index + 1) % nbColonnes() == 0"
-                                        [class.day-disabled]="(element.estWeekend && weekendDisabled()) || element.estBloquer"
-                                        [class.today]="element.estAujourdhui"
+                                        [class.day-disabled]="(element.isWeekend && weekendDisabled()) || element.isLocked"
+                                        [class.today]="element.isToday"
                                         [class.different-month]="!element.estMoisCourant"
                                         [class.is-creating]="EstEnCreation(element.date)">
                                     
                                     <div class="day-cell-header">
                                         <span class="day-number">{{ element.date.getDate() }}</span>
                                         
-                                        @if (element.listeEventSpecial && element.listeEventSpecial.length > 0) 
+                                        @if (element.specialEventList && element.specialEventList.length > 0) 
                                         {
                                             <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
-                                                @for (sp of element.listeEventSpecial; track $index) 
+                                                @for (sp of element.specialEventList; track $index) 
                                                 {
                                                     <div class="special-badge" [title]="sp.title" [attr.aria-label]="sp.title" role="note">
                                                         <span class="special-text" aria-hidden="true">{{ sp.title }}</span>
@@ -227,10 +227,10 @@
                                     </div>
 
                                     <div class="day-cell-footer">
-                                        @if (element.listeEvent.length > maxLignesVisibles()) 
+                                        @if (element.eventList.length > maxLignesVisibles()) 
                                         {
                                             <div class="more-indicator">
-                                                +{{ element.listeEvent.length - maxLignesVisibles() }} 
+                                                +{{ element.eventList.length - maxLignesVisibles() }} 
                                                 
                                                 @if (!estPetitEcran()) 
                                                 {
@@ -239,7 +239,7 @@
                                             </div>
                                         }
 
-                                        @if (element.estBloquer) 
+                                        @if (element.isLocked) 
                                         {
                                             <mat-icon class="day-readonly-icon-corner" aria-hidden="true">lock</mat-icon>
                                         }

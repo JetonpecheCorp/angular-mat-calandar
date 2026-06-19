@@ -197,7 +197,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             ariaEventMasques: "eventos adicionais ocultos"
         }
     };
-    
+
     constructor() { effect(() => this.dateAdapter.setLocale(this.langue())); }
 
     protected trad = computed(() => 
@@ -365,7 +365,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             return '';
         
         let label = '';
-        if (jour.estAujourdhui) 
+        if (jour.isToday) 
             label += this.trad().ceJour + ', ';
         
         label += this.FormatDateAria(jour.date);
@@ -373,17 +373,17 @@ export class MatYearCalandar implements OnInit, OnDestroy
         if (estLectureSeul)
             label += ', ' + this.trad().ariaMoisLectureSeul;
         
-        if (jour.estBloquer)
+        if (jour.isLocked)
             label += ', ' + this.trad().ariaBloque;
  
         else 
         {
-            if (jour.listeEvent.length > 0)
-                label += ', ' + jour.listeEvent.length + ' ' + this.trad().ariaEvenement;
+            if (jour.eventList.length > 0)
+                label += ', ' + jour.eventList.length + ' ' + this.trad().ariaEvenement;
 
-            if (jour.listeEventSpecial && jour.listeEventSpecial.length > 0) 
+            if (jour.specialEventList && jour.specialEventList.length > 0) 
             {
-                const titresSpeciaux = jour.listeEventSpecial.map(sp => sp.title).join(', ');
+                const titresSpeciaux = jour.specialEventList.map(sp => sp.title).join(', ');
                 label += ', ' + titresSpeciaux;
             }
         }
@@ -476,7 +476,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
 
     protected ClickJour(dateCalendrier: DateCalendrier): void 
     {
-        if (!dateCalendrier.estBloquer && dateCalendrier.estMoisCourant)
+        if (!dateCalendrier.isLocked && dateCalendrier.estMoisCourant)
             this.eventClickJour.emit(dateCalendrier);
     }
 
@@ -608,7 +608,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             if (this.readonly() || estLectureSeul) 
                 return;
 
-            if (jour.estBloquer && !this.dragCreationEnCours()) 
+            if (jour.isLocked && !this.dragCreationEnCours()) 
                 return;
 
             if (!this.dragCreationEnCours()) 
@@ -667,10 +667,10 @@ export class MatYearCalandar implements OnInit, OnDestroy
         if (event.altKey && event.key === 'ArrowDown') 
         {
             event.preventDefault();
-            if (jour.listeEvent && jour.listeEvent.length > 0) 
+            if (jour.eventList && jour.eventList.length > 0) 
             {
                 this.dateRetourFocus.set(jour.date.getTime());
-                const eventsTries = [...jour.listeEvent].sort((a, b) => {
+                const eventsTries = [...jour.eventList].sort((a, b) => {
                     const startDiff = a.startDate.getTime() - b.startDate.getTime();
 
                     if (startDiff !== 0) 
@@ -1404,12 +1404,12 @@ export class MatYearCalandar implements OnInit, OnDestroy
 
             joursPlats.push({
                 date: date, 
-                estBloquer: estBloquer, 
-                estAujourdhui: this.EstMemeJour(date, new Date()),
+                isLocked: estBloquer, 
+                isToday: this.EstMemeJour(date, new Date()),
                 estMoisCourant: estMoisCourant, 
-                estWeekend: date.getDay() == 0 || date.getDay() == 6,
-                listeEvent: eventsDuJour, 
-                listeEventSpecial: eventsSpeciauxDuJour,
+                isWeekend: date.getDay() == 0 || date.getDay() == 6,
+                eventList: eventsDuJour, 
+                specialEventList: eventsSpeciauxDuJour,
                 nbEventsMasques: 0
             });
         }
@@ -1425,7 +1425,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
             let slotsOccuppes: { [jour: number]: number[] } = {};
 
             const setEvents = new Set<EventCalandar>();
-            joursSemaine.forEach(j => j.listeEvent.forEach(ev => setEvents.add(ev)));
+            joursSemaine.forEach(j => j.eventList.forEach(ev => setEvents.add(ev)));
 
             const eventsTries = Array.from(setEvents).sort((a, b) => {
                 const startDiff = a.startDate.getTime() - b.startDate.getTime();
@@ -1444,7 +1444,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
                 
                 for (let j = 0; j < joursSemaine.length; j++) 
                 {
-                    if (joursSemaine[j].listeEvent.some(e => e.id === ev.id)) 
+                    if (joursSemaine[j].eventList.some(e => e.id === ev.id)) 
                     {
                         if (startIdx === -1) 
                             startIdx = j;

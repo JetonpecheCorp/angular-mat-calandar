@@ -355,7 +355,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             const setEvents = new Set<EventCalandar>();
             joursSemaine.forEach(j => 
             {
-                j.listeEvent.forEach(ev => setEvents.add(ev));
+                j.eventList.forEach(ev => setEvents.add(ev));
             });
 
             // 2. Trier : on place en haut les plus anciens et les plus longs
@@ -462,27 +462,27 @@ export class MatMonthCalandar implements OnInit, OnDestroy
     protected GetDayAriaLabel(jour: DateCalendrier): string 
     {
         let label = '';
-        if (jour.estAujourdhui) 
+        if (jour.isToday) 
             label += this.trad().aujourdhui + ', ';
 
         label += this.FormatDateAria(jour.date);
         
-        if (jour.estBloquer)
+        if (jour.isLocked)
             label += ', ' + this.trad().ariaBloque;
 
         else 
         {
-            if (jour.listeEvent.length > 0) 
-                label += ', ' + jour.listeEvent.length + ' ' + this.trad().ariaEvenement;
+            if (jour.eventList.length > 0) 
+                label += ', ' + jour.eventList.length + ' ' + this.trad().ariaEvenement;
             
-            if (jour.listeEventSpecial && jour.listeEventSpecial.length > 0) 
+            if (jour.specialEventList && jour.specialEventList.length > 0) 
             {
-                const titresSpeciaux = jour.listeEventSpecial.map(sp => sp.title).join(', ');
+                const titresSpeciaux = jour.specialEventList.map(sp => sp.title).join(', ');
                 label += ', ' + this.trad().ariaEventSpecial + ' ' + titresSpeciaux;
             }
 
             if (!this.dragCreationEnCours())
-                label += '. ' + this.trad().ariaCreer + ' ' + this.FormatDateAria(jour.date) + this.trad().aideCreerEtendre + (jour.listeEvent.length > 0 ? this.trad().aideDescendre : '') + this.trad().aideNavMois;
+                label += '. ' + this.trad().ariaCreer + ' ' + this.FormatDateAria(jour.date) + this.trad().aideCreerEtendre + (jour.eventList.length > 0 ? this.trad().aideDescendre : '') + this.trad().aideNavMois;
 
             else
                 label += '. ' + this.trad().aideCreerValider;
@@ -629,9 +629,9 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         return tDate >= min && tDate <= max;
     }
 
-    protected OnMouseDownCreation(event: MouseEvent | TouchEvent | Event, dateJour: Date, estBloquer: boolean): void 
+    protected OnMouseDownCreation(event: MouseEvent | TouchEvent | Event, dateJour: Date, isLocked: boolean): void 
     {
-        if (this.readonly() || estBloquer) 
+        if (this.readonly() || isLocked) 
             return;
 
         // Anti-Ghost Click Mobile
@@ -1025,7 +1025,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
         window.addEventListener('touchend', onMouseUp);
     }
 
-    protected OnDayCellKeydown(event: KeyboardEvent, dateJour: Date, estBloquer: boolean, eventsDuJour: EventCalandar[] = []): void 
+    protected OnDayCellKeydown(event: KeyboardEvent, dateJour: Date, isLocked: boolean, eventsDuJour: EventCalandar[] = []): void 
     {
         if (event.key == 'Escape') 
         {
@@ -1147,7 +1147,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             } 
             else 
             {
-                if (estBloquer) 
+                if (isLocked) 
                     return; 
 
                 let dateCalendrier = this.listeDate().find(x => x.date.getTime() == dateJour.getTime());
@@ -1166,7 +1166,7 @@ export class MatMonthCalandar implements OnInit, OnDestroy
             if (this.readonly()) 
                 return;
 
-            if (estBloquer && !this.dragCreationEnCours()) 
+            if (isLocked && !this.dragCreationEnCours()) 
                 return;
 
             if (!this.dragCreationEnCours()) 
@@ -1728,10 +1728,10 @@ export class MatMonthCalandar implements OnInit, OnDestroy
                 return false;
             });
 
-            let estBloquer = estBloquerDatePrecise || estBloquerIntervalle;
+            let isLocked = estBloquerDatePrecise || estBloquerIntervalle;
 
             if (this.readonlyPast() && date.getTime() < new Date().setHours(0, 0, 0, 0))
-                estBloquer = true;
+                isLocked = true;
             
             // --- GESTION DES ÉVÉNEMENTS SPÉCIAUX (BADGES) ---
             const eventsSpeciauxDuJour = this.specialEvents().filter(sp => 
@@ -1754,12 +1754,12 @@ export class MatMonthCalandar implements OnInit, OnDestroy
 
             liste.push({
                 date,
-                estBloquer: estBloquer,
-                estAujourdhui: this.EstDateJour(date),
+                isLocked: isLocked,
+                isToday: this.EstDateJour(date),
                 estMoisCourant: date.getMonth() == _de.getMonth(),
-                estWeekend: date.getDay() == 0 || date.getDay() == 6,
-                listeEvent: listeDateInterval,
-                listeEventSpecial: eventsSpeciauxDuJour
+                isWeekend: date.getDay() == 0 || date.getDay() == 6,
+                eventList: listeDateInterval,
+                specialEventList: eventsSpeciauxDuJour
             });
         }
 

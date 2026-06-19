@@ -167,33 +167,33 @@
                                             {
                                                 <div class="day-cell"
                                                         matRipple
-                                                        [matRippleDisabled]="matRippleDisabled() || jour.estBloquer || mois.estDesactive"
+                                                        [matRippleDisabled]="matRippleDisabled() || jour.isLocked || mois.estDesactive"
                                                         [class.hors-mois]="!jour.estMoisCourant"
-                                                        [class.today]="jour.estAujourdhui"
-                                                        [class.day-disabled]="jour.estBloquer && jour.estMoisCourant"
-                                                        [class.day-readonly]="mois.estDesactive && !jour.estBloquer && jour.estMoisCourant"
+                                                        [class.today]="jour.isToday"
+                                                        [class.day-disabled]="jour.isLocked && jour.estMoisCourant"
+                                                        [class.day-readonly]="mois.estDesactive && !jour.isLocked && jour.estMoisCourant"
                                                         [class.is-creating]="jour.estMoisCourant && EstEnCreation(jour.date)"
                                                         [attr.data-date]="jour.date.getTime()"
                                                         
                                                         role="button"
                                                         [attr.tabindex]="!jour.estMoisCourant ? -1 : 0"
-                                                        [attr.aria-disabled]="jour.estBloquer"
-                                                        [attr.aria-current]="jour.estAujourdhui ? 'date' : null"
+                                                        [attr.aria-disabled]="jour.isLocked"
+                                                        [attr.aria-current]="jour.isToday ? 'date' : null"
                                                         [attr.aria-pressed]="EstEnCreation(jour.date) ? 'true' : 'false'"
                                                         [attr.aria-label]="GetDayAriaLabel(jour, mois.estDesactive)"
                                                         
                                                         (click)="jour.estMoisCourant && !mois.estDesactive && ClickJour(jour)"
                                                         (keydown)="jour.estMoisCourant && OnDayCellKeydown($event, jour, mois.estDesactive)"
-                                                        (mousedown)="OnMouseDownCreation($event, jour.date, jour.estBloquer || mois.estDesactive)"
-                                                        (touchstart)="OnMouseDownCreation($event, jour.date, jour.estBloquer || mois.estDesactive)">
+                                                        (mousedown)="OnMouseDownCreation($event, jour.date, jour.isLocked || mois.estDesactive)"
+                                                        (touchstart)="OnMouseDownCreation($event, jour.date, jour.isLocked || mois.estDesactive)">
                                                         
                                                         <div class="day-cell-header">
                                                             <span class="day-number-text">{{ !jour.estMoisCourant ? '' : jour.date.getDate() }}</span>
                         
-                                                            @if (jour.listeEventSpecial && jour.listeEventSpecial.length > 0) 
+                                                            @if (jour.specialEventList && jour.specialEventList.length > 0) 
                                                             {
                                                                 <div class="special-event-indicators-container" (wheel)="ScrollHorizontal($event)">
-                                                                    @for (sp of jour.listeEventSpecial; track $index) 
+                                                                    @for (sp of jour.specialEventList; track $index) 
                                                                     {
                                                                         <div class="special-badge" [title]="sp.title" [attr.aria-label]="sp.title" role="note">
                                                                             <span class="special-text" aria-hidden="true">{{ sp.title }}</span>
