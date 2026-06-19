@@ -86,7 +86,7 @@
 }
 .burger-menu-btn.is-hidden { width: 0; margin-right: 0; opacity: 0; pointer-events: none; }
 
-.title-selector { display: flex; gap: 8px; align-items: center; position: relative; }
+.title-selector { display: flex; align-items: center; position: relative; }
 .period-title { font-size: 1.5rem; font-weight: 500; cursor: pointer; min-width: 0; }
 
 /* --- LE PANNEAU LATÉRAL --- */
