@@ -1,0 +1,432 @@
+:host {
+    display: block;
+    height: 100%;
+}
+
+.mat-ripple:not(:empty)
+{
+    transform: none;
+}
+
+/* --- OVERLAY DE CHARGEMENT --- */
+.loading-overlay 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    pointer-events: auto;
+}
+
+/* Le fond semi-transparent avec effet flou */
+.loading-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    
+    background-color: var(--mat-sys-surface);
+    opacity: 0.6;
+    
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    
+    z-index: -1;
+    border-radius: inherit;
+}
+
+.year-calendar-root {
+    display: block;
+    width: 100%;
+    height: 100%; 
+    border-radius: 8px;
+    background-color: var(--mat-sys-surface);
+}
+
+.calendar-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--mat-sys-surface);
+}
+
+/* --- HEADER --- */
+.calendar-header {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    min-height: 85px;
+    padding: 8px 16px 8px 8px !important;
+    background-color: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+    flex-shrink: 0; 
+}
+.header-main-container { display: flex; flex-direction: column; align-items: center; flex: 1; width: 100%; }
+.header-nav-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.header-action-row { display: flex; justify-content: center; width: 100%; margin-top: 4px;}
+.calendar-header button { color: var(--mat-sys-on-primary); }
+.today-btn { height: 32px; line-height: 32px; }
+
+.burger-menu-btn {
+    margin-right: 8px; 
+    margin-top: -4px; 
+    width: 48px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin 0.3s ease;
+}
+.burger-menu-btn.is-hidden { width: 0; margin-right: 0; opacity: 0; pointer-events: none; }
+
+.title-selector { display: flex; gap: 8px; align-items: center; position: relative; }
+.period-title { font-size: 1.5rem; font-weight: 500; cursor: pointer; min-width: 0; }
+
+/* --- LE PANNEAU LATÉRAL --- */
+.side-panel { width: 280px; background-color: var(--mat-sys-surface-container-low); border-right: 1px solid var(--mat-sys-outline-variant); }
+.side-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; min-height: 80px; border-bottom: 1px solid var(--mat-sys-outline-variant); background-color: var(--mat-sys-surface-container); }
+.side-panel-header h3 { margin: 0; font-size: 1.1rem; font-weight: 500; text-transform: capitalize; color: var(--mat-sys-on-surface); }
+.side-panel-content { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+
+.side-panel-accordion { display: flex; flex-direction: column; gap: 8px; }
+.group-expansion-panel { background: transparent !important; box-shadow: none !important; border: 1px solid var(--mat-sys-outline-variant); }
+.group-expansion-panel::before { display: none; }
+.group-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; margin-top: 0; }
+.group-color-indicator { width: 12px; height: 12px; border-radius: 50%; background-color: var(--g-color); }
+
+.group-events-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.side-event-card-clean { 
+    display: flex; flex-direction: column; align-items: flex-start; padding: 8px 12px; 
+    border-radius: 6px; background-color: transparent; border: 1px solid var(--mat-sys-outline-variant); 
+    width: 100%; text-align: left; cursor: pointer; transition: background-color 0.15s ease; font-family: inherit; color: var(--mat-sys-on-surface);
+}
+.side-event-card-clean:hover, .side-event-card-clean:focus-visible { background-color: var(--mat-sys-surface-container-highest); border-color: var(--mat-sys-primary); outline: 2px solid var(--mat-sys-primary); outline-offset: -1px; }
+.side-event-date { font-size: 0.75rem; font-weight: 500; color: var(--mat-sys-primary); margin-bottom: 2px; }
+.side-event-title { font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+
+::ng-deep .group-expansion-panel .mat-expansion-panel-body { padding-left: 12px !important; padding-right: 12px !important; padding-bottom: 8px !important; }
+::ng-deep .group-expansion-panel.mat-expansion-panel-spacing { margin: 6px 0 !important; }
+::ng-deep .group-expansion-panel .mat-expansion-panel-header { padding-left: 12px !important; padding-right: 12px !important; }
+::ng-deep .group-expansion-panel .mat-expansion-panel-header:hover { background-color: transparent !important; }
+
+/* --- CORPS ET GRILLES --- */
+.calendar-body.continuous-layout { position: relative; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.global-weekdays-header { display: flex; position: sticky; top: 0; z-index: 10; background-color: var(--mat-sys-primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.month-name-spacer { width: 140px; flex-shrink: 0; border-right: 1px solid rgba(255, 255, 255, 0.2); }
+.weekdays-grid { display: grid; flex: 1; padding: 12px 16px 12px 0; gap: 1px; }
+.weekday-label { text-align: center; font-size: 1rem; text-transform: capitalize; color: var(--mat-sys-on-primary); }
+.weekday-label .short-name { display: none; }
+
+.vertical-months-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background-color: var(--mat-sys-outline-variant); gap: 6px; }
+
+.calendar-body-mini { position: relative; display: flex; flex-direction: column; background-color: var(--mat-sys-surface); flex: 1; }
+.month-row { display: flex; }
+.month-sidebar { width: 140px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background-color: var(--mat-sys-surface-container-lowest); border-right: 1px solid var(--mat-sys-outline-variant); }
+.month-sidebar h2 { margin: 0; font-size: 1.2rem; font-weight: 500; color: var(--mat-sys-primary); text-transform: capitalize; }
+.month-row.month-disabled {
+    background-color: var(--mat-sys-surface-container-lowest);
+}
+.readonly-icon {
+    font-size: 1.1rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-left: 8px;
+    vertical-align: middle;
+    color: var(--mat-sys-on-surface-variant);
+    opacity: 0.6;
+}
+
+/* --- CADENAS DANS LA CASE DU JOUR --- */
+.day-readonly-icon-corner {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    font-size: 0.9rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--mat-sys-on-surface-variant);
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.day-cell.day-readonly {
+    cursor: default;
+}
+/* Retire le background au survol pour les jours en lecture seule */
+.day-cell.day-readonly:hover:not(.hors-mois):not(.day-disabled) {
+    background-color: var(--mat-sys-surface);
+}
+.week-row { 
+    position: relative; 
+    min-height: 160px; 
+    border-bottom: 1px solid var(--mat-sys-outline-variant); 
+    display: flex; 
+}
+.days-background-grid { display: grid; width: 100%; flex-grow: 1; background-color: var(--mat-sys-outline-variant); gap: 1px; }
+
+/* --- CASES DES JOURS --- */
+.day-cell { 
+    background-color: var(--mat-sys-surface); 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+    align-items: flex-start; 
+    padding: 6px 8px; 
+    position: relative; 
+    cursor: pointer; 
+    transition: background-color 0.2s ease; 
+    box-sizing: border-box; 
+    padding-top: 8px;
+    padding-bottom: 4px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.day-cell:hover:not(.hors-mois):not(.day-disabled) { background-color: var(--mat-sys-surface-container-highest); }
+.day-cell.hors-mois { background-color: var(--mat-sys-surface-container-lowest); pointer-events: none; }
+.day-cell.day-disabled { cursor: default; background-color: var(--mat-sys-surface-container-low); opacity: 0.8; }
+.day-cell.today { background-color: var(--mat-sys-primary-container) !important; }
+.day-cell.today .day-number-text { font-weight: bold; color: var(--mat-sys-primary); }
+.day-cell.is-creating {
+    background-color: var(--mat-sys-primary-container);
+    opacity: 0.8;
+    box-shadow: inset 0 0 0 1px var(--mat-sys-primary); 
+    transition: none;
+}
+
+.day-number-text { 
+    display: block; 
+    font-size: 0.85rem; 
+    color: var(--mat-sys-on-surface-variant); 
+    transition: transform 0.2s ease, color 0.2s ease; 
+    z-index: 1; 
+    flex-shrink: 0; 
+    min-width: 16px; 
+}
+.day-cell:hover:not(.hors-mois):not(.day-disabled) .day-number-text { transform: translateX(5px); color: var(--mat-sys-primary); }
+.day-cell.day-disabled .day-number-text { text-decoration: line-through; opacity: 0.6; }
+
+/* --- ACCESSIBILITÉ --- */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* --- EVENTS SPECIAUX --- */
+.day-cell-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    min-height: 15px;
+    box-sizing: border-box;
+}
+
+.special-event-indicators-container 
+{
+    display: flex;
+    flex-direction: row; 
+    flex-wrap: nowrap; 
+    overflow-x: auto; 
+    overflow-y: hidden;
+    justify-content: flex-start;
+    gap: 4px; 
+    flex: 1;
+    min-width: 0;
+    
+    /* Pour Firefox : barre fine */
+    scrollbar-width: thin; 
+    scrollbar-color: var(--mat-sys-outline-variant) transparent;
+}
+
+.special-badge {
+    flex-shrink: 0;
+    background-color: var(--mat-sys-tertiary-container, #e8def8);
+    color: var(--mat-sys-on-tertiary-container, #1d192b);
+    border-radius: 12px;
+    padding: 2px 6px;
+    font-size: 0.6rem;
+    font-weight: 500;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+}
+
+.special-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Pour Chrome, Safari : Design d'une barre de scroll ultra-fine (4px) */
+.special-event-indicators-container::-webkit-scrollbar 
+{
+    height: 4px; 
+}
+
+.special-event-indicators-container::-webkit-scrollbar-track {
+    background: transparent; 
+}
+
+.special-event-indicators-container::-webkit-scrollbar-thumb 
+{
+    background-color: var(--mat-sys-outline-variant); 
+    border-radius: 4px;
+}
+
+.special-event-indicators-container::-webkit-scrollbar-thumb:hover 
+{
+    background-color: var(--mat-sys-primary); 
+}
+
+/* --- COUCHE DES ÉVÉNEMENTS (DRAG & DROP) --- */
+.events-foreground-layer { position: absolute; top: 30px; left: 0; width: 100%; bottom: 0; pointer-events: none; }
+
+.absolute-event {
+    position: absolute;
+    pointer-events: auto;
+    left: calc(var(--pos-start) * (100% / var(--nb-cols)));
+    width: calc((var(--pos-duree) * (100% / var(--nb-cols))) - 4px);
+    top: calc(var(--pos-ligne) * 28px);
+    
+    height: 22px; 
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    
+    background-color: var(--event-bg, var(--mat-sys-primary)); 
+    color: var(--event-text, var(--mat-sys-on-primary));
+    border-radius: 4px;
+    margin-left: 2px;
+    
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: grab;
+    box-sizing: border-box;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.more-indicator {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--mat-sys-secondary);
+    padding: 0 4px;
+    margin-top: auto;
+}
+
+.absolute-event.is-dragging { opacity: 0.5; border: 1px dashed var(--mat-sys-outline) !important; }
+.event-title { overflow: hidden; text-overflow: ellipsis; }
+.event-time {
+    font-weight: 700;
+    color: inherit;
+    flex-shrink: 0;
+}
+.resize-handle { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 20; }
+.resize-handle.left { left: 0; }
+.resize-handle.right { right: 0; }
+
+.event-ghost-preview {
+    position: fixed !important; pointer-events: none !important; z-index: 99999 !important; opacity: 0.9 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4) !important; transform: scale(1.02) !important; transition: none !important;
+    border-radius: 4px;
+}
+
+/* --- FILTRE DES MOIS DANS LE PANNEAU LATÉRAL --- */
+.month-filter-container {
+    width: 100%;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.month-filter-field {
+    width: 100%;
+}
+
+.month-filter-option 
+{
+    text-transform: capitalize;
+}
+
+/* Masque l'espace réservé aux messages d'erreur/indices pour gagner de la place */
+::ng-deep .month-filter-field .mat-mdc-form-field-subscript-wrapper {
+    display: none; 
+}
+
+/* --- RESPONSIVE MOBILE --- */
+@media (max-width: 800px) 
+{
+    .month-name-spacer { width: 80px; }
+    .month-sidebar { width: 80px; }
+    .month-sidebar h2 { font-size: 0.9rem; writing-mode: vertical-rl; transform: rotate(180deg); }
+    .weekday-label .long-name { display: none; }
+    .weekday-label .short-name { display: inline; text-transform: uppercase; }
+    .day-number-text { font-size: 0.9rem; }
+    .readonly-icon {
+        margin-left: 0;
+        margin-top: 8px;
+    }
+}
+
+@media (max-width: 600px) 
+{
+    .month-row {
+        flex-direction: column; 
+    }
+    .readonly-icon {
+        margin-left: 8px;
+        margin-top: 0;
+    }
+    .calendar-header { min-height: auto !important; padding: 4px 0 !important; align-items: center; }
+    .header-main-container { flex-direction: row; justify-content: space-between; }
+    .header-nav-row { gap: 0; }
+    .header-action-row { width: auto; margin-top: 0; }
+    .period-title { font-size: 1.2rem; }
+    .burger-menu-btn { margin-right: 4px; margin-top: 0; }
+    .today-btn { height: 28px; line-height: 28px; font-size: 0.7rem; padding: 0 10px; }
+    
+    .global-weekdays-header { display: none; } 
+    .month-sidebar { 
+        width: 100%; 
+        border-right: none; 
+        border-bottom: 1px solid var(--mat-sys-outline-variant); 
+        padding: 8px; 
+        background: var(--mat-sys-surface-container); 
+        position: sticky; 
+        top: 0; 
+        z-index: 5; 
+        justify-content: flex-start; /* Aligne le nom à gauche */
+    }
+
+    .month-sidebar h2 { 
+        font-size: 1.1rem; 
+        writing-mode: horizontal-tb; 
+        transform: none; 
+    }
+
+    .calendar-body-mini {
+        width: 100%;
+    }
+}
