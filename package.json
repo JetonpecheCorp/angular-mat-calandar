@@ -1,5 +1,5 @@
 {
-  "name": "angular-mat-calandar",
+  "name": "@jetonpeche/angular-mat-calandar",
   "description": "Calendrier angular material",
   "author": "jetonpeche",
   "version": "1.0.0",
@@ -17,5 +17,5 @@
   },
   "sideEffects": false,
   "license": "ISC",
-  "keywords": ["angular", "calandar", "material", "angular material", "angular calandar"]
+  "keywords": ["angular", "calandar", "material", "angular material"]
 }
