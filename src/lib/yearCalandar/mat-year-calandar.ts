@@ -21,6 +21,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideNativeDateAdapter, DateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MonthCalandar } from '../../models/MonthCalandar';
 
 interface EventPositionne {
     event: EventCalandar;
@@ -67,7 +68,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
     hideSelectMonth = input(false, { transform: booleanAttribute });
 
     daysOfWeekDisabled = input<number[]>([]);
-    monthsDisabled = input<number[]>([]);
+    monthsDisabled = input<MonthCalandar[]>([]);
+    hiddenMonths = input<MonthCalandar[]>([]);
     defaultHiddenMonths = input<number[]>([]);
     daysDisabled = input<Date[]>();
     intervalsDisabled = input<DateCalandarDisabled[]>([]);
@@ -282,31 +284,47 @@ export class MatYearCalandar implements OnInit, OnDestroy
     protected listeMoisAnnee = computed(() => {
         const moisData = [];
         const formatMois = new Intl.DateTimeFormat(this.langue(), { month: 'long' });
+        const anneeEnCours = this.annee();
 
         for (let m = 1; m <= 12; m++) 
         {
+            // 1. Masqué par le développeur (règle forte)
+            if (this.EstMoisConcerne(m, anneeEnCours, this.hiddenMonths())) 
+                continue;
+
+            // 2. Masqué par l'utilisateur (via le mat-select)
             if (this.moisMasquesSet().has(m)) 
                 continue;
 
-            const estDesactive = this.monthsDisabled().includes(m);
+            const estDesactive = this.EstMoisConcerne(m, anneeEnCours, this.monthsDisabled());
             moisData.push({
                 numero: m,
-                nom: formatMois.format(new Date(this.annee(), m - 1, 1)),
+                nom: formatMois.format(new Date(anneeEnCours, m - 1, 1)),
                 estDesactive: estDesactive,
                 semaines: this.GenererMiniMois(m)
             });
         }
+
         return moisData;
     });
 
     protected listeTousLesMois = computed(() => 
     {
         const formatMois = new Intl.DateTimeFormat(this.langue(), { month: 'long' });
+        const anneeEnCours = this.annee();
+        const options = [];
 
-        return Array.from({ length: 12 }, (_, i) => ({
-            numero: i + 1,
-            nom: formatMois.format(new Date(this.annee(), i, 1))
-        }));
+        for(let m = 1; m <= 12; m++) 
+        {
+            if (!this.EstMoisConcerne(m, anneeEnCours, this.hiddenMonths())) 
+            {
+                options.push({
+                    numero: m,
+                    nom: formatMois.format(new Date(anneeEnCours, m - 1, 1))
+                });
+            }
+        }
+        return options;
     });
 
     ngOnInit(): void 
@@ -334,6 +352,37 @@ export class MatYearCalandar implements OnInit, OnDestroy
     {
         this.moisMasques.set(valeurs);
         this.AnnoncerActionVocalement(this.trad().ariaMasquerMois);
+    }
+
+    protected EstMoisConcerne(mois: number, annee: number, regles: MonthCalandar[]): boolean 
+    {
+        if (!regles || regles.length === 0) 
+            return false;
+        
+        return regles.some(regle => {
+            if (regle.month !== mois) 
+                return false;
+
+            // aucune année n'est précisée
+            if (regle.year === undefined && regle.startYear === undefined && regle.endYear === undefined)
+                return true;
+
+            // Année spécifique
+            if (regle.year !== undefined && regle.year === annee)
+                return true;
+
+            // Intervalle (startYear et/ou endYear)
+            if (regle.startYear !== undefined || regle.endYear !== undefined) 
+            {
+                const start = regle.startYear !== undefined ? regle.startYear : -Infinity;
+                const end = regle.endYear !== undefined ? regle.endYear : Infinity;
+                
+                if (annee >= start && annee <= end) 
+                    return true;
+            }
+
+            return false;
+        });
     }
 
     protected OnYearSelected(date: Date, datepicker: any): void 
@@ -404,7 +453,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
         if (!dateDebut) 
             return false;
 
-        return this.monthsDisabled().includes(dateDebut.getMonth() + 1);
+        return this.EstMoisConcerne(dateDebut.getMonth() + 1, dateDebut.getFullYear(), this.monthsDisabled());
     }
 
     protected EstDateFinLectureSeul(dateFin: Date): boolean 
@@ -412,7 +461,7 @@ export class MatYearCalandar implements OnInit, OnDestroy
         if (!dateFin) 
             return false;
 
-        return this.monthsDisabled().includes(dateFin.getMonth() + 1);
+        return this.EstMoisConcerne(dateFin.getMonth() + 1, dateFin.getFullYear(), this.monthsDisabled());
     }
 
     protected FormaterDateCourte(date: Date): string 
@@ -1308,8 +1357,8 @@ export class MatYearCalandar implements OnInit, OnDestroy
     private GenererMiniMois(mois: number): SemaineCalendrier[] 
     {
         const _de = new Date(this.annee(), mois - 1, 1);
-        const isMonthReadOnly = this.monthsDisabled().includes(mois);
-
+        const isMonthReadOnly = this.EstMoisConcerne(mois, this.annee(), this.monthsDisabled());
+        
         // On définit les limites exactes du vrai mois (du 1er au dernier jour)
         const debutVraiMois = new Date(this.annee(), mois - 1, 1).getTime();
         const finVraiMois = new Date(this.annee(), mois, 0, 23, 59, 59).getTime();

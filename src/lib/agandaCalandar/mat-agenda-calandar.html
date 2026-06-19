@@ -86,9 +86,14 @@
                     </button>
 
                     <button matButton="filled"
+                            style="font-size: 1.2rem;"
                             (click)="picker.open()" 
                             [attr.aria-label]="nomMois() + ' ' + annee() + ', ' + trad().ariaMenuMois">
                         {{ nomMois() }} {{ annee() }}
+                        @if(estMoisCourantLectureSeule()) 
+                        {
+                            <mat-icon class="title-lock-icon" aria-hidden="true" [title]="trad().ariaLectureSeule">lock</mat-icon>
+                        }
                     </button>
                     
                     <input [matDatepicker]="picker" 
@@ -123,7 +128,7 @@
             </div>
         </mat-toolbar>
 
-        <div class="content-wrapper" role="region" [attr.aria-label]="nomMois() + ' ' + annee()">
+        <div class="content-wrapper" role="region" [attr.aria-label]="(estMoisCourantLectureSeule() ? trad().ariaLectureSeule + ' - ' : '') + nomMois() + ' ' + annee()">
 
             <div class="sr-only" aria-live="polite" aria-atomic="true">
                 {{ messageAriaLive() }}

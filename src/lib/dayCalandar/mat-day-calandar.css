@@ -470,6 +470,15 @@ mat-sidenav-content {
     transition: opacity 0.2s ease;
 }
 
+/* --- ICÔNE LECTURE SEULE (TITRE) --- */
+.title-lock-icon {
+    vertical-align: middle;
+    font-size: 1.1rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--mat-sys-on-primary);
+}
+
 /* --- ACCESSIBILITÉ --- */
 .sr-only {
     position: absolute;

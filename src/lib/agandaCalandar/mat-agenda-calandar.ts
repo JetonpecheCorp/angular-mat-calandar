@@ -16,6 +16,7 @@ import { DateCalandarDisabled } from '../../models/DateCalandarDisabled';
 import { SidebarConfigCalandar } from '../../models/SidebarConfigCalandar';
 import { ThemeConfigCalandar } from '../../models/ThemeConfigCalandar';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MonthCalandar } from '../../models/MonthCalandar';
 
 @Component({
   selector: 'jp-mat-agenda-calandar',
@@ -37,7 +38,9 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     specialEvents = input<DateSpecialEvent[]>([]);
     groups = input<EventGroup[]>([]);
     customMatMenu = input<MatMenu | null>(null);
-    monthsDisabled = input<number[]>([]);
+
+    monthsDisabled = input<MonthCalandar[]>([]);
+    hiddenMonths = input<MonthCalandar[]>([]);
     daysDisabled = input<Date[]>();
     intervalsDisabled = input<DateCalandarDisabled[]>([]);
 
@@ -207,6 +210,7 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         return this.DICT_TRADUCTION[codeLangue] || this.DICT_TRADUCTION['en'];
     });
 
+    protected estMoisCourantLectureSeule = computed(() => this.EstMoisConcerne(this.mois(), this.annee(), this.monthsDisabled()));
     protected datePickerValue = computed(() => new Date(this.annee(), this.mois() - 1, 1));
 
     protected nomMois = computed(() => 
@@ -221,13 +225,19 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         const masques = this.groupesMasques();
         const bloquerPasse = this.readonlyPast();
         const minuitAujourdhui = new Date().setHours(0, 0, 0, 0);
+        const moisRestreints = this.monthsDisabled();
 
         return baseEvents.filter(ev => !masques.has(ev.groupEventId || 'sans-groupe')).map(ev => 
         {
-            if (bloquerPasse && ev.startDate.getTime() < minuitAujourdhui)
-                return { ...ev, readonly: true };
+            let estLectureSeule = ev.readonly;
 
-            return ev;
+            if (bloquerPasse && ev.startDate.getTime() < minuitAujourdhui)
+                estLectureSeule = true;
+
+            if (this.estMoisCourantLectureSeule() || this.EstMoisConcerne(ev.startDate.getMonth() + 1, ev.startDate.getFullYear(), moisRestreints))
+                estLectureSeule = true;
+
+            return { ...ev, readonly: estLectureSeule };
         });
     });
 
@@ -238,11 +248,9 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         const annee = this.annee();
         const mois = this.mois(); 
         const joursDesactives = this.joursAExclure();
-
-        const moisDesactives = this.monthsDisabled();
         const joursSpecifiquesDesactives = this.daysDisabled() || [];
 
-        if (moisDesactives.includes(mois)) 
+       if (this.EstMoisConcerne(mois, annee, this.hiddenMonths()))
             return [];
 
         const debutMois = new Date(annee, mois - 1, 1).getTime();
@@ -450,6 +458,38 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         return !this.EstBloque(date);
     };
 
+    protected EstMoisConcerne(mois: number, annee: number, regles: MonthCalandar[]): boolean 
+    {
+        if (!regles || regles.length === 0) 
+            return false;
+        
+        return regles.some(regle => {
+
+            if (regle.month !== mois) 
+                return false;
+
+            // aucune année n'est précisée
+            if (regle.year === undefined && regle.startYear === undefined && regle.endYear === undefined)
+                return true;
+
+            // Année spécifique
+            if (regle.year !== undefined && regle.year === annee)
+                return true;
+
+            // Intervalle (startYear et/ou endYear)
+            if (regle.startYear !== undefined || regle.endYear !== undefined) 
+            {
+                const start = regle.startYear !== undefined ? regle.startYear : -Infinity;
+                const end = regle.endYear !== undefined ? regle.endYear : Infinity;
+                
+                if (annee >= start && annee <= end)
+                    return true;
+            }
+
+            return false;
+        });
+    }
+
     protected AnnoncerActionVocalement(message: string): void 
     {
         this.messageAriaLive.set('');
@@ -465,8 +505,8 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         if (this.joursAExclure().includes(dayOfWeek)) 
             return true;
 
-        // 2. Check Mois désactivés
-        if (this.monthsDisabled().includes(month)) 
+        // 2. Check Mois masqué
+        if (this.EstMoisConcerne(month, date.getFullYear(), this.hiddenMonths()))
             return true;
 
         // 3. Check Dates spécifiques désactivées
@@ -569,10 +609,24 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
         if (!date) 
             return;
         
-        this.annee.set(date.getFullYear());
-        this.mois.set(date.getMonth() + 1);
+        let selectedM = date.getMonth() + 1;
+        let selectedY = date.getFullYear();
 
-        this.pendingScrollTime.set(date.setHours(0, 0, 0, 0));
+        let safety = 0;
+        while(this.EstMoisConcerne(selectedM, selectedY, this.hiddenMonths()) && safety < 12) 
+        {
+            selectedM++;
+            if(selectedM > 12) 
+            { 
+                selectedM = 1; 
+                selectedY++; 
+            }
+            safety++;
+        }
+
+        this.annee.set(selectedY);
+        this.mois.set(selectedM);
+        this.pendingScrollTime.set(new Date(selectedY, selectedM - 1, date.getDate()).setHours(0, 0, 0, 0));
     }
 
     protected GetStartDisplay(ev: EventCalandar, dateGroupe: Date): string 
@@ -614,23 +668,34 @@ export class MatAgendaCalandar implements OnInit, OnDestroy
     protected Precedent() 
     {
         let n = this.mois() == 1 ? 12 : this.mois() - 1;
+        let y = this.mois() === 1 ? this.annee() - 1 : this.annee();
 
-        if (n === 12) 
-            this.annee.set(this.annee() - 1);
+        while (this.EstMoisConcerne(n, y, this.hiddenMonths())) 
+        {
+            n = n == 1 ? 12 : n - 1;
+            if (n == 12) 
+                y--;
+        }
 
+        this.annee.set(y);
         this.mois.set(n);
-
         this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 
     protected Suivant() 
     {
         let n = this.mois() === 12 ? 1 : this.mois() + 1;
+        let y = this.mois() === 12 ? this.annee() + 1 : this.annee();
 
-        if (n === 1) 
-            this.annee.set(this.annee() + 1);
+        while (this.EstMoisConcerne(n, y, this.hiddenMonths())) 
+        {
+            n = n == 12 ? 1 : n + 1;
+            if (n == 1) 
+                y++;
+        }
+
+        this.annee.set(y);
         this.mois.set(n);
-
         this.AnnoncerActionVocalement(`${this.nomMois()} ${this.annee()}`);
     }
 

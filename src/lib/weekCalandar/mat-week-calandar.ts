@@ -16,6 +16,7 @@ import { SidebarConfigCalandar } from '../../models/SidebarConfigCalandar';
 import { NgStyle } from '@angular/common';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideNativeDateAdapter, DateAdapter } from '@angular/material/core';
+import { MonthCalandar } from '../../models/MonthCalandar';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -55,6 +56,8 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     /** 0 => Sunday, 6 => Monday */
     daysOfWeekDisabled = input<number[]>([]);
+    hiddenMonths = input<MonthCalandar[]>([]);
+    monthsDisabled = input<MonthCalandar[]>([])
 
     themeConfig = input<ThemeConfigCalandar>();
     sidebarConfig = input<SidebarConfigCalandar>();
@@ -266,10 +269,16 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             return !masques.has(idGroupe);
         }).map(ev => 
         {
-            if (bloquerPasse && ev.startDate.getTime() < maintenant)
-                return { ...ev, readonly: true };
+            let isReadOnly = ev.readonly;
             
-            return ev;
+            if (bloquerPasse && ev.startDate.getTime() < maintenant)
+                isReadOnly = true;
+                
+            // Verrouille si le mois est concerné
+            if (this.EstMoisConcerne(ev.startDate.getMonth() + 1, ev.startDate.getFullYear(), this.monthsDisabled()))
+                isReadOnly = true;
+            
+            return { ...ev, readonly: isReadOnly };
         });
 
         if (!preview) 
@@ -346,6 +355,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             liste.push({
                 date: DATE,
                 estAujourdhui: this.EstAujourdhui(DATE),
+                estLectureSeule: this.EstMoisConcerne(DATE.getMonth() + 1, DATE.getFullYear(), this.monthsDisabled()),
                 reduit: DATE.toLocaleString(navigator.language, { weekday: 'short' }).replace('.', ''),
                 normal: DATE.toLocaleString(navigator.language, { weekday: 'long' }),
                 specialEvents: eventsSpeciauxDuJour
@@ -445,6 +455,48 @@ export class MatWeekCalendar implements OnInit, OnDestroy
             this.themeObserver.disconnect();
     }
 
+    protected dateFilter = (date: Date | null): boolean => 
+    {
+        if (!date) return true;
+        return !this.EstMoisConcerne(date.getMonth() + 1, date.getFullYear(), this.hiddenMonths());
+    };
+
+    protected EstSlotBloque(date: Date, h: string): boolean 
+    {
+        if (this.EstMoisConcerne(date.getMonth() + 1, date.getFullYear(), this.monthsDisabled())) 
+            return true;
+
+        return this.EstJourPasse(date, h);
+    }
+
+    protected EstMoisConcerne(mois: number, annee: number, regles: MonthCalandar[]): boolean 
+    {
+        if (!regles || regles.length === 0) 
+            return false;
+
+        return regles.some(regle => {
+            if (regle.month !== mois) 
+                return false;
+
+            if (regle.year === undefined && regle.startYear === undefined && regle.endYear === undefined) 
+                return true;
+
+            if (regle.year !== undefined && regle.year === annee) 
+                return true;
+
+            if (regle.startYear !== undefined || regle.endYear !== undefined) 
+            {
+                const start = regle.startYear !== undefined ? regle.startYear : -Infinity;
+                const end = regle.endYear !== undefined ? regle.endYear : Infinity;
+
+                if (annee >= start && annee <= end) 
+                    return true;
+            }
+            
+            return false;
+        });
+    }
+
     protected OnDateSelectionnee(event: any): void 
     {
         if (event.value) 
@@ -461,6 +513,10 @@ export class MatWeekCalendar implements OnInit, OnDestroy
     {
         let label = element.estAujourdhui ? this.trad().aujourdhui + ', ' : '';
         label += element.normal;
+
+        if (element.estLectureSeule)
+            label += ', ' + this.trad().ariaLectureSeule;
+
         if (element.specialEvents && element.specialEvents.length > 0) 
         {
             const titres = element.specialEvents.map((sp: any) => sp.title).join(', ');
@@ -472,6 +528,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
     protected GetSlotAriaLabel(dateJour: Date, h: string, aDesEvents: boolean): string 
     {
+        if (this.EstMoisConcerne(dateJour.getMonth() + 1, dateJour.getFullYear(), this.monthsDisabled())) 
+            return this.FormatDateAria(dateJour) + ' ' + h + ', ' + this.trad().ariaLectureSeule;
+
         if (this.EstJourPasse(dateJour, h))
             return this.FormatDateAria(dateJour) + ' ' + h + ', ' + this.trad().ariaBloque;
 
@@ -714,39 +773,35 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         this.timeSlotClicked.emit({ start: dateDebut, end: dateFin });
     }
 
-    protected MoisPrecedent(): void
+    protected MoisPrecedent(): void 
     {
         const DATE = new Date(this.dateReference());
         DATE.setMonth(DATE.getMonth() - 1);
-        this.dateReference.set(DATE);
-
+        this.dateReference.set(this.TrouverSemaineValide(DATE, -1));
         this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
-    protected MoisSuivant(): void
+    protected MoisSuivant(): void 
     {
         const DATE = new Date(this.dateReference());
         DATE.setMonth(DATE.getMonth() + 1);
-        this.dateReference.set(DATE);
-
+        this.dateReference.set(this.TrouverSemaineValide(DATE, 1));
         this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
-    protected Precedent(): void
+    protected Precedent(): void 
     {
         const DATE = new Date(this.dateReference());
         DATE.setDate(DATE.getDate() - 7);
-        this.dateReference.set(DATE);
-
+        this.dateReference.set(this.TrouverSemaineValide(DATE, -1));
         this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
-    protected Suivant(): void
+    protected Suivant(): void 
     {
         const DATE = new Date(this.dateReference());
         DATE.setDate(DATE.getDate() + 7);
-        this.dateReference.set(DATE);
-
+        this.dateReference.set(this.TrouverSemaineValide(DATE, 1));
         this.AnnoncerActionVocalement(this.titrePeriode());
     }
 
@@ -1262,7 +1317,7 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         if (event.key === 'Enter' || event.key === ' ') 
         {
             event.preventDefault();
-            if (this.readonly() || this.EstJourPasse(dateJour, heureLabel))
+            if (this.readonly() || this.EstSlotBloque(dateJour, heureLabel))
                 return;
 
             if (this.dragCreationEnCours()) 
@@ -1343,7 +1398,9 @@ export class MatWeekCalendar implements OnInit, OnDestroy
         if (event.shiftKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) 
         {
             event.preventDefault();
-            if (this.readonly()) return;
+
+            if (this.EstSlotBloque(dateJour, heureLabel)) 
+                return;
 
             this.ignoreBlur = true;
             if (this.focusTimeout) clearTimeout(this.focusTimeout);
@@ -1710,6 +1767,21 @@ export class MatWeekCalendar implements OnInit, OnDestroy
 
         const langue = this.langue() || 'fr-FR'; 
         return date.toLocaleDateString(langue, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    private TrouverSemaineValide(dateDepart: Date, direction: 1 | -1): Date 
+    {
+        let d = new Date(dateDepart);
+        let safety = 0;
+
+        // Saute les semaines si elles tombent dans un mois caché
+        while (this.EstMoisConcerne(d.getMonth() + 1, d.getFullYear(), this.hiddenMonths()) && safety < 52) 
+        {
+            d.setDate(d.getDate() + (direction * 7));
+            safety++;
+        }
+
+        return d;
     }
 
     private VerifierTheme(): void 

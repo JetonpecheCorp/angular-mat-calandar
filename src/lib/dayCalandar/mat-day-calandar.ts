@@ -12,6 +12,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { NgStyle } from '@angular/common';
+import { MonthCalandar } from '../../models/MonthCalandar';
 
 interface PositionedEvent extends EventCalandar 
 {
@@ -43,7 +44,8 @@ export class MatDayCalendar implements OnInit, OnDestroy
     hourMax = input(23, { transform: numberAttribute });
     langue = input<string>(typeof navigator !== 'undefined' ? navigator.language : 'en');
     daysOfWeekDisabled = input<number[]>([]);
-    monthsDisabled = input<number[]>([]);
+    hiddenMonths = input<MonthCalandar[]>([]);
+    monthsDisabled = input<MonthCalandar[]>([])
     daysDisabled = input<Date[]>();
     themeConfig = input<ThemeConfigCalandar>();
     sidebarConfig = input<SidebarConfigCalandar>();
@@ -227,10 +229,18 @@ export class MatDayCalendar implements OnInit, OnDestroy
         const eventsFiltres = baseEvents.filter(ev => {
             const idGroupe = ev.groupEventId || 'sans-groupe';
             return !masques.has(idGroupe);
-        }).map(ev => {
+        }).map(ev => 
+        {
+            let isReadOnly = ev.readonly;
+            
             if (bloquerPasse && ev.startDate.getTime() < maintenant)
-                return { ...ev, readonly: true };
-            return ev;
+                isReadOnly = true;
+                
+            // Verrouille si le mois est concerné
+            if (this.EstMoisConcerne(ev.startDate.getMonth() + 1, ev.startDate.getFullYear(), this.monthsDisabled()))
+                isReadOnly = true;
+            
+            return { ...ev, readonly: isReadOnly };
         });
 
         if (!preview) return eventsFiltres;
@@ -268,6 +278,7 @@ export class MatDayCalendar implements OnInit, OnDestroy
             date: DATE,
             estAujourdhui: this.EstAujourdhui(DATE),
             estBloquer: this.EstBloque(DATE),
+            estLectureSeule: this.EstMoisConcerne(DATE.getMonth() + 1, DATE.getFullYear(), this.monthsDisabled()),
             reduit: DATE.toLocaleString(this.langue(), { weekday: 'short' }).replace('.', ''),
             normal: DATE.toLocaleString(this.langue(), { weekday: 'long' }),
             specialEvents: eventsSpeciauxDuJour
@@ -350,10 +361,44 @@ export class MatDayCalendar implements OnInit, OnDestroy
         return !this.EstBloque(date);
     };
 
+    protected EstMoisConcerne(mois: number, annee: number, regles: MonthCalandar[]): boolean 
+    {
+        if (!regles || regles.length === 0) 
+            return false;
+
+        return regles.some(regle => {
+            if (regle.month !== mois) 
+                return false;
+
+            if (regle.year === undefined && regle.startYear === undefined && regle.endYear === undefined) 
+                return true;
+
+            if (regle.year !== undefined && regle.year === annee) 
+                return true;
+
+            if (regle.startYear !== undefined || regle.endYear !== undefined) 
+            {
+                const start = regle.startYear !== undefined ? regle.startYear : -Infinity;
+                const end = regle.endYear !== undefined ? regle.endYear : Infinity;
+
+                if (annee >= start && annee <= end) 
+                    return true;
+            }
+
+            return false;
+        });
+    }
+
     protected GetDayHeaderAriaLabel(element: any): string 
     {
         let label = element.estAujourdhui ? this.trad().aujourdhui + ', ' : '';
         label += element.normal;
+
+        if (element.estLectureSeule)
+            label += ', ' + this.trad().ariaLectureSeule;
+
+        else if (element.estBloquer)
+            label += ', ' + this.trad().ariaBloque;
 
         if (element.specialEvents && element.specialEvents.length > 0) 
         {
@@ -366,6 +411,9 @@ export class MatDayCalendar implements OnInit, OnDestroy
 
     protected GetSlotAriaLabel(dateJour: Date, h: string, aDesEvents: boolean): string 
     {
+        if (this.EstMoisConcerne(dateJour.getMonth() + 1, dateJour.getFullYear(), this.monthsDisabled()))
+            return this.FormatDateAria(dateJour) + ' ' + h + ', ' + this.trad().ariaLectureSeule;
+
         if (this.EstJourPasse(dateJour, h))
             return this.FormatDateAria(dateJour) + ' ' + h + ', ' + this.trad().ariaBloque;
 
@@ -413,7 +461,8 @@ export class MatDayCalendar implements OnInit, OnDestroy
         if (this.joursAExclure().includes(dayOfWeek)) 
             return true;
 
-        if (this.monthsDisabled().includes(month)) 
+        // bloque le jour s'il fait partie d'un mois CACHÉ
+        if (this.EstMoisConcerne(month, date.getFullYear(), this.hiddenMonths())) 
             return true;
 
         if (this.daysDisabled()?.some(d => this.EstMemeJour(d, date))) 

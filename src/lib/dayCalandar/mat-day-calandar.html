@@ -47,7 +47,7 @@
     </mat-sidenav>
 
     <mat-sidenav-content>
-        <div class="day-calendar-container" role="region" [attr.aria-label]="titrePeriode()" 
+        <div class="day-calendar-container" role="region" [attr.aria-label]="(EstMoisConcerne(dateReference().getMonth() + 1, dateReference().getFullYear(), monthsDisabled()) ? trad().ariaLectureSeule + ' - ' : '') + titrePeriode()"
                 [class.is-resizing-calendar]="previewResize() !== null || dragCreationEnCours()"
                 [class.nav-hover-left]="zoneNavigationActive() == 'left'"
                 [class.nav-hover-right]="zoneNavigationActive() == 'right'">
@@ -94,6 +94,10 @@
 
                                 <span #btnPeriode class="period-title" role="button" tabindex="0" [attr.aria-label]="trad().ariaMenu" (click)="picker.open()" (keydown.enter)="picker.open()">
                                     {{ titrePeriode() }}
+                                    @if(jourActuel().estLectureSeule) 
+                                    {
+                                        <mat-icon class="title-lock-icon" aria-hidden="true" [title]="trad().ariaLectureSeule">lock</mat-icon>
+                                    }
                                 </span>
                                 <mat-datepicker #picker [restoreFocus]="false" [touchUi]="estPetitEcran()"></mat-datepicker>
                             </div>
@@ -232,7 +236,7 @@
                             
                             @for (h of heures(); track h) 
                             {
-                                @let slotBloque = jour.estBloquer || EstJourPasse(jour.date, h);
+                                @let slotBloque = jour.estBloquer || jour.estLectureSeule || EstJourPasse(jour.date, h);
 
                                 <div class="hour-slot" 
                                         [id]="'slot-' + jour.date.getTime() + '-' + h.replace(' ', '')"

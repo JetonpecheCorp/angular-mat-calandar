@@ -53,7 +53,7 @@
         </div>
     </mat-sidenav>
     <mat-sidenav-content>
-        <div class="week-calendar-container" role="region" [attr.aria-label]="titrePeriode()"
+        <div class="week-calendar-container" role="region" [attr.aria-label]="(EstMoisConcerne(dateReference().getMonth() + 1, dateReference().getFullYear(), monthsDisabled()) ? trad().ariaLectureSeule + ' - ' : '') + titrePeriode()"
                 [class.is-resizing-calendar]="previewResize() !== null || dragCreationEnCours()"
                 [class.nav-hover-left]="zoneNavigationActive() === 'left'"
                 [class.nav-hover-right]="zoneNavigationActive() === 'right'">
@@ -103,6 +103,7 @@
     
                                 <input matInput 
                                         [matDatepicker]="picker" 
+                                        [matDatepickerFilter]="dateFilter"
                                         [value]="dateReference()" 
                                         (dateChange)="OnDateSelectionnee($event)"
                                         style="width: 0; height: 0; border: none; padding: 0; margin: 0; position: absolute; opacity: 0; pointer-events: none;"
@@ -117,6 +118,10 @@
                                         (click)="picker.open()"
                                         (keydown.enter)="picker.open()">
                                     {{ titrePeriode() }}
+                                    @if(EstMoisConcerne(dateReference().getMonth() + 1, dateReference().getFullYear(), monthsDisabled())) 
+                                    {
+                                        <mat-icon class="title-lock-icon" aria-hidden="true" [title]="trad().ariaLectureSeule">lock</mat-icon>
+                                    }
                                 </span>
                                 
                                 <mat-datepicker #picker [restoreFocus]="false" [touchUi]="estPetitEcran()"></mat-datepicker>
@@ -269,19 +274,21 @@
 
                                 @for (h of heures(); track h) 
                                 {
+                                    @let slotBloque = EstSlotBloque(jour.date, h);
+
                                     <div class="hour-slot" 
-                                            [id]="'slot-' + jour.date.getTime() + '-' + h.replace(' ', '')"
-                                            [class.slot-disabled]="EstJourPasse(jour.date, h)"
-                                            role="button"
-                                            tabindex="0"
-                                            [attr.aria-disabled]="EstJourPasse(jour.date, h)"
-                                            [attr.aria-pressed]="dragCreationEnCours() ? 'true' : 'false'"
-                                            [attr.aria-label]="GetSlotAriaLabel(jour.date, h, getPositionedEvents(jour.date).length > 0)"
-                                            (keydown)="OnTimeSlotKeydown($event, jour.date, h, getPositionedEvents(jour.date))"
-                                            matRipple 
-                                            [matRippleDisabled]="matRippleDisabled() || EstJourPasse(jour.date, h)" 
-                                            (mousedown)="!EstJourPasse(jour.date, h) && OnMouseDownHoraire(jour.date, $event)"
-                                            (touchstart)="!EstJourPasse(jour.date, h) && OnMouseDownHoraire(jour.date, $event)"></div>
+                                                [id]="'slot-' + jour.date.getTime() + '-' + h.replace(' ', '')"
+                                                [class.slot-disabled]="slotBloque"
+                                                role="button"
+                                                tabindex="0"
+                                                [attr.aria-disabled]="slotBloque"
+                                                [attr.aria-pressed]="dragCreationEnCours() ? 'true' : 'false'"
+                                                [attr.aria-label]="GetSlotAriaLabel(jour.date, h, getPositionedEvents(jour.date).length > 0)"
+                                                (keydown)="OnTimeSlotKeydown($event, jour.date, h, getPositionedEvents(jour.date))"
+                                                matRipple 
+                                                [matRippleDisabled]="matRippleDisabled() || slotBloque" 
+                                                (mousedown)="!slotBloque && OnMouseDownHoraire(jour.date, $event)"
+                                                (touchstart)="!slotBloque && OnMouseDownHoraire(jour.date, $event)"></div>
                                 }
                                 </div>
                             }
