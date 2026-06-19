@@ -4,10 +4,10 @@ import { EventCalandar } from "./EventCalandar"
 export type DateCalendrier =
 {
     date: Date,
-    estBloquer: boolean,
-    estAujourdhui: boolean,
-    estMoisCourant: boolean,
-    estWeekend: boolean,
-    listeEvent: EventCalandar[],
-    listeEventSpecial: DateSpecialEvent[]
+    isLocked: boolean,
+    isToday: boolean,
+    isWeekend: boolean,
+    eventList: EventCalandar[],
+    specialEventList: DateSpecialEvent[],
+    estMoisCourant: boolean
 }
