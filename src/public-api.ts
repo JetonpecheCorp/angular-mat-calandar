@@ -8,6 +8,7 @@ export * from './lib/dayCalandar/mat-day-calandar';
 export * from './lib/yearCalandar/mat-year-calandar';
 export * from './models/EventCalandar';
 export * from './models/DateCalandar';
+export * from './models/MonthCalandar';
 export * from './models/DateSpecialEvent';
 export * from './models/DateCalandarDisabled';
 export * from './models/EventGroup';
