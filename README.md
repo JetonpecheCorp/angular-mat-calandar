@@ -1,70 +1,69 @@
 # Angular mat calandar
-
-Calendrier au style material design de angular.  
-Traduction automatique celons la **langue du navigateur.**.
+Calendrier au style `material design` d'angular.  
+Traduction automatique selons la **langue du navigateur.**
 
 # Information
-
 - Compatible Angular 22
 - Compatible et conçu pour Angular material
-- Accessible via aria, navigation et actions par le clavier
+- Accessible via les `arias`, voix, navigation et actions par le clavier
 
 # Attributs en commun
-- `events`: Liste des evenements à mettre sur le calandrier
-- `specialEvents`: Liste des evenements spécials (vacances, noel, jour de l'an...)
-- `configTheme`: Configuration du theme par defaut pour actualiser les les couleurs des events defini dans le groupe
-- `sidebarConfig`: Configuration de la sidebar
-- `groups`: Liste des groupes d'event pour personnaliser la couleur et / ou les regrouper
-- `monthsDisabled`: Masquer des mois (1 => janvier 12 => decembre)
-- `intervalDisabled`: Liste des intervals de jours a désactiver
-- `daysDisabled`: Liste des jours à désactiver
-- `customMatMenu`: Permet d'utiliser un menu contextuel personnalisé
-- `langue`: Permet de definir une traduction (defaut la langue du naviguateur, si pas de traduction langue anglais)
-    - Langue disponible (en, fr, es, it, de, pt)
+- `events` : liste des événements à mettre sur le calendrier
+- `specialEvents` : liste des événements spéciaux (vacances, Noël, jour de l'An...)
+- `configTheme` : configuration du thème par défaut pour actualiser les couleurs des événements définis dans le groupe
+- `sidebarConfig` : configuration de la sidebar
+- `groups` : liste des groupes d'événements pour personnaliser la couleur et / ou les regrouper
+- `monthsDisabled` : liste des mois à désactiver (1 => janvier, 12 => décembre)
+- `hiddenMonths` : liste des mois à masquer (1 => janvier, 12 => décembre)
+- `intervalDisabled` : liste des intervalles de jours à désactiver
+- `daysDisabled` : liste des jours à désactiver
+- `customMatMenu` : permet d'utiliser un menu contextuel personnalisé
+- `langue` : permet de définir une traduction (par défaut, la langue du navigateur ; si aucune traduction n'est disponible, l'anglais est utilisé)
+    - Langues disponibles : anglais, français, espagnol, italien, allemand et portugais
 
 ## Attributs boolean
-- `matRippleDisabled`: désactiver l'effet ripple
-- `weekendDisabled`: Masquer le weekend (samedi et dimanche)
-- `mondayFirst`: Faire commencer le calendrier par lundi sinon dimanche
-- `daysOfWeekDisabled`: Désactiver des jours de la semaine (0 => dimanche, 6 => lundi)
-- `useAmPm`: Afficher les heures en AM / PM
-- `readonly`: Met le calandrier en lecture seul
-- `readonlyPast`: Met le calendrier en lecture seul sur le passé
-- `loading`: Affiche un spinner par dessus le corps du calendrier
-- `hideNavYearBtn`: Masquer les boutons pour naviguer d'une année
-- `showBtnAdd`: Afficher le bouton ajouter un nouvelle event
+- `matRippleDisabled` : désactiver l'effet ripple
+- `weekendDisabled` : masquer le week-end (samedi et dimanche)
+- `mondayFirst` : faire commencer le calendrier par le lundi, sinon le dimanche.
+- `daysOfWeekDisabled` : désactiver des jours de la semaine (0 => dimanche, 6 => lundi)
+- `useAmPm` : afficher les heures au format AM/PM.
+- `readonly` : met le calendrier en lecture seule
+- `readonlyPast` : met le calendrier en lecture seule sur le passé
+- `loading` : affiche un spinner par-dessus le corps du calendrier
+- `hideNavYearBtn` : masquer les boutons pour naviguer d'une année
+- `showBtnAdd` : afficher le bouton pour ajouter un nouvel événement
+
+# Événements en commun
+- `dayClicked`: événement clic sur un jour, liste les events inclus dans le jour
+- `eventClicked`: événement clic sur un évènement
+- `contextClicked` : événement de clic sur le menu contextuel par défaut
+- `eventCreated` : événement de glisser pour créer un événement
+- `eventUpdated` : événement de glisser-déposer ou redimensionnement d'un événement
+- `btnAddClicked` : événement de clic sur le bouton pour ajouter un nouvel événement
 
 # Par année
 
 ## Attributs
-- `month`: mois à afficher (REQUIS) (1 - 12)
-- `defaultHiddenMonths`: Liste des mois à masquer par defaut
-- `hideSelectMonth`: Masquer le select des mois
-
-## Events
-- `contextClicked`: Event click mat menu contextuel par defaut
-- `eventClickJour`: Event click sur le jour
-- `eventClickEvent`: Event click sur un évènement
-- `eventCreated`: Event drag pour créer un event
-- `eventUpdated`: Event drag and drop ou resize d'un event
-- `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
+- `year` : année à afficher (REQUIS) (1 - 12)
+- `defaultHiddenMonths` : liste des mois à masquer par défaut dans le select (`hiddenMonths` prioritaire)
+- `hideSelectMonth` : masquer le select des mois
 
 ## Navigation via clavier
-- `TAB`: parcourir le composant
-- `FLECHES`: Parcourir les jours du composant 
-- `ALT + FLECHE BAS`: parcourir les events d'un jour
-- `CTRL + FLECHE HAUT`: Revenir sur le jour
-- `N / P`: Avancer ou reculer d'un an
+- `TAB` : parcourir le composant
+- `FLÈCHES` : parcourir les jours du composant 
+- `ALT + FLÈCHE BAS` : parcourir les événements d'un jour
+- `CTRL + FLÈCHE HAUT` : revenir sur le jour
+- `N / P` : avancer ou reculer d'un an
 
-### Creation
-- `SHIFT + fleches clavier` puis `Entrer` pour valider
+### Création
+- `SHIFT + flèches clavier` puis `Entrée` pour valider
 
-### Modifier date interval
-- `CTRL + FLECHE DROITE`: modifier date fin
-- `CTRL + SHIFT + FLECHE GAUCHE`: modifier date de début
+### Modifier l'intervalle de date
+- `CTRL + FLÈCHE DROITE` : modifier la date de fin
+- `CTRL + SHIFT + FLÈCHE GAUCHE` : modifier la date de début
 
-### Déplacer l'event
-- `SHIFT + FLECHE DROITE ou GAUCHE`: deplacer l'event
+### Déplacer l'événement
+- `SHIFT + FLÈCHE DROITE ou GAUCHE` : déplacer l'événement
 
 ## Exemple
 ```html
@@ -80,14 +79,6 @@ Traduction automatique celons la **langue du navigateur.**.
 ## Attributs
 - `month`: mois à afficher (REQUIS) (1 - 12)
 - `year`: Année du mois à afficher (REQUIS)
-
-## Events
-- `contextClicked`: Event click mat menu contextuel par defaut
-- `eventClickJour`: Event click sur le jour
-- `eventClickEvent`: Event click sur un évènement
-- `eventCreated`: Event drag pour créer un event
-- `eventUpdated`: Event drag and drop ou resize d'un event
-- `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
 
 ## Navigation via clavier
 - `TAB`: parcourir le composant
@@ -119,34 +110,28 @@ Traduction automatique celons la **langue du navigateur.**.
 # Par semaine et par jour
 
 ## Attributs
-- `dateReference`: Affiche la semaine entière a partir de cette date (REQUIS)
-- `hourMin`: Heure début du calendrier (0 - 23)
-- `hourMax`: Heure de fin du calandrier (0 - 23)
+- `dateReference` : affiche la semaine entière à partir de cette date (REQUIS)
+- `hourMin` : heure de début du calendrier (0-23)
+- `hourMax` : heure de fin du calendrier (0-23)
 
-## Events
-- `contextClicked`: Event click mat menu contextuel par defaut
-- `timeSlotClicked`: Event click sur une heure du calendrier
-- `eventClicked`: Event click sur un évènement
-- `dayClicked`: Event click sur un jour, liste les events inclus dans le jour
-- `eventUpdated`: Event drag and drop ou resize d'un event
-- `eventCreated`: Event drag pour créer un event
-- `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
+## Événements
+- `timeSlotClicked` : événement clic sur une heure du calendrier
 
-## Navigation via clavier
-- `TAB`: parcourir le composant
-- `FLECHES`: Parcourir les heures et jours du composant 
-- `N / P`: Avancer ou reculer d'une semaine (un jour pour le composant par jour)
-- `SHIFT + N / P`: Avancer ou reculer d'un mois
+## Navigation via le clavier
+- `TAB` : parcourir le composant
+- `FLÈCHES` : parcourir les heures et jours du composant 
+- `N / P` : avancer ou reculer d'une semaine (un jour pour le composant par jour)
+- `SHIFT + N / P` : avancer ou reculer d'un mois
 
-### Creation
-- `SHIFT + FLECHES` puis `Entrer` pour valider
+### Création
+- `SHIFT + FLÈCHES` puis `Entrer` pour valider
 
 ### Modifier date interval
-- `CTRL + FLECHE DROITE`: modifier date fin
-- `CTRL + SHIFT + FLECHE GAUCHE`: modifier date de début
+- `CTRL + FLÈCHE DROITE` : modifier la date de fin
+- `CTRL + SHIFT + FLÈCHE GAUCHE` : modifier la date de début
 
-### Déplacer l'event
-- `SHIFT + FLECHES`: déplacer l'event
+### Déplacer l'événement
+- `SHIFT + FLÈCHES` : déplacer l'événement
 
 ## Exemple
 ```html
@@ -161,28 +146,26 @@ Traduction automatique celons la **langue du navigateur.**.
 # Agenda
 
 ## Attributs
-- `month`: mois à afficher (REQUIS) (1 - 12)
-- `year`: Année du mois à afficher (REQUIS)
+- `month` : mois à afficher (REQUIS) (1-12)
+- `year` : année du mois à afficher (REQUIS)
 
 ## Events
-- `eventClicked`: Event click sur un évènement
-- `contextClicked`: Event click mat menu contextuel par defaut
-- `btnAddClicked`: Event click sur bouton ajouter un nouvelle event
+`dayClicked`, `eventCreated` et `eventUpdated` non disponibles
 
 # Menu contextuel et directive
 
 ## Directive
-- `[jpCalandarAction]`: Lier au calendrier conserné (REQUIS)
-- `[event]`: Event sur lequel le menu est ouvert (REQUIS)
+- `[jpCalandarAction]` : lier au calendrier concerné (REQUIS)
+- `[event]` : événement sur lequel le menu est ouvert (REQUIS)
 
 Permet de désactiver automatiquement un `<button>`, `<div>` ou `<a>` si  
-le composant est en `readonly`, `readonlyPast` ou l'event est en `readonly`
+le composant est en `readonly`, `readonlyPast` ou l'événement est en `readonly`
 
 **Note:** l'attribut `aria-disabled` est géré automatiquement.
 
 ## Menu contextuel
-`let-ev="eventCal"`: Permet d'avoir l'event sur lequel le menu s'ouvre.  
-Par defaut, il existe un menu avec les actions Modifier et Supprimer.  
+`let-ev="eventCal"`: Permet d'avoir l'événement sur lequel le menu s'ouvre.  
+Par défaut, il existe un menu avec les actions Modifier et Supprimer.  
 Ils s'activent selon le `readonly` ou `readonlyPast`.
 
 ## Exemple
